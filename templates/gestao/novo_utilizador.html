@@ -1,0 +1,36 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<div class="p-6 max-w-lg mx-auto">
+  <h1 class="text-2xl font-bold text-slate-800 mb-6">Novo Utilizador</h1>
+
+  {% if error %}
+  <div class="mb-4 p-3 rounded-lg bg-red-50 text-red-700 border border-red-200">{{ error }}</div>
+  {% endif %}
+
+  <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+    <form method="post">
+      {% csrf_token %}
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-slate-700 mb-1">Email</label>
+        <input type="email" name="email" class="form-input" placeholder="utilizador@email.com" required>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-slate-700 mb-1">Primeiro Nome</label>
+        <input type="text" name="first_name" class="form-input" placeholder="Ana">
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-slate-700 mb-1">Apelido</label>
+        <input type="text" name="last_name" class="form-input" placeholder="Silva">
+      </div>
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-slate-700 mb-1">Palavra-passe temporaria</label>
+        <input type="text" name="password" class="form-input" placeholder="Min. 8 caracteres" required>
+      </div>
+      <div class="flex gap-3">
+        <button type="submit" class="btn-primary">Criar Utilizador</button>
+        <a href="/gestao/utilizadores/" class="btn-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
