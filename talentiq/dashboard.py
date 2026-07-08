@@ -1,17 +1,21 @@
 from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
 from vagas.models import Vaga
 from candidatos.models import Candidato
 
 
-@login_required
 def dashboard(request):
-    org = request.user.organisation
-    vagas = Vaga.objects.filter(organisation=org, estado="Aberta")
-    candidatos = Candidato.objects.filter(organisation=org)
-    contratados = candidatos.filter(etapa="Contratado").count()
-    scores = [c.score_fit for c in candidatos if c.score_fit is not None]
-    score_medio = round(sum(scores) / len(scores)) if scores else 0
+    org = getattr(request.user, "organisation", None) if request.user.is_authenticated else None
+    if org:
+        vagas = Vaga.objects.filter(organisation=org, estado="Aberta")
+        candidatos = Candidato.objects.filter(organisation=org)
+        contratados = candidatos.filter(etapa="Contratado").count()
+        scores = [c.score_fit for c in candidatos if c.score_fit is not None]
+        score_medio = round(sum(scores) / len(scores)) if scores else 0
+    else:
+        vagas = Vaga.objects.none()
+        candidatos = Candidato.objects.none()
+        contratados = 0
+        score_medio = 0
 
     return render(request, "dashboard.html", {
         "total_vagas": vagas.count(),
