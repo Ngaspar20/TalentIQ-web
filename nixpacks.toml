@@ -5,4 +5,4 @@ cmds = [
 ]
 
 [start]
-cmd = "python manage.py migrate --noinput && gunicorn talentiq.wsgi --bind 0.0.0.0:$PORT --workers 2"
+cmd = "python manage.py migrate --noinput && python manage.py seed_admin && gunicorn talentiq.wsgi --bind 0.0.0.0:$PORT --workers 2"
