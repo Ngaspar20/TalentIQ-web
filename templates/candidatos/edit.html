@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Editar {{ candidato.nome }}{% endblock %}
+{% block breadcrumb %}
+<a href="/candidatos/" class="hover:text-slate-700">Candidatos</a> <span class="mx-2">›</span>
+<a href="/candidatos/{{ candidato.pk }}/" class="hover:text-slate-700">{{ candidato.nome }}</a> <span class="mx-2">›</span> Editar
+{% endblock %}
+{% block content %}
+<div class="page-header flex items-center justify-between">
+    <h1 class="flex items-center gap-3">
+        <i class="fa-solid fa-pen" style="color:#8b5cf6;"></i> Editar Candidato
+    </h1>
+    <a href="/candidatos/{{ candidato.pk }}/" class="btn-secondary">
+        <i class="fa-solid fa-arrow-left"></i> Voltar
+    </a>
+</div>
+
+<div class="section-card">
+    <form method="post" action="/candidatos/{{ candidato.pk }}/editar/">
+        {% csrf_token %}
+        <div class="grid grid-cols-2 gap-6 mb-6">
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4"><i class="fa-solid fa-user mr-1"></i> Dados Pessoais</p>
+                <div class="mb-4"><label>Nome Completo *</label><input type="text" name="nome" class="form-input" required value="{{ candidato.nome }}"></div>
+                <div class="mb-4">
+                    <label>Vaga Associada</label>
+                    <select name="vaga_id" class="form-input">
+                        <option value="">— Sem vaga —</option>
+                        {% for v in vagas %}
+                        <option value="{{ v.pk }}" {% if candidato.vaga and candidato.vaga.pk == v.pk %}selected{% endif %}>{{ v.titulo }}{% if v.organizacao %} · {{ v.organizacao }}{% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-4"><label>Email</label><input type="email" name="email" class="form-input" value="{{ candidato.email }}"></div>
+                <div class="mb-4"><label>Telefone</label><input type="text" name="telefone" class="form-input" value="{{ candidato.telefone }}"></div>
+                <div class="mb-4"><label>Anos de Experiência</label><input type="number" name="experiencia_anos" class="form-input" min="0" max="50" value="{{ candidato.experiencia_anos }}"></div>
+                <div class="mb-4">
+                    <label>Etapa do Pipeline</label>
+                    <select name="etapa" class="form-input">
+                        <option {% if candidato.etapa == "Candidatura Recebida" %}selected{% endif %}>Candidatura Recebida</option>
+                        <option {% if candidato.etapa == "Em Triagem" %}selected{% endif %}>Em Triagem</option>
+                        <option {% if candidato.etapa == "Entrevista" %}selected{% endif %}>Entrevista</option>
+                        <option {% if candidato.etapa == "Proposta" %}selected{% endif %}>Proposta</option>
+                        <option {% if candidato.etapa == "Contratado" %}selected{% endif %}>Contratado</option>
+                        <option {% if candidato.etapa == "Rejeitado" %}selected{% endif %}>Rejeitado</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4"><i class="fa-solid fa-graduation-cap mr-1"></i> Perfil</p>
+                <div class="mb-4"><label>Competências <span class="text-slate-400 font-normal">— separadas por vírgula</span></label><textarea name="competencias_input" class="form-input" rows="3">{{ candidato.competencias|join:", " }}</textarea></div>
+                <div class="mb-4"><label>Formação Académica <span class="text-slate-400 font-normal">— uma por linha</span></label><textarea name="formacao_input" class="form-input" rows="3">{% for f in candidato.formacao %}{{ f }}
+{% endfor %}</textarea></div>
+                <div class="mb-4"><label>Idiomas <span class="text-slate-400 font-normal">— separados por vírgula</span></label><input type="text" name="idiomas_input" class="form-input" value="{{ candidato.idiomas|join:', ' }}"></div>
+            </div>
+        </div>
+        <div class="mb-4"><label><i class="fa-solid fa-align-left mr-1" style="color:#8b5cf6;"></i> Resumo Profissional</label><textarea name="resumo" class="form-input" rows="3">{{ candidato.resumo }}</textarea></div>
+        <div class="mb-6"><label><i class="fa-solid fa-note-sticky mr-1" style="color:#8b5cf6;"></i> Notas Internas</label><textarea name="notas" class="form-input" rows="2">{{ candidato.notas }}</textarea></div>
+        <div class="flex gap-3 pt-4 border-t border-slate-100">
+            <button type="submit" class="btn-primary" style="background:#7c3aed;"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+            <a href="/candidatos/{{ candidato.pk }}/" class="btn-secondary"><i class="fa-solid fa-xmark"></i> Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

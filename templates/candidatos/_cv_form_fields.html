@@ -1,0 +1,73 @@
+<!-- Injected into #cv-form-fields after AI analysis -->
+{% if metodo %}
+<div class="alert-success flex items-center gap-2 mb-4">
+    <i class="fa-solid fa-circle-check"></i>
+    <span>Perfil extraído automaticamente · Método: <strong>{{ metodo }}</strong> · Reveja e corrija se necessário</span>
+</div>
+{% endif %}
+
+<div class="grid grid-cols-2 gap-6 mb-6">
+    <div>
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
+            <i class="fa-solid fa-user mr-1"></i> Dados Pessoais
+        </p>
+        <div class="mb-4">
+            <label>Nome Completo *</label>
+            <input type="text" name="nome" class="form-input" placeholder="Ex: João Silva" required
+                   value="{{ cv.nome|default:'' }}">
+        </div>
+        <div class="mb-4">
+            <label>Email</label>
+            <input type="email" name="email" class="form-input" placeholder="Ex: joao@email.com"
+                   value="{{ cv.email|default:'' }}">
+        </div>
+        <div class="mb-4">
+            <label>Telefone</label>
+            <input type="text" name="telefone" class="form-input" placeholder="Ex: +258 84 000 0000"
+                   value="{{ cv.telefone|default:'' }}">
+        </div>
+        <div class="mb-4">
+            <label>Anos de Experiência</label>
+            <input type="number" name="experiencia_anos" class="form-input" min="0" max="50"
+                   value="{{ cv.experiencia_anos|default:0 }}">
+        </div>
+    </div>
+
+    <div>
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
+            <i class="fa-solid fa-graduation-cap mr-1"></i> Perfil
+        </p>
+        <div class="mb-4">
+            <label>Competências <span class="text-slate-400 font-normal">— separadas por vírgula</span></label>
+            <textarea name="competencias_input" class="form-input" rows="3"
+                      placeholder="Ex: Python, SQL, Power BI">{{ cv.competencias|join:", " }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label>Formação Académica <span class="text-slate-400 font-normal">— uma por linha</span></label>
+            <textarea name="formacao_input" class="form-input" rows="3"
+                      placeholder="Ex: Licenciatura em Informática, UEM">{% for f in cv.formacao %}{{ f }}
+{% endfor %}</textarea>
+        </div>
+        <div class="mb-4">
+            <label>Idiomas <span class="text-slate-400 font-normal">— separados por vírgula</span></label>
+            <input type="text" name="idiomas_input" class="form-input" placeholder="Ex: Português, Inglês"
+                   value="{{ cv.idiomas|join:', ' }}">
+        </div>
+    </div>
+</div>
+
+<div class="mb-4">
+    <label>
+        <i class="fa-solid fa-align-left mr-1" style="color:#8b5cf6;"></i> Resumo Profissional
+    </label>
+    <textarea name="resumo" class="form-input" rows="3"
+              placeholder="Breve descrição do candidato...">{{ cv.resumo|default:'' }}</textarea>
+</div>
+
+<div class="mb-4">
+    <label>
+        <i class="fa-solid fa-note-sticky mr-1" style="color:#8b5cf6;"></i> Notas Internas
+    </label>
+    <textarea name="notas" class="form-input" rows="2"
+              placeholder="Notas do recrutador (não visíveis ao candidato)..."></textarea>
+</div>

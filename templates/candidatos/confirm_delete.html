@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Eliminar Candidato{% endblock %}
+{% block breadcrumb %}<a href="/candidatos/" class="hover:text-slate-700">Candidatos</a> <span class="mx-2">›</span> Eliminar{% endblock %}
+{% block content %}
+<div class="section-card" style="max-width:500px; margin:40px auto;">
+    <div class="text-center mb-6">
+        <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+            <i class="fa-solid fa-trash fa-xl" style="color:#dc2626;"></i>
+        </div>
+        <h2 class="text-xl font-bold text-slate-800 mb-2">Eliminar Candidato</h2>
+        <p class="text-slate-500">Tem a certeza que deseja eliminar <strong>{{ candidato.nome }}</strong>? Esta acção é irreversível.</p>
+    </div>
+    <form method="post" class="flex gap-3 justify-center">
+        {% csrf_token %}
+        <button type="submit" class="btn-danger" style="padding:10px 24px; font-size:0.9rem;">
+            <i class="fa-solid fa-trash"></i> Eliminar
+        </button>
+        <a href="/candidatos/" class="btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

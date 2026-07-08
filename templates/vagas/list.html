@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Vagas{% endblock %}
+
+{% block breadcrumb %}📋 Vagas{% endblock %}
+
+{% block content %}
+<div class="page-header flex items-center justify-between">
+    <div>
+        <h1>📋 Vagas</h1>
+        <p>Crie e gira as posições em aberto da sua organização</p>
+    </div>
+    <a href="/vagas/criar/" class="btn-primary">+ Nova Vaga</a>
+</div>
+
+{% if vagas %}
+<div class="space-y-4">
+    {% for vaga in vagas %}
+    <div class="section-card">
+        <div class="flex items-start justify-between gap-4">
+            <div class="flex-1">
+                <div class="flex items-center gap-3 mb-2">
+                    <h3 class="font-bold text-lg text-slate-800">{{ vaga.titulo }}</h3>
+                    <span class="text-xs px-2 py-1 rounded-full font-medium
+                        {% if vaga.estado == 'Aberta' %}bg-green-100 text-green-700
+                        {% elif vaga.estado == 'Fechada' %}bg-red-100 text-red-700
+                        {% else %}bg-yellow-100 text-yellow-700{% endif %}">
+                        {{ vaga.estado }}
+                    </span>
+                </div>
+
+                {% if vaga.organizacao %}
+                <p class="text-sm text-slate-500 mb-3">🏛️ {{ vaga.organizacao }} &nbsp;·&nbsp; {{ vaga.departamento }}</p>
+                {% else %}
+                <p class="text-sm text-slate-500 mb-3">{{ vaga.departamento }}</p>
+                {% endif %}
+
+                <div class="flex flex-wrap gap-4 text-sm text-slate-600 mb-3">
+                    {% if vaga.local %}<span>📍 {{ vaga.local }}</span>{% endif %}
+                    <span>🏢 {{ vaga.modalidade }}</span>
+                    <span>📄 {{ vaga.tipo_contrato }}</span>
+                    <span>⏳ {{ vaga.anos_experiencia_min }} anos exp.</span>
+                    {% if vaga.nivel_formacao %}<span>🎓 {{ vaga.nivel_formacao|title }}</span>{% endif %}
+                </div>
+
+                {% if vaga.competencias_requeridas %}
+                <div class="flex flex-wrap gap-1">
+                    {% for comp in vaga.competencias_requeridas|slice:":8" %}
+                    <span class="skill-tag">{{ comp }}</span>
+                    {% endfor %}
+                    {% if vaga.competencias_requeridas|length > 8 %}
+                    <span class="skill-tag" style="background:#f1f5f9; color:#64748b;">+{{ vaga.competencias_requeridas|length|add:"-8" }}</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="flex flex-col gap-2 flex-shrink-0">
+                <a href="/vagas/{{ vaga.id }}/" class="btn-secondary text-sm py-2 px-3">Ver</a>
+                <a href="/vagas/{{ vaga.id }}/editar/" class="btn-secondary text-sm py-2 px-3">✏️ Editar</a>
+                <form method="post" action="/vagas/{{ vaga.id }}/eliminar/">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-danger text-sm w-full"
+                            onclick="return confirm('Eliminar esta vaga e todos os seus candidatos?')">
+                        🗑️ Remover
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+            <span>ID: {{ vaga.short_id }} · Criada em {{ vaga.created_at|date:"d/m/Y H:i" }} · Origem: {{ vaga.origem|default:"—" }}</span>
+            <span>{{ vaga.candidatos.count }} candidato(s)</span>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% else %}
+<div class="alert-info text-center py-10">
+    <p class="text-lg font-semibold mb-2">Nenhuma vaga criada ainda</p>
+    <p class="text-sm mb-4">Carregue um Termo de Referência para criar a sua primeira vaga.</p>
+    <a href="/vagas/criar/" class="btn-primary">+ Criar Primeira Vaga</a>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,42 @@
+<!-- Injected into #tor-preview-zone after file upload -->
+<div class="section-card mb-6" style="border-left: 4px solid #1d4ed8;">
+    <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+            <i class="fa-solid fa-file-lines" style="color:#1d4ed8;"></i>
+            <span class="font-semibold text-slate-700 text-sm">Conteúdo extraído do ToR</span>
+            <span class="text-xs text-slate-400">(pré-visualização)</span>
+        </div>
+        <span class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full border border-blue-200 font-medium">
+            {{ texto|length }} caracteres
+        </span>
+    </div>
+
+    <div class="bg-slate-50 rounded-lg border border-slate-200 p-4 max-h-52 overflow-y-auto">
+        <pre class="text-xs text-slate-600 whitespace-pre-wrap font-mono leading-relaxed">{{ texto }}</pre>
+    </div>
+
+    <!-- Hidden field carries full text to the AI endpoint -->
+    <input type="hidden" name="texto_completo" id="texto_completo" value="{{ texto_completo|escape }}">
+
+    <!-- Step 2 action buttons -->
+    <div class="flex items-center gap-3 mt-4 pt-4 border-t border-slate-100">
+        <button type="button"
+                class="btn-primary"
+                hx-post="/vagas/analyse-tor/"
+                hx-include="#texto_completo"
+                hx-target="#form-fields"
+                hx-indicator="#ai-indicator"
+                hx-swap="innerHTML">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Analisar com IA
+        </button>
+        <button type="button"
+                class="btn-secondary"
+                onclick="document.getElementById('manual-form').classList.remove('hidden'); this.closest('.section-card').style.display='none';">
+            <i class="fa-solid fa-pen-to-square"></i> Preencher Manualmente
+        </button>
+        <div id="ai-indicator" class="htmx-indicator flex items-center gap-2 ml-2">
+            <i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>
+            <span class="text-sm text-slate-600">A analisar com IA...</span>
+        </div>
+    </div>
+</div>

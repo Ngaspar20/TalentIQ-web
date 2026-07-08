@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+{% block title %}Como Funciona{% endblock %}
+{% block breadcrumb %}Como Funciona{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1 class="flex items-center gap-3">
+        <i class="fa-solid fa-circle-question" style="color:#8b5cf6;"></i> Como Funciona o TalentIQ
+    </h1>
+    <p>Guia completo do fluxo de recrutamento e do sistema de pontuação</p>
+</div>
+
+<!-- Quick nav tabs -->
+<div class="flex gap-2 mb-6 flex-wrap">
+    <a href="#fluxo" class="btn-secondary" style="font-size:0.82rem; padding:6px 14px;"><i class="fa-solid fa-diagram-project mr-1" style="color:#8b5cf6;"></i> Fluxo Geral</a>
+    <a href="#vagas" class="btn-secondary" style="font-size:0.82rem; padding:6px 14px;"><i class="fa-solid fa-briefcase mr-1" style="color:#1d4ed8;"></i> Vagas</a>
+    <a href="#candidatos" class="btn-secondary" style="font-size:0.82rem; padding:6px 14px;"><i class="fa-solid fa-user mr-1" style="color:#8b5cf6;"></i> Candidatos</a>
+    <a href="#scoring" class="btn-secondary" style="font-size:0.82rem; padding:6px 14px;"><i class="fa-solid fa-chart-bar mr-1" style="color:#10b981;"></i> Scoring</a>
+    <a href="#pipeline" class="btn-secondary" style="font-size:0.82rem; padding:6px 14px;"><i class="fa-solid fa-filter mr-1" style="color:#f59e0b;"></i> Pipeline</a>
+    <a href="#exportar" class="btn-secondary" style="font-size:0.82rem; padding:6px 14px;"><i class="fa-solid fa-download mr-1" style="color:#16a34a;"></i> Exportar</a>
+    <a href="#ia" class="btn-secondary" style="font-size:0.82rem; padding:6px 14px;"><i class="fa-solid fa-robot mr-1" style="color:#dc2626;"></i> IA</a>
+</div>
+
+<!-- ── Fluxo Geral ──────────────────────────────────────── -->
+<div id="fluxo" class="section-card mb-4">
+    <h2 style="font-size:1.15rem; font-weight:800; color:#1e3a8a; margin-bottom:16px;">
+        <i class="fa-solid fa-diagram-project mr-2" style="color:#8b5cf6;"></i> Fluxo Geral do Processo
+    </h2>
+    <p class="text-sm text-slate-600 mb-5">O TalentIQ segue um fluxo linear de 4 etapas. Cada etapa alimenta a seguinte.</p>
+    <div class="grid grid-cols-4 gap-3">
+        {% for step in steps %}
+        <div class="text-center">
+            <div class="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center" style="background:{{ step.bg }};">
+                <i class="fa-solid {{ step.icon }}" style="color:{{ step.color }}; font-size:1.2rem;"></i>
+            </div>
+            <div class="font-bold text-slate-800 text-sm mb-1">{{ step.num }}. {{ step.title }}</div>
+            <div class="text-xs text-slate-500 leading-relaxed">{{ step.desc }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    <!-- Flow arrows -->
+    <div class="flex items-center justify-center gap-2 mt-4">
+        <span class="text-xs bg-blue-50 text-blue-700 px-3 py-1 rounded-full font-medium border border-blue-200">Criar Vaga</span>
+        <i class="fa-solid fa-arrow-right text-slate-300"></i>
+        <span class="text-xs bg-purple-50 text-purple-700 px-3 py-1 rounded-full font-medium border border-purple-200">Carregar CVs</span>
+        <i class="fa-solid fa-arrow-right text-slate-300"></i>
+        <span class="text-xs bg-green-50 text-green-700 px-3 py-1 rounded-full font-medium border border-green-200">Calcular Scores</span>
+        <i class="fa-solid fa-arrow-right text-slate-300"></i>
+        <span class="text-xs bg-amber-50 text-amber-700 px-3 py-1 rounded-full font-medium border border-amber-200">Gerir Pipeline</span>
+    </div>
+</div>
+
+<!-- ── Vagas ──────────────────────────────────────────── -->
+<div id="vagas" class="section-card mb-4">
+    <h2 style="font-size:1.15rem; font-weight:800; color:#1e3a8a; margin-bottom:12px;">
+        <i class="fa-solid fa-briefcase mr-2" style="color:#1d4ed8;"></i> Criar e Gerir Vagas
+    </h2>
+    <div class="grid grid-cols-2 gap-6">
+        <div>
+            <p class="text-sm text-slate-600 mb-3">Cada vaga define o perfil ideal contra o qual os candidatos serão avaliados. Quanto mais completa for a vaga, mais preciso será o scoring.</p>
+            <div class="space-y-2">
+                <div class="flex items-start gap-2 text-sm">
+                    <i class="fa-solid fa-file-arrow-up mt-0.5" style="color:#1d4ed8;"></i>
+                    <div><strong>Carregar ToR/JD</strong> — Faça upload do Termos de Referência em PDF, Word ou Excel. A IA extrai automaticamente o título, requisitos, competências e responsabilidades.</div>
+                </div>
+                <div class="flex items-start gap-2 text-sm">
+                    <i class="fa-solid fa-pen mt-0.5" style="color:#1d4ed8;"></i>
+                    <div><strong>Preencher manualmente</strong> — Preencha o formulário directamente sem carregar ficheiro. Pode combinar os dois métodos.</div>
+                </div>
+                <div class="flex items-start gap-2 text-sm">
+                    <i class="fa-solid fa-list-check mt-0.5" style="color:#1d4ed8;"></i>
+                    <div><strong>Campos importantes para scoring</strong> — Competências requeridas, nível de formação e anos de experiência são os campos que mais influenciam a pontuação dos candidatos.</div>
+                </div>
+            </div>
+        </div>
+        <div class="bg-slate-50 rounded-xl p-4">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Campos da Vaga</p>
+            <div class="space-y-1.5">
+                {% for field in vaga_fields %}
+                <div class="flex items-center gap-2 text-xs">
+                    <span class="w-2 h-2 rounded-full flex-shrink-0" style="background:{{ field.color }};"></span>
+                    <span class="font-semibold text-slate-700">{{ field.name }}</span>
+                    <span class="text-slate-400">— {{ field.desc }}</span>
+                    {% if field.important %}<span class="text-xs bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-medium">Scoring</span>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Candidatos ──────────────────────────────────────── -->
+<div id="candidatos" class="section-card mb-4">
+    <h2 style="font-size:1.15rem; font-weight:800; color:#1e3a8a; margin-bottom:12px;">
+        <i class="fa-solid fa-user mr-2" style="color:#8b5cf6;"></i> Carregar e Gerir Candidatos
+    </h2>
+    <div class="grid grid-cols-2 gap-6">
+        <div>
+            <p class="text-sm text-slate-600 mb-3">Os candidatos são carregados via CV (PDF, Word) ou inseridos manualmente. A IA analisa o CV e preenche automaticamente o perfil.</p>
+            <div class="space-y-2">
+                <div class="flex items-start gap-2 text-sm">
+                    <i class="fa-solid fa-robot mt-0.5" style="color:#8b5cf6;"></i>
+                    <div><strong>Análise automática de CV</strong> — Após o upload, clique em "Analisar com IA" para extrair nome, competências, formação, anos de experiência e idiomas.</div>
+                </div>
+                <div class="flex items-start gap-2 text-sm">
+                    <i class="fa-solid fa-link mt-0.5" style="color:#8b5cf6;"></i>
+                    <div><strong>Associar a uma vaga</strong> — Seleccione a vaga durante o upload. Esta associação é necessária para calcular o score de fit.</div>
+                </div>
+                <div class="flex items-start gap-2 text-sm">
+                    <i class="fa-solid fa-pen mt-0.5" style="color:#8b5cf6;"></i>
+                    <div><strong>Editar o perfil</strong> — Reveja e corrija os dados extraídos. A qualidade do scoring depende da precisão do perfil.</div>
+                </div>
+            </div>
+        </div>
+        <div class="bg-slate-50 rounded-xl p-4">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Formatos de CV Suportados</p>
+            <div class="space-y-2">
+                <div class="flex items-center gap-2 text-sm"><i class="fa-solid fa-file-pdf" style="color:#dc2626;"></i> <strong>PDF</strong> — Funciona bem com PDFs de texto. PDFs digitalizados (imagem) não são suportados.</div>
+                <div class="flex items-center gap-2 text-sm"><i class="fa-solid fa-file-word" style="color:#1d4ed8;"></i> <strong>Word (.docx)</strong> — Suporte completo incluindo tabelas e listas.</div>
+                <div class="flex items-center gap-2 text-sm"><i class="fa-solid fa-file-excel" style="color:#16a34a;"></i> <strong>Excel (.xlsx)</strong> — Para listas de candidatos ou formulários estruturados.</div>
+            </div>
+            <div class="mt-3 p-2 bg-amber-50 rounded-lg border border-amber-200">
+                <p class="text-xs text-amber-700"><i class="fa-solid fa-triangle-exclamation mr-1"></i> CVs digitalizados (scan de papel) não permitem extracção de texto — insira os dados manualmente.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Scoring ──────────────────────────────────────────── -->
+<div id="scoring" class="section-card mb-4">
+    <h2 style="font-size:1.15rem; font-weight:800; color:#1e3a8a; margin-bottom:12px;">
+        <i class="fa-solid fa-chart-bar mr-2" style="color:#10b981;"></i> Sistema de Pontuação Fit (0–100)
+    </h2>
+    <p class="text-sm text-slate-600 mb-4">O score de fit mede o alinhamento entre o perfil do candidato e os requisitos da vaga. É calculado em 3 dimensões com pesos diferentes.</p>
+
+    <!-- Score dimensions -->
+    <div class="grid grid-cols-3 gap-4 mb-5">
+        {% for dim in score_dims %}
+        <div class="rounded-xl p-4" style="background:{{ dim.bg }}; border: 1px solid {{ dim.border }};">
+            <div class="flex items-center justify-between mb-2">
+                <span class="font-bold text-sm" style="color:{{ dim.color }};">{{ dim.name }}</span>
+                <span class="text-2xl font-extrabold" style="color:{{ dim.color }};">{{ dim.pts }}</span>
+            </div>
+            <div class="text-xs leading-relaxed" style="color:{{ dim.text_color }};">{{ dim.desc }}</div>
+            <div class="mt-3 h-2 rounded-full" style="background:{{ dim.bar_bg }};">
+                <div class="h-2 rounded-full" style="width:{{ dim.pct }}%; background:{{ dim.color }};"></div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Score thresholds -->
+    <div class="grid grid-cols-3 gap-3 mb-4">
+        <div class="rounded-lg p-3 bg-green-50 border border-green-200 text-center">
+            <div class="text-xl font-extrabold text-green-700">75–100</div>
+            <div class="text-xs font-bold text-green-600 mt-1">Alinhamento Alto</div>
+            <div class="text-xs text-green-600 mt-1">Candidato altamente recomendado. Avançar para entrevista.</div>
+        </div>
+        <div class="rounded-lg p-3 bg-yellow-50 border border-yellow-200 text-center">
+            <div class="text-xl font-extrabold text-yellow-700">50–74</div>
+            <div class="text-xs font-bold text-yellow-600 mt-1">Alinhamento Médio</div>
+            <div class="text-xs text-yellow-600 mt-1">Candidato com potencial. Verificar pontos em falta na entrevista.</div>
+        </div>
+        <div class="rounded-lg p-3 bg-red-50 border border-red-200 text-center">
+            <div class="text-xl font-extrabold text-red-700">0–49</div>
+            <div class="text-xs font-bold text-red-600 mt-1">Alinhamento Baixo</div>
+            <div class="text-xs text-red-600 mt-1">Candidato com fraco alinhamento. Considerar apenas se necessário.</div>
+        </div>
+    </div>
+
+    <div class="bg-blue-50 rounded-xl p-4 border border-blue-100">
+        <p class="text-xs font-bold text-blue-700 mb-2"><i class="fa-solid fa-lightbulb mr-1"></i> Como obter melhores scores</p>
+        <div class="grid grid-cols-2 gap-2 text-xs text-blue-700">
+            <div><i class="fa-solid fa-check mr-1"></i> Preencha as competências requeridas na vaga (são o campo mais pesado — 50pts)</div>
+            <div><i class="fa-solid fa-check mr-1"></i> Extraia o CV com IA para capturar todas as competências do candidato</div>
+            <div><i class="fa-solid fa-check mr-1"></i> Defina o nível de formação e anos de experiência mínimos na vaga</div>
+            <div><i class="fa-solid fa-check mr-1"></i> Reveja o perfil do candidato após a extracção automática</div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Pipeline ──────────────────────────────────────────── -->
+<div id="pipeline" class="section-card mb-4">
+    <h2 style="font-size:1.15rem; font-weight:800; color:#1e3a8a; margin-bottom:12px;">
+        <i class="fa-solid fa-filter mr-2" style="color:#f59e0b;"></i> Pipeline de Selecção
+    </h2>
+    <p class="text-sm text-slate-600 mb-4">O pipeline mostra todos os candidatos organizados por etapa do processo de selecção. Mova candidatos entre etapas com as setas.</p>
+    <div class="grid grid-cols-6 gap-2 mb-4">
+        {% for stage in pipeline_stages %}
+        <div class="rounded-lg p-3 text-center" style="background:{{ stage.bg }}; border:1px solid {{ stage.border }};">
+            <i class="fa-solid {{ stage.icon }}" style="color:{{ stage.color }}; font-size:1rem;"></i>
+            <div class="text-xs font-bold mt-2" style="color:{{ stage.color }};">{{ stage.name }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 text-sm text-slate-600">
+        <i class="fa-solid fa-arrows-left-right mr-2 text-slate-400"></i>
+        Use as setas <strong>&larr;</strong> e <strong>&rarr;</strong> em cada cartão para mover o candidato uma etapa de cada vez. O pipeline pode ser filtrado por vaga.
+    </div>
+</div>
+
+<!-- ── Exportar ──────────────────────────────────────────── -->
+<div id="exportar" class="section-card mb-4">
+    <h2 style="font-size:1.15rem; font-weight:800; color:#1e3a8a; margin-bottom:12px;">
+        <i class="fa-solid fa-download mr-2" style="color:#16a34a;"></i> Exportar Relatórios
+    </h2>
+    <p class="text-sm text-slate-600 mb-4">Os relatórios estão disponíveis na página <strong>Pontuação Fit</strong>, depois de seleccionar uma vaga. Os botões aparecem no topo, ao lado de "Calcular Todos os Scores".</p>
+    <div class="grid grid-cols-2 gap-4">
+        <div class="rounded-xl p-4 border border-green-200 bg-green-50">
+            <div class="flex items-center gap-2 mb-3">
+                <i class="fa-solid fa-file-excel fa-lg" style="color:#16a34a;"></i>
+                <span class="font-bold text-green-800">Exportar para Excel</span>
+            </div>
+            <ul class="text-sm text-green-700 space-y-1">
+                <li><i class="fa-solid fa-check mr-1 text-xs"></i> Ranking completo de candidatos</li>
+                <li><i class="fa-solid fa-check mr-1 text-xs"></i> Score total e por dimensão (competências, experiência, formação)</li>
+                <li><i class="fa-solid fa-check mr-1 text-xs"></i> Etapa actual no pipeline</li>
+                <li><i class="fa-solid fa-check mr-1 text-xs"></i> Alinhamento (Alto / Médio / Baixo)</li>
+                <li><i class="fa-solid fa-check mr-1 text-xs"></i> Cabeçalhos coloridos e scores com código de cor</li>
+            </ul>
+        </div>
+        <div class="rounded-xl p-4 border border-blue-200 bg-blue-50">
+            <div class="flex items-center gap-2 mb-3">
+                <i class="fa-solid fa-file-word fa-lg" style="color:#1d4ed8;"></i>
+                <span class="font-bold text-blue-800">Relatório Word (Descritivo)</span>
+            </div>
+            <ul class="text-sm text-blue-700 space-y-1">
+                <li><i class="fa-solid fa-check mr-1 text-xs"></i> Sumário executivo com recomendação principal</li>
+                <li><i class="fa-solid fa-check mr-1 text-xs"></i> Perfil completo da vaga</li>
+                <li><i class="fa-solid fa-check mr-1 text-xs"></i> Ranking geral em tabela</li>
+                <li><i class="fa-solid fa-check mr-1 text-xs"></i> Análise individual por candidato com justificação da IA</li>
+                <li><i class="fa-solid fa-check mr-1 text-xs"></i> Recomendação escrita por candidato (Alto / Médio / Baixo)</li>
+                <li><i class="fa-solid fa-check mr-1 text-xs"></i> Conclusão com próximos passos sugeridos</li>
+            </ul>
+        </div>
+    </div>
+    <div class="mt-3 p-3 bg-amber-50 rounded-lg border border-amber-200 text-sm text-amber-700">
+        <i class="fa-solid fa-triangle-exclamation mr-1"></i>
+        Os relatórios baseiam-se nos scores calculados. Calcule os scores antes de exportar para obter resultados completos.
+    </div>
+</div>
+
+<!-- ── IA ──────────────────────────────────────────────── -->
+<div id="ia" class="section-card mb-4">
+    <h2 style="font-size:1.15rem; font-weight:800; color:#1e3a8a; margin-bottom:12px;">
+        <i class="fa-solid fa-robot mr-2" style="color:#dc2626;"></i> Inteligência Artificial (Grok / xAI)
+    </h2>
+    <div class="grid grid-cols-2 gap-6">
+        <div>
+            <p class="text-sm text-slate-600 mb-3">O TalentIQ usa o modelo <strong>Grok-3</strong> da xAI em dois momentos do processo:</p>
+            <div class="space-y-3">
+                <div class="flex items-start gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <i class="fa-solid fa-file-lines mt-0.5" style="color:#1d4ed8;"></i>
+                    <div class="text-sm">
+                        <strong class="text-slate-800">Análise de Documentos</strong>
+                        <p class="text-slate-500 text-xs mt-1">Lê o ToR/JD ou o CV e extrai automaticamente campos estruturados: título, competências, formação, experiência, responsabilidades. Reduz o tempo de entrada de dados de minutos para segundos.</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <i class="fa-solid fa-scale-balanced mt-0.5" style="color:#10b981;"></i>
+                    <div class="text-sm">
+                        <strong class="text-slate-800">Scoring de Fit</strong>
+                        <p class="text-slate-500 text-xs mt-1">Compara o perfil do candidato com os requisitos da vaga e atribui pontuação em 3 dimensões. Gera notas explicativas sobre pontos fortes e lacunas do candidato.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div>
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Perguntas Frequentes</p>
+            <div class="space-y-3">
+                <div>
+                    <p class="text-sm font-semibold text-slate-700">A IA pode errar?</p>
+                    <p class="text-xs text-slate-500 mt-0.5">Sim. Reveja sempre os dados extraídos antes de calcular scores. A IA é uma ferramenta de apoio, não substitui a avaliação humana.</p>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-slate-700">O scoring é automático?</p>
+                    <p class="text-xs text-slate-500 mt-0.5">Não. É necessário clicar em "Calcular Todos os Scores" ou recalcular individualmente após alterar o perfil de um candidato.</p>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-slate-700">E se a IA não estiver disponível?</p>
+                    <p class="text-xs text-slate-500 mt-0.5">O sistema cai para modo determinístico (baseado em palavras-chave) sem perder funcionalidade. Os scores serão menos precisos mas ainda úteis.</p>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-slate-700">Os dados são partilhados com terceiros?</p>
+                    <p class="text-xs text-slate-500 mt-0.5">O texto dos documentos é enviado para a API da xAI para análise. Não é armazenado nos servidores da xAI além do necessário para a resposta.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

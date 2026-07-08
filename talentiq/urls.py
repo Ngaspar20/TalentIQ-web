@@ -1,0 +1,15 @@
+from django.contrib import admin
+from django.urls import path, include
+from .dashboard import dashboard
+from ajuda.views import ajuda_view
+
+urlpatterns = [
+    path("admin/", admin.site.urls),
+    path("accounts/", include("accounts.urls")),
+    path("vagas/", include("vagas.urls")),
+    path("candidatos/", include("candidatos.urls")),
+    path("scoring/", include("scoring.urls")),
+    path("pipeline/", include("pipeline.urls")),
+    path("ajuda/", ajuda_view, name="ajuda"),
+    path("", dashboard, name="dashboard"),
+]

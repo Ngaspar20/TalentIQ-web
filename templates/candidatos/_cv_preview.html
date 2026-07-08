@@ -1,0 +1,41 @@
+<!-- Injected into #cv-preview-zone after file upload -->
+<div class="section-card mb-4" style="border-left: 4px solid #8b5cf6;">
+    <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+            <i class="fa-solid fa-file-lines" style="color:#8b5cf6;"></i>
+            <span class="font-semibold text-slate-700 text-sm">Conteúdo extraído do CV</span>
+            <span class="text-xs text-slate-400">(pré-visualização)</span>
+        </div>
+        <span class="text-xs bg-purple-50 text-purple-600 px-2 py-1 rounded-full border border-purple-200 font-medium">
+            {{ texto|length }} caracteres
+        </span>
+    </div>
+
+    <div class="bg-slate-50 rounded-lg border border-slate-200 p-4 max-h-52 overflow-y-auto">
+        <pre class="text-xs text-slate-600 whitespace-pre-wrap font-mono leading-relaxed">{{ texto }}</pre>
+    </div>
+
+    <input type="hidden" name="texto_completo" id="texto_completo" value="{{ texto_completo|escape }}">
+
+    <div class="flex items-center gap-3 mt-4 pt-4 border-t border-slate-100">
+        <button type="button"
+                class="btn-primary"
+                style="background:#7c3aed;"
+                hx-post="/candidatos/analyse-cv/"
+                hx-include="#texto_completo"
+                hx-target="#cv-form-fields"
+                hx-indicator="#ai-indicator"
+                hx-swap="innerHTML">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Analisar com IA
+        </button>
+        <button type="button"
+                class="btn-secondary"
+                onclick="showManualForm(); this.closest('.section-card').style.display='none';">
+            <i class="fa-solid fa-pen-to-square"></i> Preencher Manualmente
+        </button>
+        <div id="ai-indicator" class="htmx-indicator flex items-center gap-2 ml-2">
+            <i class="fa-solid fa-circle-notch fa-spin" style="color:#8b5cf6;"></i>
+            <span class="text-sm text-slate-600">A analisar CV com IA...</span>
+        </div>
+    </div>
+</div>

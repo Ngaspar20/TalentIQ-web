@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}{{ candidato.nome }}{% endblock %}
+
+{% block breadcrumb %}
+<a href="/candidatos/" class="hover:text-slate-700">Candidatos</a> <span class="mx-2">›</span> {{ candidato.nome }}
+{% endblock %}
+
+{% block content %}
+<div class="page-header flex items-center justify-between">
+    <div>
+        <h1 class="flex items-center gap-3">
+            <i class="fa-solid fa-user" style="color:#8b5cf6;"></i> {{ candidato.nome }}
+        </h1>
+        <p>{% if candidato.vaga %}{{ candidato.vaga.titulo }}{% else %}Sem vaga associada{% endif %}</p>
+    </div>
+    <div class="flex gap-2">
+        <a href="/candidatos/{{ candidato.pk }}/editar/" class="btn-secondary">
+            <i class="fa-solid fa-pen"></i> Editar
+        </a>
+        <a href="/candidatos/" class="btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+</div>
+
+<div class="grid grid-cols-3 gap-4 mb-4">
+    <!-- Score card -->
+    <div class="section-card text-center" style="border-top:4px solid {% if candidato.score_fit >= 75 %}#10b981{% elif candidato.score_fit %}#f59e0b{% else %}#e2e8f0{% endif %}; margin-bottom:0;">
+        {% if candidato.score_fit is not None %}
+        <div style="font-size:2.5rem; font-weight:800; color:{% if candidato.score_fit >= 75 %}#15803d{% elif candidato.score_fit >= 50 %}#92400e{% else %}#dc2626{% endif %};">
+            {{ candidato.score_fit }}
+        </div>
+        <div class="text-xs text-slate-400 mb-2">Score Fit / 100</div>
+        {% with det=candidato.perfil_completo %}
+        {% if det.nivel_alinhamento %}
+        <span class="score-badge {% if det.cor == 'green' %}alto{% elif det.cor == 'orange' %}medio{% else %}baixo{% endif %}">
+            {{ det.nivel_alinhamento }}
+        </span>
+        {% endif %}
+        {% endwith %}
+        {% else %}
+        <div style="font-size:2rem; color:#cbd5e1; font-weight:700;">—</div>
+        <div class="text-xs text-slate-400">Sem score</div>
+        {% if candidato.vaga %}
+        <a href="/scoring/?vaga={{ candidato.vaga.pk }}" class="btn-secondary mt-3 text-xs">Calcular Score</a>
+        {% endif %}
+        {% endif %}
+    </div>
+
+    <!-- Contact -->
+    <div class="section-card" style="margin-bottom:0;">
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Contacto</p>
+        {% if candidato.email %}
+        <div class="flex items-center gap-2 mb-2 text-sm">
+            <i class="fa-solid fa-envelope" style="color:#8b5cf6; width:16px;"></i>
+            <span>{{ candidato.email }}</span>
+        </div>
+        {% endif %}
+        {% if candidato.telefone %}
+        <div class="flex items-center gap-2 mb-2 text-sm">
+            <i class="fa-solid fa-phone" style="color:#8b5cf6; width:16px;"></i>
+            <span>{{ candidato.telefone }}</span>
+        </div>
+        {% endif %}
+        <div class="flex items-center gap-2 mb-2 text-sm">
+            <i class="fa-solid fa-briefcase" style="color:#8b5cf6; width:16px;"></i>
+            <span>{{ candidato.experiencia_anos }} anos de experiência</span>
+        </div>
+    </div>
+
+    <!-- Pipeline stage -->
+    <div class="section-card" style="margin-bottom:0;">
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Etapa do Pipeline</p>
+        <span style="font-size:1rem; font-weight:700; color:#1e3a8a;">{{ candidato.etapa }}</span>
+        <a href="/pipeline/" class="block mt-3 text-xs text-blue-600 hover:underline">
+            <i class="fa-solid fa-filter mr-1"></i>Ver no Pipeline
+        </a>
+    </div>
+</div>
+
+<div class="grid grid-cols-2 gap-4">
+    <!-- Left column -->
+    <div>
+        {% if candidato.resumo %}
+        <div class="section-card">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
+                <i class="fa-solid fa-align-left mr-1"></i> Resumo Profissional
+            </p>
+            <p class="text-sm text-slate-700 leading-relaxed">{{ candidato.resumo }}</p>
+        </div>
+        {% endif %}
+
+        {% if candidato.competencias %}
+        <div class="section-card">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
+                <i class="fa-solid fa-brain mr-1"></i> Competências
+            </p>
+            <div class="flex flex-wrap gap-1">
+                {% for comp in candidato.competencias %}
+                <span class="skill-tag">{{ comp }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if candidato.idiomas %}
+        <div class="section-card">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
+                <i class="fa-solid fa-language mr-1"></i> Idiomas
+            </p>
+            <div class="flex flex-wrap gap-1">
+                {% for idioma in candidato.idiomas %}
+                <span class="skill-tag" style="background:#f0fdf4; color:#15803d;">{{ idioma }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Right column -->
+    <div>
+        {% if candidato.formacao %}
+        <div class="section-card">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
+                <i class="fa-solid fa-graduation-cap mr-1"></i> Formação Académica
+            </p>
+            <ul class="space-y-1">
+                {% for f in candidato.formacao %}
+                <li class="text-sm text-slate-700 flex items-start gap-2">
+                    <i class="fa-solid fa-circle-dot mt-1" style="color:#8b5cf6; font-size:0.6rem;"></i>
+                    {{ f }}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% with det=candidato.perfil_completo %}
+        {% if det.explicacao %}
+        <div class="section-card">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
+                <i class="fa-solid fa-chart-bar mr-1"></i> Análise de Fit
+            </p>
+            {% if det.pontuacao_detalhada %}
+            <div class="grid grid-cols-3 gap-2 mb-3">
+                <div class="text-center p-2 bg-blue-50 rounded-lg">
+                    <div class="font-bold text-blue-700">{{ det.pontuacao_detalhada.competencias }}/50</div>
+                    <div class="text-xs text-slate-500">Competências</div>
+                </div>
+                <div class="text-center p-2 bg-purple-50 rounded-lg">
+                    <div class="font-bold text-purple-700">{{ det.pontuacao_detalhada.experiencia }}/30</div>
+                    <div class="text-xs text-slate-500">Experiência</div>
+                </div>
+                <div class="text-center p-2 bg-cyan-50 rounded-lg">
+                    <div class="font-bold text-cyan-700">{{ det.pontuacao_detalhada.formacao }}/20</div>
+                    <div class="text-xs text-slate-500">Formação</div>
+                </div>
+            </div>
+            {% endif %}
+            <ul class="space-y-1">
+                {% for linha in det.explicacao %}
+                <li class="text-xs text-slate-600 bg-slate-50 rounded px-2 py-1">{{ linha }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        {% if candidato.notas %}
+        <div class="section-card">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
+                <i class="fa-solid fa-note-sticky mr-1"></i> Notas Internas
+            </p>
+            <p class="text-sm text-slate-700">{{ candidato.notas }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

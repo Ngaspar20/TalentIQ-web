@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Criar Vaga{% endblock %}
+
+{% block breadcrumb %}
+<a href="/vagas/" class="hover:text-slate-700">Vagas</a> <span class="mx-2">›</span> Nova Vaga
+{% endblock %}
+
+{% block content %}
+<div class="page-header flex items-center justify-between">
+    <div>
+        <h1 class="flex items-center gap-3">
+            <i class="fa-solid fa-briefcase" style="color:#1d4ed8;"></i> Criar Nova Vaga
+        </h1>
+        <p>Carregue o Termo de Referência — a IA extrai automaticamente todos os elementos da posição</p>
+    </div>
+    <div class="flex items-center gap-2">
+        <a href="https://forms.gle/W2EDoCJ3wW7GwUsw7" target="_blank" class="btn-secondary text-xs">
+            <i class="fa-solid fa-comment-dots"></i> Feedback
+        </a>
+        <a href="/vagas/" class="btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+</div>
+
+<!-- Step 1: Upload ToR -->
+<div class="flex items-center gap-3 mb-3">
+    <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm flex-shrink-0">1</div>
+    <span class="font-semibold text-slate-700">Carregar Termo de Referência</span>
+    <span class="text-xs text-slate-400">— PDF ou DOCX · máx. 10MB</span>
+</div>
+
+<div class="section-card mb-4">
+    <form id="upload-form">
+        {% csrf_token %}
+        <div id="upload-area"
+             class="border-2 border-dashed border-blue-300 rounded-xl p-10 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all"
+             onclick="document.getElementById('tor-file').click()">
+            <i class="fa-solid fa-cloud-arrow-up fa-3x mb-4" style="color:#93c5fd;"></i>
+            <p class="font-semibold text-slate-700 mb-1">Arraste o ToR aqui ou clique para seleccionar</p>
+            <p class="text-sm text-slate-400">Suporta PDF e DOCX · Máximo 10MB</p>
+            <input type="file" id="tor-file" name="tor_file" accept=".pdf,.docx" class="hidden"
+                   hx-post="/vagas/parse-tor/"
+                   hx-encoding="multipart/form-data"
+                   hx-include="#upload-form"
+                   hx-target="#tor-preview-zone"
+                   hx-indicator="#parsing-indicator"
+                   hx-trigger="change"
+                   hx-swap="innerHTML">
+        </div>
+
+        <!-- Parsing indicator -->
+        <div id="parsing-indicator" class="htmx-indicator flex items-center justify-center gap-3 mt-4 py-3">
+            <i class="fa-solid fa-circle-notch fa-spin" style="color:#1d4ed8;"></i>
+            <span class="text-slate-600 font-medium">A extrair texto do ficheiro...</span>
+        </div>
+
+        <div id="tor-success" class="hidden mt-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
+            <i class="fa-solid fa-circle-check" style="color:#10b981;"></i>
+            <span class="text-green-700 text-sm font-medium" id="tor-filename"></span>
+        </div>
+    </form>
+</div>
+
+<!-- Step 2: Text preview + AI/Manual choice (injected by HTMX) -->
+<div id="tor-preview-zone"></div>
+
+<!-- Step 3: Manual form (hidden until "Preencher Manualmente" is clicked) -->
+<div id="manual-form" class="hidden">
+    <div class="flex items-center gap-3 mb-3">
+        <div class="w-8 h-8 rounded-full bg-slate-400 text-white flex items-center justify-center font-bold text-sm flex-shrink-0">2</div>
+        <span class="font-semibold text-slate-700">Preencher Manualmente</span>
+    </div>
+</div>
+
+<!-- Main form (always present; form fields are injected inside #form-fields) -->
+<div class="section-card">
+    <form method="post" action="/vagas/criar/" id="vaga-form">
+        {% csrf_token %}
+
+        <div id="form-fields">
+            <!-- Empty state: shown before upload or before AI fills it -->
+            <div id="form-empty-state" class="py-10 text-center text-slate-400">
+                <i class="fa-solid fa-arrow-up fa-2x mb-3" style="color:#cbd5e1;"></i>
+                <p class="font-medium">Carregue o ToR acima para preencher automaticamente</p>
+                <p class="text-sm mt-1">ou clique em <strong>Preencher Manualmente</strong> após carregar o ficheiro</p>
+                <button type="button" class="btn-secondary mt-4 text-sm"
+                        onclick="document.getElementById('form-empty-state').classList.add('hidden'); document.getElementById('form-fields').insertAdjacentHTML('beforeend', manualFormHTML());">
+                    <i class="fa-solid fa-pen-to-square"></i> Começar sem ToR
+                </button>
+            </div>
+        </div>
+
+        <!-- Actions (hidden until form is filled) -->
+        <div id="form-actions" class="hidden flex items-center gap-3 pt-4 border-t border-slate-100">
+            <button type="submit" class="btn-primary">
+                <i class="fa-solid fa-floppy-disk"></i> Guardar Vaga
+            </button>
+            <a href="/vagas/" class="btn-secondary">
+                <i class="fa-solid fa-xmark"></i> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Show filename banner after file selected
+    document.getElementById('tor-file').addEventListener('change', function() {
+        if (this.files.length > 0) {
+            document.getElementById('tor-filename').textContent = 'Ficheiro: ' + this.files[0].name;
+            document.getElementById('tor-success').classList.remove('hidden');
+            document.getElementById('upload-area').style.borderColor = '#10b981';
+            document.getElementById('upload-area').style.backgroundColor = '#f0fdf4';
+        }
+    });
+
+    // Show save button after HTMX swaps in form fields
+    document.body.addEventListener('htmx:afterSwap', function(e) {
+        if (e.detail.target.id === 'form-fields') {
+            document.getElementById('form-empty-state') && document.getElementById('form-empty-state').remove();
+            document.getElementById('form-actions').classList.remove('hidden');
+            document.getElementById('form-actions').classList.add('flex');
+        }
+    });
+
+    // Manual blank form HTML (no tor data)
+    function manualFormHTML() {
+        return `
+        <div class="grid grid-cols-2 gap-6 mb-6">
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4"><i class="fa-solid fa-circle-info mr-1"></i> Informação Básica</p>
+                <div class="mb-4"><label>Título da Vaga *</label><input type="text" name="titulo" class="form-input" placeholder="Ex: Analista de Dados Sénior" required></div>
+                <div class="mb-4"><label>Organização</label><input type="text" name="organizacao" class="form-input" placeholder="Ex: Ministério da Saúde"></div>
+                <div class="mb-4"><label>Departamento</label><select name="departamento" class="form-input"><option>Recursos Humanos</option><option>Tecnologia de Informação</option><option>Finanças</option><option>Operações</option><option>Saúde Pública</option><option>Marketing</option><option>Vendas</option><option selected>Outro</option></select></div>
+                <div class="mb-4"><label>Localização</label><input type="text" name="local" class="form-input" placeholder="Ex: Maputo, Moçambique"></div>
+                <div class="mb-4"><label>Modalidade</label><select name="modalidade" class="form-input"><option>Presencial</option><option>Remoto</option><option>Híbrido</option></select></div>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4"><i class="fa-solid fa-graduation-cap mr-1"></i> Requisitos</p>
+                <div class="mb-4"><label>Nível de Formação Mínimo</label><select name="nivel_formacao" class="form-input"><option value="">— Seleccionar —</option><option>Curso Técnico</option><option>Licenciatura</option><option>Mestrado</option><option>Doutoramento</option></select></div>
+                <div class="mb-4"><label>Anos de Experiência Mínimos</label><input type="number" name="anos_experiencia_min" class="form-input" value="0" min="0" max="30"></div>
+                <div class="mb-4"><label>Tipo de Contrato</label><select name="tipo_contrato" class="form-input"><option>Tempo Inteiro</option><option>Tempo Parcial</option><option>Consultoria</option><option>Estágio</option></select></div>
+                <div class="mb-4"><label>Faixa Salarial (opcional)</label><input type="text" name="salario" class="form-input" placeholder="Ex: 50.000 - 80.000 MZN"></div>
+                <div class="mb-4"><label>Prazo de Candidatura</label><input type="text" name="prazo_candidatura" class="form-input" placeholder="Ex: 31 de Julho de 2026"></div>
+            </div>
+        </div>
+        <div class="mb-4"><label><i class="fa-solid fa-brain mr-1" style="color:#1d4ed8;"></i> Competências Requeridas * <span class="text-slate-400 font-normal ml-1">— separadas por vírgula</span></label><textarea name="competencias_input" class="form-input" rows="3" placeholder="Ex: Python, SQL, Power BI, Gestão de Projectos, Excel"></textarea></div>
+        <div class="mb-4"><label><i class="fa-solid fa-list-check mr-1" style="color:#1d4ed8;"></i> Responsabilidades</label><textarea name="responsabilidades_input" class="form-input" rows="4" placeholder="Uma responsabilidade por linha..."></textarea></div>
+        <div class="mb-6"><label><i class="fa-solid fa-align-left mr-1" style="color:#1d4ed8;"></i> Descrição da Vaga</label><textarea name="descricao" class="form-input" rows="4" placeholder="Contexto e objectivo da posição..."></textarea></div>
+        `;
+    }
+
+    // "Preencher Manualmente" button (in preview card) also shows form actions
+    document.body.addEventListener('click', function(e) {
+        if (e.target.closest('[onclick*="manual-form"]') || e.target.closest('button[onclick*="Preencher"]')) {
+            setTimeout(function() {
+                document.getElementById('form-empty-state') && document.getElementById('form-empty-state').classList.add('hidden');
+                document.getElementById('form-actions').classList.remove('hidden');
+                document.getElementById('form-actions').classList.add('flex');
+                // Inject blank form into form-fields if still empty
+                const ff = document.getElementById('form-fields');
+                if (!ff.querySelector('input[name="titulo"]')) {
+                    ff.insertAdjacentHTML('beforeend', manualFormHTML());
+                }
+            }, 50);
+        }
+    });
+</script>
+{% endblock %}

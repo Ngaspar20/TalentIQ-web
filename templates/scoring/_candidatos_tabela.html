@@ -1,0 +1,108 @@
+{% if candidatos %}
+<div class="section-card" style="padding:0; overflow:hidden;">
+    <table style="width:100%; border-collapse:collapse;">
+        <thead>
+            <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0;">
+                <th style="padding:12px 16px; text-align:left; font-size:0.78rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.05em;">#</th>
+                <th style="padding:12px 16px; text-align:left; font-size:0.78rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.05em;">Candidato</th>
+                <th style="padding:12px 16px; text-align:center; font-size:0.78rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.05em;">Score</th>
+                <th style="padding:12px 16px; text-align:center; font-size:0.78rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.05em;">Competências</th>
+                <th style="padding:12px 16px; text-align:center; font-size:0.78rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.05em;">Experiência</th>
+                <th style="padding:12px 16px; text-align:center; font-size:0.78rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.05em;">Formação</th>
+                <th style="padding:12px 16px; text-align:left; font-size:0.78rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.05em;">Alinhamento</th>
+                <th style="padding:12px 16px; text-align:center; font-size:0.78rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.05em;">Acções</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for c in candidatos %}
+        {% with det=c.perfil_completo %}
+        <tr style="border-bottom:1px solid #f1f5f9; {% if forloop.counter == 1 %}background:#f0fdf4;{% endif %}">
+            <td style="padding:12px 16px; font-weight:700; color:{% if forloop.counter == 1 %}#15803d{% elif forloop.counter == 2 %}#92400e{% elif forloop.counter == 3 %}#9a3412{% else %}#94a3b8{% endif %}; font-size:0.9rem;">
+                {% if forloop.counter == 1 %}<i class="fa-solid fa-trophy" style="color:#f59e0b;"></i>
+                {% elif forloop.counter == 2 %}<i class="fa-solid fa-medal" style="color:#94a3b8;"></i>
+                {% elif forloop.counter == 3 %}<i class="fa-solid fa-medal" style="color:#cd7c2f;"></i>
+                {% else %}{{ forloop.counter }}{% endif %}
+            </td>
+            <td style="padding:12px 16px;">
+                <div class="font-semibold text-slate-800" style="font-size:0.9rem;">{{ c.nome }}</div>
+                {% if c.email %}<div class="text-xs text-slate-400">{{ c.email }}</div>{% endif %}
+                {% if c.experiencia_anos %}<div class="text-xs text-slate-500 mt-1"><i class="fa-solid fa-briefcase mr-1"></i>{{ c.experiencia_anos }} anos exp.</div>{% endif %}
+            </td>
+            <td style="padding:12px 16px; text-align:center;">
+                {% if c.score_fit is not None %}
+                <div style="font-size:1.4rem; font-weight:800; color:{% if c.score_fit >= 75 %}#15803d{% elif c.score_fit >= 50 %}#92400e{% else %}#dc2626{% endif %};">
+                    {{ c.score_fit }}
+                </div>
+                <div style="font-size:0.7rem; color:#94a3b8;">/ 100</div>
+                <div style="margin-top:4px; height:4px; background:#e2e8f0; border-radius:2px; width:60px; margin-left:auto; margin-right:auto;">
+                    <div style="height:4px; border-radius:2px; width:{{ c.score_fit }}%; background:{% if c.score_fit >= 75 %}#10b981{% elif c.score_fit >= 50 %}#f59e0b{% else %}#ef4444{% endif %};"></div>
+                </div>
+                {% else %}
+                <span class="text-slate-300 text-sm">—</span>
+                {% endif %}
+            </td>
+            <td style="padding:12px 16px; text-align:center; font-size:0.85rem; font-weight:600; color:#1d4ed8;">
+                {% if det.pontuacao_detalhada %}{{ det.pontuacao_detalhada.competencias }}/50{% else %}—{% endif %}
+            </td>
+            <td style="padding:12px 16px; text-align:center; font-size:0.85rem; font-weight:600; color:#7c3aed;">
+                {% if det.pontuacao_detalhada %}{{ det.pontuacao_detalhada.experiencia }}/30{% else %}—{% endif %}
+            </td>
+            <td style="padding:12px 16px; text-align:center; font-size:0.85rem; font-weight:600; color:#0891b2;">
+                {% if det.pontuacao_detalhada %}{{ det.pontuacao_detalhada.formacao }}/20{% else %}—{% endif %}
+            </td>
+            <td style="padding:12px 16px;">
+                {% if det.nivel_alinhamento %}
+                <span class="score-badge {% if det.cor == 'green' %}alto{% elif det.cor == 'orange' %}medio{% else %}baixo{% endif %}">
+                    {{ det.nivel_alinhamento }}
+                </span>
+                {% elif c.score_fit is None %}
+                <span class="score-badge none">Sem score</span>
+                {% endif %}
+            </td>
+            <td style="padding:12px 16px; text-align:center;">
+                <div class="flex items-center justify-center gap-2">
+                    {% if c.vaga %}
+                    <form method="post" action="/scoring/calcular/"
+                          hx-post="/scoring/calcular/"
+                          hx-target="#candidatos-zone"
+                          hx-swap="innerHTML"
+                          style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="vaga_id" value="{{ c.vaga.pk }}">
+                        <input type="hidden" name="candidato_id" value="{{ c.pk }}">
+                        <button type="submit" class="btn-secondary" style="padding:6px 10px; font-size:0.78rem;" title="Recalcular score">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                        </button>
+                    </form>
+                    {% endif %}
+                    <a href="/candidatos/{{ c.pk }}/" class="btn-secondary" style="padding:6px 10px; font-size:0.78rem;" title="Ver perfil">
+                        <i class="fa-solid fa-eye"></i>
+                    </a>
+                </div>
+            </td>
+        </tr>
+        {% if det.explicacao %}
+        <tr style="background:#fafafa; border-bottom:1px solid #f1f5f9;">
+            <td colspan="8" style="padding:8px 16px 12px 48px;">
+                <div class="flex flex-wrap gap-2">
+                {% for linha in det.explicacao %}
+                    <span style="font-size:0.75rem; color:#64748b; background:#f1f5f9; padding:2px 8px; border-radius:4px;">{{ linha }}</span>
+                {% endfor %}
+                </div>
+            </td>
+        </tr>
+        {% endif %}
+        {% endwith %}
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="section-card py-12 text-center text-slate-400">
+    <i class="fa-solid fa-users fa-2x mb-3" style="color:#d1fae5;"></i>
+    <p class="font-medium text-slate-500">Nenhum candidato associado a esta vaga</p>
+    <a href="/candidatos/carregar/" class="btn-secondary mt-4 text-sm">
+        <i class="fa-solid fa-file-arrow-up"></i> Carregar CV
+    </a>
+</div>
+{% endif %}

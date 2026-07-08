@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Pontuação Fit{% endblock %}
+{% block breadcrumb %}Pontuação Fit{% endblock %}
+{% block content %}
+<div class="page-header flex items-center justify-between">
+    <div>
+        <h1 class="flex items-center gap-3">
+            <i class="fa-solid fa-chart-bar" style="color:#10b981;"></i> Pontuação Fit
+        </h1>
+        <p>Ranking automático de candidatos por alinhamento com a vaga (0–100)</p>
+    </div>
+</div>
+
+<!-- Vacancy selector (standalone GET form) -->
+<div class="section-card mb-4">
+    <form method="get" action="/scoring/" id="vaga-form">
+        <label>Seleccionar Vaga</label>
+        <div class="flex items-center gap-3 mt-1">
+            <select name="vaga" class="form-input flex-1" onchange="document.getElementById('vaga-form').submit()">
+                <option value="">— Escolha uma vaga —</option>
+                {% for v in vagas %}
+                <option value="{{ v.pk }}" {% if vaga_sel and vaga_sel.pk == v.pk %}selected{% endif %}>
+                    {{ v.titulo }}{% if v.organizacao %} · {{ v.organizacao }}{% endif %} · {{ v.estado }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+</div>
+
+{% if vaga_sel %}
+
+<!-- Vaga summary + action bar -->
+<div class="section-card mb-4" style="border-left: 4px solid #10b981;">
+    <div class="flex items-start justify-between gap-4">
+        <div class="flex-1">
+            <h3 class="font-bold text-slate-800 mb-1">{{ vaga_sel.titulo }}</h3>
+            <div class="flex flex-wrap gap-3 text-sm text-slate-500">
+                {% if vaga_sel.organizacao %}<span><i class="fa-solid fa-building mr-1"></i>{{ vaga_sel.organizacao }}</span>{% endif %}
+                {% if vaga_sel.local %}<span><i class="fa-solid fa-location-dot mr-1"></i>{{ vaga_sel.local }}</span>{% endif %}
+                <span><i class="fa-solid fa-graduation-cap mr-1"></i>{{ vaga_sel.nivel_formacao|default:"—" }}</span>
+                <span><i class="fa-solid fa-clock mr-1"></i>{{ vaga_sel.anos_experiencia_min }} anos exp.</span>
+            </div>
+            {% if vaga_sel.competencias_requeridas %}
+            <div class="mt-2 flex flex-wrap gap-1">
+                {% for c in vaga_sel.competencias_requeridas %}<span class="skill-tag">{{ c }}</span>{% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        <span class="text-xs px-3 py-1 rounded-full font-semibold flex-shrink-0
+            {% if vaga_sel.estado == 'Aberta' %}bg-green-100 text-green-700{% else %}bg-slate-100 text-slate-500{% endif %}">
+            {{ vaga_sel.estado }}
+        </span>
+    </div>
+</div>
+
+<!-- Action buttons (separate from any form) -->
+<div class="flex items-center gap-3 mb-4">
+    <form method="post" action="/scoring/calcular/"
+          hx-post="/scoring/calcular/"
+          hx-target="#candidatos-zone"
+          hx-indicator="#calc-indicator"
+          hx-swap="innerHTML"
+          id="calc-form">
+        {% csrf_token %}
+        <input type="hidden" name="vaga_id" value="{{ vaga_sel.pk }}">
+        <button type="submit" class="btn-primary" style="background:#10b981;">
+            <i class="fa-solid fa-calculator"></i> Calcular Todos os Scores
+        </button>
+    </form>
+    <div id="calc-indicator" class="htmx-indicator flex items-center gap-2">
+        <i class="fa-solid fa-circle-notch fa-spin" style="color:#10b981;"></i>
+        <span class="text-sm text-slate-600">A calcular...</span>
+    </div>
+
+    <div class="ml-auto flex items-center gap-2">
+        <span class="text-xs text-slate-400 font-medium mr-1"><i class="fa-solid fa-download mr-1"></i> Exportar:</span>
+        <a href="/scoring/exportar-excel/?vaga={{ vaga_sel.pk }}"
+           class="btn-secondary" style="padding:8px 16px;">
+            <i class="fa-solid fa-file-excel" style="color:#16a34a;"></i> Excel
+        </a>
+        <a href="/scoring/exportar-word/?vaga={{ vaga_sel.pk }}"
+           class="btn-secondary" style="padding:8px 16px;">
+            <i class="fa-solid fa-file-word" style="color:#1d4ed8;"></i> Relatório Word
+        </a>
+    </div>
+</div>
+
+<!-- Candidates table -->
+{% if sem_vaga_count %}
+<div class="alert-warning flex items-center gap-3 mb-3">
+    <i class="fa-solid fa-triangle-exclamation"></i>
+    <span>
+        <strong>{{ sem_vaga_count }} candidato(s) sem vaga associada</strong> não aparecem aqui.
+        <a href="/candidatos/" class="underline font-semibold">Ver candidatos</a> e editar para associar à vaga correcta.
+    </span>
+</div>
+{% endif %}
+<div id="candidatos-zone">
+    {% include "scoring/_candidatos_tabela.html" %}
+</div>
+
+{% else %}
+<div class="section-card py-16 text-center text-slate-400">
+    <i class="fa-solid fa-chart-bar fa-3x mb-4" style="color:#d1fae5;"></i>
+    <p class="font-medium text-slate-500">Seleccione uma vaga acima para ver os candidatos</p>
+    <p class="text-sm mt-1">Os scores são calculados comparando o perfil do candidato com os requisitos da vaga</p>
+</div>
+{% endif %}
+{% endblock %}

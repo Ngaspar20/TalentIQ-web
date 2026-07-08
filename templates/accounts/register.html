@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block auth_content %}
+<div class="min-h-screen flex items-center justify-center py-10" style="background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 60%, #3b82f6 100%);">
+    <div class="w-full max-w-lg px-4">
+
+        <!-- Logo -->
+        <div class="text-center mb-6">
+            <h1 class="text-3xl font-extrabold text-white">Talent<span class="text-blue-300">IQ</span></h1>
+            <p class="text-blue-200 text-sm mt-1">Criar nova organização</p>
+        </div>
+
+        <!-- Card -->
+        <div class="bg-white rounded-2xl shadow-2xl p-8">
+            <h2 class="text-xl font-bold text-slate-800 mb-6">Registar Organização</h2>
+
+            {% if form.non_field_errors %}
+            <div class="alert-error mb-4">
+                {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                <div class="mb-4">
+                    <label>Nome da Organização</label>
+                    <input type="text" name="organisation_name" class="form-input"
+                           placeholder="Ex: Ministério da Saúde"
+                           value="{{ form.organisation_name.value|default:'' }}">
+                    {% if form.organisation_name.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.organisation_name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label>Primeiro Nome</label>
+                        <input type="text" name="first_name" class="form-input"
+                               placeholder="Ana" value="{{ form.first_name.value|default:'' }}">
+                    </div>
+                    <div>
+                        <label>Apelido</label>
+                        <input type="text" name="last_name" class="form-input"
+                               placeholder="Silva" value="{{ form.last_name.value|default:'' }}">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label>Email</label>
+                    <input type="email" name="email" class="form-input"
+                           placeholder="ana.silva@org.mz"
+                           value="{{ form.email.value|default:'' }}">
+                    {% if form.email.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.email.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label>Palavra-passe</label>
+                        <input type="password" name="password" class="form-input" placeholder="Mínimo 8 caracteres">
+                    </div>
+                    <div>
+                        <label>Confirmar</label>
+                        <input type="password" name="password_confirm" class="form-input" placeholder="Repita">
+                        {% if form.password_confirm.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ form.password_confirm.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary w-full justify-center">
+                    Criar Conta e Organização
+                </button>
+            </form>
+
+            <p class="text-center text-sm text-slate-500 mt-6">
+                Já tem conta?
+                <a href="/accounts/login/" class="text-blue-600 font-semibold hover:underline">Entrar</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

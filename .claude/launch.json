@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "TalentIQ Web",
+      "runtimeExecutable": "C:\\Python314\\python.exe",
+      "runtimeArgs": ["manage.py", "runserver", "8080"],
+      "port": 8080,
+      "cwd": "C:\\Users\\Nuno Gaspar\\Desktop\\Projectos\\02_HR_Recruitment\\TalentIQ_Web"
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Pipeline{% endblock %}
+
+{% block breadcrumb %}Pipeline{% endblock %}
+
+{% block content %}
+<div class="page-header flex items-center justify-between">
+    <div>
+        <h1 class="flex items-center gap-3">
+            <i class="fa-solid fa-filter" style="color:#f59e0b;"></i> Pipeline de Recrutamento
+        </h1>
+        <p>Funil visual — mova candidatos entre etapas do processo</p>
+    </div>
+</div>
+
+<!-- Vacancy filter -->
+<div class="section-card mb-4">
+    <form method="get" action="/pipeline/" class="flex items-end gap-4">
+        <div class="flex-1">
+            <label>Filtrar por Vaga</label>
+            <select name="vaga" class="form-input" onchange="this.form.submit()">
+                <option value="">— Todas as vagas —</option>
+                {% for v in vagas %}
+                <option value="{{ v.pk }}" {% if filtro_vaga and filtro_vaga.pk == v.pk %}selected{% endif %}>
+                    {{ v.titulo }} {% if v.organizacao %}· {{ v.organizacao }}{% endif %}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        {% if filtro_vaga %}
+        <a href="/pipeline/" class="btn-secondary">
+            <i class="fa-solid fa-xmark"></i> Limpar filtro
+        </a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Kanban board -->
+<div class="flex gap-3 overflow-x-auto pb-4" style="min-height: 500px;">
+    {% for etapa in etapas %}
+    <div class="kanban-col flex-shrink-0" style="width: 220px;">
+
+        <!-- Column header -->
+        <div class="kanban-col-header flex items-center justify-between"
+             style="background: {% if etapa == 'Candidatura Recebida' %}#3b82f6{% elif etapa == 'Em Triagem' %}#8b5cf6{% elif etapa == 'Entrevista' %}#f59e0b{% elif etapa == 'Proposta' %}#06b6d4{% elif etapa == 'Contratado' %}#10b981{% else %}#ef4444{% endif %};">
+            <span>{{ etapa }}</span>
+            <span class="bg-white bg-opacity-25 text-white text-xs font-bold px-2 py-0.5 rounded-full col-count">0</span>
+        </div>
+
+        <!-- Cards -->
+        {% for c in candidatos %}
+        {% if c.etapa == etapa %}
+        <div class="kanban-card"
+             style="border-left-color: {% if etapa == 'Candidatura Recebida' %}#3b82f6{% elif etapa == 'Em Triagem' %}#8b5cf6{% elif etapa == 'Entrevista' %}#f59e0b{% elif etapa == 'Proposta' %}#06b6d4{% elif etapa == 'Contratado' %}#10b981{% else %}#ef4444{% endif %};">
+
+            <div class="kanban-card-name">{{ c.nome }}</div>
+            {% if c.vaga %}
+            <div class="kanban-card-sub">{{ c.vaga.titulo|truncatechars:30 }}</div>
+            {% endif %}
+
+            <div class="flex items-center justify-between mt-2">
+                {% if c.score_fit is not None %}
+                <span class="score-badge {{ c.score_label }}">{{ c.score_fit }}%</span>
+                {% else %}
+                <span class="score-badge none">—</span>
+                {% endif %}
+                <a href="/candidatos/{{ c.pk }}/" class="text-slate-400 hover:text-slate-600" style="font-size:0.75rem;">
+                    <i class="fa-solid fa-eye"></i>
+                </a>
+            </div>
+
+            <!-- Move left/right buttons -->
+            <div class="flex items-center gap-1 mt-2"
+                 data-candidato="{{ c.pk }}"
+                 data-etapa="{{ c.etapa }}">
+                <button class="btn-secondary btn-prev" style="padding:3px 8px; font-size:0.75rem;" title="Recuar">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <span class="etapa-label" style="font-size:0.7rem; color:#94a3b8; flex:1; text-align:center;">{{ c.etapa|truncatechars:14 }}</span>
+                <button class="btn-primary btn-next" style="padding:3px 8px; font-size:0.75rem;" title="Avançar">
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Move confirmation toasts -->
+<div id="toast-zone" style="position:fixed; bottom:24px; right:24px; z-index:999; display:flex; flex-direction:column; gap:8px;"></div>
+
+<script>
+const ETAPAS = ["Candidatura Recebida","Em Triagem","Entrevista","Proposta","Contratado","Rejeitado"];
+const CSRF = '{{ csrf_token }}';
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Count cards per column
+    document.querySelectorAll('.kanban-col').forEach(function(col) {
+        col.querySelector('.col-count').textContent = col.querySelectorAll('.kanban-card').length;
+    });
+
+    // Wire up arrow buttons
+    document.querySelectorAll('[data-candidato]').forEach(function(nav) {
+        const candidatoId = nav.dataset.candidato;
+        const etapa = nav.dataset.etapa;
+        const idx = ETAPAS.indexOf(etapa);
+
+        const btnPrev = nav.querySelector('.btn-prev');
+        const btnNext = nav.querySelector('.btn-next');
+
+        if (idx === 0) btnPrev.style.visibility = 'hidden';
+        if (idx === ETAPAS.length - 1) btnNext.style.visibility = 'hidden';
+
+        btnPrev.addEventListener('click', function() {
+            if (idx > 0) moverEtapa(candidatoId, ETAPAS[idx - 1]);
+        });
+        btnNext.addEventListener('click', function() {
+            if (idx < ETAPAS.length - 1) moverEtapa(candidatoId, ETAPAS[idx + 1]);
+        });
+    });
+});
+
+function moverEtapa(candidatoId, novaEtapa) {
+    const formData = new FormData();
+    formData.append('candidato_id', candidatoId);
+    formData.append('etapa', novaEtapa);
+
+    fetch('/pipeline/mover/', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': CSRF },
+        body: formData,
+    })
+    .then(r => r.text())
+    .then(() => {
+        const toast = document.createElement('div');
+        toast.className = 'alert-success';
+        toast.style.cssText = 'padding:10px 16px; font-size:0.85rem; box-shadow:0 4px 12px rgba(0,0,0,0.1); min-width:220px;';
+        toast.innerHTML = '<i class="fa-solid fa-circle-check mr-2"></i>Movido para <strong>' + novaEtapa + '</strong>';
+        document.getElementById('toast-zone').appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+        setTimeout(() => location.reload(), 600);
+    });
+}
+</script>
+{% endblock %}

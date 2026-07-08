@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Candidatos{% endblock %}
+
+{% block breadcrumb %}Candidatos{% endblock %}
+
+{% block content %}
+<div class="page-header flex items-center justify-between">
+    <div>
+        <h1 class="flex items-center gap-3">
+            <i class="fa-solid fa-users" style="color:#8b5cf6;"></i> Candidatos
+        </h1>
+        <p>Todos os candidatos registados na plataforma</p>
+    </div>
+    <a href="/candidatos/carregar/" class="btn-primary" style="background:#7c3aed;">
+        <i class="fa-solid fa-file-arrow-up"></i> Carregar CV
+    </a>
+</div>
+
+{% if candidatos %}
+<div class="section-card" style="padding:0; overflow:hidden;">
+    <table style="width:100%; border-collapse:collapse;">
+        <thead>
+            <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0;">
+                <th style="padding:12px 16px; text-align:left; font-size:0.78rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.05em;">Candidato</th>
+                <th style="padding:12px 16px; text-align:left; font-size:0.78rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.05em;">Vaga</th>
+                <th style="padding:12px 16px; text-align:center; font-size:0.78rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.05em;">Score</th>
+                <th style="padding:12px 16px; text-align:left; font-size:0.78rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.05em;">Etapa</th>
+                <th style="padding:12px 16px; text-align:left; font-size:0.78rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.05em;">Competências</th>
+                <th style="padding:12px 16px; text-align:center; font-size:0.78rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.05em;">Acções</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for c in candidatos %}
+        <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:12px 16px;">
+                <div class="font-semibold text-slate-800" style="font-size:0.9rem;">{{ c.nome }}</div>
+                {% if c.email %}<div class="text-xs text-slate-400">{{ c.email }}</div>{% endif %}
+                {% if c.experiencia_anos %}<div class="text-xs text-slate-500 mt-1"><i class="fa-solid fa-briefcase mr-1"></i>{{ c.experiencia_anos }} anos</div>{% endif %}
+            </td>
+            <td style="padding:12px 16px;">
+                {% if c.vaga %}
+                <div style="font-size:0.85rem; color:#1e3a8a; font-weight:500;">{{ c.vaga.titulo|truncatechars:35 }}</div>
+                {% if c.vaga.organizacao %}<div class="text-xs text-slate-400">{{ c.vaga.organizacao }}</div>{% endif %}
+                {% else %}
+                <span class="text-slate-300 text-sm">—</span>
+                {% endif %}
+            </td>
+            <td style="padding:12px 16px; text-align:center;">
+                {% if c.score_fit is not None %}
+                <span class="score-badge {{ c.score_label }}">{{ c.score_fit }}%</span>
+                {% else %}
+                <span class="score-badge none">—</span>
+                {% endif %}
+            </td>
+            <td style="padding:12px 16px;">
+                <span style="font-size:0.8rem; color:#64748b;">{{ c.etapa }}</span>
+            </td>
+            <td style="padding:12px 16px;">
+                <div class="flex flex-wrap gap-1">
+                {% for comp in c.competencias|slice:":4" %}
+                    <span class="skill-tag">{{ comp }}</span>
+                {% endfor %}
+                {% if c.competencias|length > 4 %}
+                    <span class="skill-tag" style="background:#f1f5f9; color:#94a3b8;">+{{ c.competencias|length|add:"-4" }}</span>
+                {% endif %}
+                </div>
+            </td>
+            <td style="padding:12px 16px; text-align:center;">
+                <div class="flex items-center justify-center gap-2">
+                    <a href="/candidatos/{{ c.pk }}/" class="btn-secondary" style="padding:6px 10px; font-size:0.78rem;" title="Ver perfil">
+                        <i class="fa-solid fa-eye"></i>
+                    </a>
+                    <a href="/candidatos/{{ c.pk }}/editar/" class="btn-secondary" style="padding:6px 10px; font-size:0.78rem;" title="Editar">
+                        <i class="fa-solid fa-pen"></i>
+                    </a>
+                    <a href="/candidatos/{{ c.pk }}/eliminar/" class="btn-danger" style="padding:6px 10px; font-size:0.78rem;" title="Eliminar">
+                        <i class="fa-solid fa-trash"></i>
+                    </a>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="section-card py-16 text-center text-slate-400">
+    <i class="fa-solid fa-users fa-3x mb-4" style="color:#e9d5ff;"></i>
+    <p class="font-medium text-slate-500">Nenhum candidato registado ainda</p>
+    <a href="/candidatos/carregar/" class="btn-primary mt-4" style="background:#7c3aed;">
+        <i class="fa-solid fa-file-arrow-up"></i> Carregar primeiro CV
+    </a>
+</div>
+{% endif %}
+{% endblock %}

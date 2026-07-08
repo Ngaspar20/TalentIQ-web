@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Carregar CV{% endblock %}
+
+{% block breadcrumb %}
+<a href="/candidatos/" class="hover:text-slate-700">Candidatos</a> <span class="mx-2">›</span> Novo Candidato
+{% endblock %}
+
+{% block content %}
+<div class="page-header flex items-center justify-between">
+    <div>
+        <h1 class="flex items-center gap-3">
+            <i class="fa-solid fa-file-arrow-up" style="color:#8b5cf6;"></i> Carregar CV
+        </h1>
+        <p>Carregue o CV do candidato — a IA extrai automaticamente o perfil completo</p>
+    </div>
+    <a href="/candidatos/" class="btn-secondary">
+        <i class="fa-solid fa-arrow-left"></i> Voltar
+    </a>
+</div>
+
+<!-- Step 1: Select Vacancy -->
+<div class="flex items-center gap-3 mb-3">
+    <div class="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold text-sm flex-shrink-0">1</div>
+    <span class="font-semibold text-slate-700">Seleccionar Vaga</span>
+    <span class="text-xs text-slate-400">— a que vaga se candidata?</span>
+</div>
+
+<div class="section-card mb-4">
+    <div class="grid grid-cols-2 gap-4">
+        <div>
+            <label>Vaga *</label>
+            <select id="vaga-selector" name="vaga_id" class="form-input">
+                <option value="">— Sem vaga associada —</option>
+                {% for vaga in vagas %}
+                <option value="{{ vaga.pk }}">{{ vaga.titulo }} {% if vaga.organizacao %}· {{ vaga.organizacao }}{% endif %}</option>
+                {% endfor %}
+            </select>
+            {% if not vagas %}
+            <p class="text-xs text-amber-600 mt-1">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                Não há vagas abertas. <a href="/vagas/criar/" class="underline">Criar uma vaga</a> primeiro.
+            </p>
+            {% endif %}
+        </div>
+        <div class="flex items-end">
+            <p class="text-sm text-slate-500">
+                <i class="fa-solid fa-circle-info mr-1" style="color:#8b5cf6;"></i>
+                Seleccione a vaga para que o score de fit seja calculado automaticamente após a análise do CV.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Step 2: Upload CV -->
+<div class="flex items-center gap-3 mb-3">
+    <div class="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold text-sm flex-shrink-0">2</div>
+    <span class="font-semibold text-slate-700">Carregar CV</span>
+    <span class="text-xs text-slate-400">— PDF ou DOCX · máx. 10MB</span>
+</div>
+
+<div class="section-card mb-4">
+    <form id="upload-form">
+        {% csrf_token %}
+        <div id="upload-area"
+             class="border-2 border-dashed border-purple-300 rounded-xl p-10 text-center cursor-pointer hover:border-purple-500 hover:bg-purple-50 transition-all"
+             onclick="document.getElementById('cv-file').click()">
+            <i class="fa-solid fa-cloud-arrow-up fa-3x mb-4" style="color:#c4b5fd;"></i>
+            <p class="font-semibold text-slate-700 mb-1">Arraste o CV aqui ou clique para seleccionar</p>
+            <p class="text-sm text-slate-400">Suporta PDF e DOCX · Máximo 10MB</p>
+            <input type="file" id="cv-file" name="cv_file" accept=".pdf,.docx" class="hidden"
+                   hx-post="/candidatos/parse-cv/"
+                   hx-encoding="multipart/form-data"
+                   hx-include="#upload-form"
+                   hx-target="#cv-preview-zone"
+                   hx-indicator="#parsing-indicator"
+                   hx-trigger="change"
+                   hx-swap="innerHTML">
+        </div>
+
+        <div id="parsing-indicator" class="htmx-indicator flex items-center justify-center gap-3 mt-4 py-3">
+            <i class="fa-solid fa-circle-notch fa-spin" style="color:#8b5cf6;"></i>
+            <span class="text-slate-600 font-medium">A extrair texto do CV...</span>
+        </div>
+
+        <div id="cv-success" class="hidden mt-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
+            <i class="fa-solid fa-circle-check" style="color:#10b981;"></i>
+            <span class="text-green-700 text-sm font-medium" id="cv-filename"></span>
+        </div>
+    </form>
+</div>
+
+<!-- Step 3: Text preview + AI/Manual choice (injected by HTMX) -->
+<div id="cv-preview-zone"></div>
+
+<!-- Main form -->
+<div class="section-card">
+    <form method="post" action="/candidatos/carregar/" id="candidato-form">
+        {% csrf_token %}
+        <input type="hidden" name="vaga_id" id="vaga_id_hidden">
+
+        <div id="cv-form-fields">
+            <div id="cv-empty-state" class="py-10 text-center text-slate-400">
+                <i class="fa-solid fa-arrow-up fa-2x mb-3" style="color:#cbd5e1;"></i>
+                <p class="font-medium">Carregue o CV acima para preencher automaticamente</p>
+                <p class="text-sm mt-1">ou clique em <strong>Preencher Manualmente</strong> após carregar o ficheiro</p>
+                <button type="button" class="btn-secondary mt-4 text-sm"
+                        onclick="showManualForm()">
+                    <i class="fa-solid fa-pen-to-square"></i> Começar sem CV
+                </button>
+            </div>
+        </div>
+
+        <div id="cv-form-actions" class="hidden flex items-center gap-3 pt-4 border-t border-slate-100">
+            <button type="submit" class="btn-primary" style="background:#7c3aed;">
+                <i class="fa-solid fa-floppy-disk"></i> Guardar Candidato
+            </button>
+            <a href="/candidatos/" class="btn-secondary">
+                <i class="fa-solid fa-xmark"></i> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.getElementById('cv-file').addEventListener('change', function() {
+        if (this.files.length > 0) {
+            document.getElementById('cv-filename').textContent = 'Ficheiro: ' + this.files[0].name;
+            document.getElementById('cv-success').classList.remove('hidden');
+            document.getElementById('upload-area').style.borderColor = '#10b981';
+            document.getElementById('upload-area').style.backgroundColor = '#f0fdf4';
+        }
+    });
+
+    document.body.addEventListener('htmx:afterSwap', function(e) {
+        if (e.detail.target.id === 'cv-form-fields') {
+            const es = document.getElementById('cv-empty-state');
+            if (es) es.remove();
+            showFormActions();
+        }
+    });
+
+    function showFormActions() {
+        const fa = document.getElementById('cv-form-actions');
+        fa.classList.remove('hidden');
+        fa.classList.add('flex');
+        // Sync vaga_id from selector into the hidden field
+        document.getElementById('vaga_id_hidden').value =
+            document.getElementById('vaga-selector').value;
+    }
+
+    function showManualForm() {
+        const es = document.getElementById('cv-empty-state');
+        if (es) es.remove();
+        const ff = document.getElementById('cv-form-fields');
+        if (!ff.querySelector('input[name="nome"]')) {
+            ff.insertAdjacentHTML('beforeend', manualFormHTML({}));
+        }
+        showFormActions();
+    }
+
+    function manualFormHTML(cv) {
+        return `
+        <div class="grid grid-cols-2 gap-6 mb-6">
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4"><i class="fa-solid fa-user mr-1"></i> Dados Pessoais</p>
+                <div class="mb-4"><label>Nome Completo *</label><input type="text" name="nome" class="form-input" placeholder="Ex: João Silva" required value="${cv.nome||''}"></div>
+                <div class="mb-4"><label>Email</label><input type="email" name="email" class="form-input" placeholder="Ex: joao@email.com" value="${cv.email||''}"></div>
+                <div class="mb-4"><label>Telefone</label><input type="text" name="telefone" class="form-input" placeholder="Ex: +258 84 000 0000" value="${cv.telefone||''}"></div>
+                <div class="mb-4"><label>Anos de Experiência</label><input type="number" name="experiencia_anos" class="form-input" min="0" max="50" value="${cv.experiencia_anos||0}"></div>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4"><i class="fa-solid fa-graduation-cap mr-1"></i> Perfil</p>
+                <div class="mb-4"><label>Competências <span class="text-slate-400 font-normal">— separadas por vírgula</span></label><textarea name="competencias_input" class="form-input" rows="3" placeholder="Ex: Python, SQL, Power BI">${(cv.competencias||[]).join(', ')}</textarea></div>
+                <div class="mb-4"><label>Formação Académica <span class="text-slate-400 font-normal">— uma por linha</span></label><textarea name="formacao_input" class="form-input" rows="3" placeholder="Ex: Licenciatura em Informática, UEM">${(cv.formacao||[]).join('\n')}</textarea></div>
+                <div class="mb-4"><label>Idiomas <span class="text-slate-400 font-normal">— separados por vírgula</span></label><input type="text" name="idiomas_input" class="form-input" placeholder="Ex: Português, Inglês" value="${(cv.idiomas||[]).join(', ')}"></div>
+            </div>
+        </div>
+        <div class="mb-4"><label><i class="fa-solid fa-align-left mr-1" style="color:#8b5cf6;"></i> Resumo Profissional</label><textarea name="resumo" class="form-input" rows="3" placeholder="Breve descrição do candidato...">${cv.resumo||''}</textarea></div>
+        <div class="mb-4"><label><i class="fa-solid fa-note-sticky mr-1" style="color:#8b5cf6;"></i> Notas Internas</label><textarea name="notas" class="form-input" rows="2" placeholder="Notas do recrutador (não visíveis ao candidato)..."></textarea></div>
+        `;
+    }
+
+    // Keep vaga_id in sync when selector changes
+    document.getElementById('vaga-selector').addEventListener('change', function() {
+        document.getElementById('vaga_id_hidden').value = this.value;
+    });
+</script>
+{% endblock %}
