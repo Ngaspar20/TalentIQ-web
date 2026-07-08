@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     "candidatos",
     "scoring",
     "pipeline",
+    "ajuda",
 ]
 
 MIDDLEWARE = [
