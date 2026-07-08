@@ -9,6 +9,15 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-dev-key-change-in-pro
 DEBUG = os.environ.get("DEBUG", "True") == "True"
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
+# Allow all Railway and custom domains automatically
+RAILWAY_DOMAIN = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "")
+if RAILWAY_DOMAIN:
+    ALLOWED_HOSTS.append(RAILWAY_DOMAIN)
+
+CSRF_TRUSTED_ORIGINS = [
+    f"https://{h}" for h in ALLOWED_HOSTS if h not in ("localhost", "127.0.0.1", "")
+] + ["http://localhost:8080", "http://127.0.0.1:8080"]
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
