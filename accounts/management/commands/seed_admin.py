@@ -7,22 +7,26 @@ class Command(BaseCommand):
     help = "Create default organisation and admin user if none exist"
 
     def handle(self, *args, **options):
-        if Organisation.objects.exists():
-            self.stdout.write("Organisation already exists, skipping seed.")
-            return
-
-        org = Organisation.objects.create(name="TalentIQ Demo", slug="talentiq-demo")
-        self.stdout.write(f"Created organisation: {org.name}")
-
-        username = os.environ.get("ADMIN_USERNAME", "admin")
-        password = os.environ.get("ADMIN_PASSWORD", "talentiq2024")
         email = os.environ.get("ADMIN_EMAIL", "admin@talentiq.app")
+        password = os.environ.get("ADMIN_PASSWORD", "talentiq2024")
 
-        user = User.objects.create_superuser(
-            username=username,
-            email=email,
-            password=password,
-            organisation=org,
-            role=User.ROLE_ADMIN,
-        )
-        self.stdout.write(f"Created admin user: {user.username} / {password}")
+        # Fix: delete old user created with username "admin" (wrong username format)
+        User.objects.filter(username="admin").delete()
+
+        if not Organisation.objects.exists():
+            org = Organisation.objects.create(name="TalentIQ Demo", slug="talentiq-demo")
+            self.stdout.write(f"Created organisation: {org.name}")
+        else:
+            org = Organisation.objects.first()
+
+        if not User.objects.filter(email=email).exists():
+            User.objects.create_superuser(
+                username=email,
+                email=email,
+                password=password,
+                organisation=org,
+                role=User.ROLE_ADMIN,
+            )
+            self.stdout.write(f"Created admin user: {email} / {password}")
+        else:
+            self.stdout.write(f"Admin user already exists: {email}")
