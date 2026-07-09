@@ -7,6 +7,11 @@ class Command(BaseCommand):
     help = "Ensure default org and admin user exist with correct credentials"
 
     def handle(self, *args, **options):
+        # Only run if the database has no users at all (first deploy).
+        if User.objects.exists():
+            self.stdout.write("Users already exist — skipping seed_admin.")
+            return
+
         if not Organisation.objects.exists():
             org = Organisation.objects.create(name="TalentIQ Demo", slug="talentiq-demo")
             self.stdout.write(f"Created organisation: {org.name}")
