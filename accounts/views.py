@@ -76,16 +76,20 @@ def debug_auth(request):
 def debug_login(request):
     import os
     from django.http import HttpResponse
+    from django.contrib.auth import authenticate
     from .models import User
-    password = os.environ.get("ADMIN_PASSWORD", "TalentIQ2024!")
+    test_password = request.GET.get("pw", os.environ.get("ADMIN_PASSWORD", "TalentIQ2024!"))
+    email = "ngaspar10@gmail.com"
     try:
-        user = User.objects.get(email__iexact="ngaspar10@gmail.com")
-        check = user.check_password(password)
+        user = User.objects.get(email__iexact=email)
+        check = user.check_password(test_password)
+        auth_user = authenticate(request, username=email, password=test_password)
         lines = [
             f"User encontrado: {user.email}",
             f"Username: {user.username}",
             f"is_active: {user.is_active}",
-            f"Password check com '{password}': {check}",
+            f"Password check com '{test_password}': {check}",
+            f"authenticate() resultado: {'OK' if auth_user else 'FALHOU'}",
             f"Password hash: {user.password[:30]}...",
         ]
         return HttpResponse("\n".join(lines), content_type="text/plain")
