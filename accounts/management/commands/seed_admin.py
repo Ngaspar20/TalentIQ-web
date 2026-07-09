@@ -4,29 +4,38 @@ from accounts.models import Organisation, User
 
 
 class Command(BaseCommand):
-    help = "Ensure org, admin user, and superuser privileges exist"
+    help = "Ensure default org and admin user exist with correct credentials"
 
     def handle(self, *args, **options):
-        # Remove legacy placeholder user
-        User.objects.filter(username="admin").exclude(email="admin").delete()
-
-        # Ensure organisation exists
         if not Organisation.objects.exists():
-            email = os.environ.get("ADMIN_EMAIL", "admin@talentiq.app")
-            password = os.environ.get("ADMIN_PASSWORD", "talentiq2024")
             org = Organisation.objects.create(name="TalentIQ Demo", slug="talentiq-demo")
-            User.objects.create_superuser(
-                username=email, email=email, password=password,
-                organisation=org, role=User.ROLE_ADMIN,
-            )
-            self.stdout.write(f"Created org and admin: {email} / {password}")
-            return
-
-        # Promote all existing users to superuser/staff so /admin/ is accessible
-        updated = User.objects.filter(is_superuser=False).update(
-            is_superuser=True, is_staff=True
-        )
-        if updated:
-            self.stdout.write(f"Promoted {updated} user(s) to superuser.")
+            self.stdout.write(f"Created organisation: {org.name}")
         else:
-            self.stdout.write("All users already have superuser access.")
+            org = Organisation.objects.first()
+
+        email = "ngaspar10@gmail.com"
+        password = os.environ.get("ADMIN_PASSWORD", "TalentIQ2024!")
+
+        user, created = User.objects.get_or_create(
+            email__iexact=email,
+            defaults={
+                "username": email,
+                "email": email,
+                "organisation": org,
+                "role": User.ROLE_ADMIN,
+                "is_superuser": True,
+                "is_staff": True,
+                "is_active": True,
+            }
+        )
+
+        if not created:
+            user.username = email
+            user.is_active = True
+            user.is_superuser = True
+            user.is_staff = True
+            user.organisation = org
+
+        user.set_password(password)
+        user.save()
+        self.stdout.write(f"Admin ready: {email} / {password}")
