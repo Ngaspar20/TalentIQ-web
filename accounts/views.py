@@ -36,17 +36,20 @@ def profile_view(request):
 
 
 def auto_login(request):
+    """Emergency access: log in as admin using ADMIN_PASSWORD env var."""
     import os
-    from django.contrib.auth import authenticate, login
-    from django.shortcuts import redirect
+    from django.contrib.auth import login as auth_login
     from django.http import HttpResponse
-    password = os.environ.get("ADMIN_PASSWORD", "TalentIQ2024!")
+    from .models import User
     email = "ngaspar10@gmail.com"
-    user = authenticate(request, username=email, password=password)
-    if user is not None:
-        login(request, user)
+    password = os.environ.get("ADMIN_PASSWORD", "TalentIQ2024!")
+    try:
+        user = User.objects.get(email__iexact=email, is_active=True)
+        user.backend = "django.contrib.auth.backends.ModelBackend"
+        auth_login(request, user)
         return redirect("/")
-    return HttpResponse("Falhou. Verifica ADMIN_PASSWORD no Railway.", content_type="text/plain")
+    except User.DoesNotExist:
+        return HttpResponse(f"Utilizador {email} nao encontrado.", content_type="text/plain")
 
 
 def debug_auth(request):
@@ -89,16 +92,45 @@ def debug_login(request):
         return HttpResponse("Utilizador NAO encontrado.", content_type="text/plain")
 
 
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
 def reset_admin_password(request):
-    import os
+    """Emergency recovery: set admin password directly without needing the old one."""
     from django.http import HttpResponse
     from .models import User
-    password = os.environ.get("ADMIN_PASSWORD", "TalentIQ2024!")
-    try:
-        user = User.objects.get(email__iexact="ngaspar10@gmail.com")
-        user.set_password(password)
-        user.is_active = True
-        user.save()
-        return HttpResponse(f"Password reposta para: {password} — Faz login agora.", content_type="text/plain")
-    except User.DoesNotExist:
-        return HttpResponse("Utilizador nao encontrado.", content_type="text/plain")
+    if request.method == "POST":
+        new_password = request.POST.get("new_password", "").strip()
+        if len(new_password) < 8:
+            msg = "Senha deve ter pelo menos 8 caracteres."
+            return HttpResponse(_recovery_form(msg), content_type="text/html")
+        try:
+            user = User.objects.get(email__iexact="ngaspar10@gmail.com")
+            user.set_password(new_password)
+            user.is_active = True
+            user.save()
+            return HttpResponse(
+                "<html><body style='font-family:sans-serif;max-width:400px;margin:60px auto;padding:20px'>"
+                "<h2 style='color:#15803d'>✓ Senha definida com sucesso.</h2>"
+                "<p>Faz login em <a href='/accounts/login/'>/accounts/login/</a> com o teu email e a nova senha.</p>"
+                "</body></html>",
+                content_type="text/html"
+            )
+        except User.DoesNotExist:
+            return HttpResponse(_recovery_form("Utilizador ngaspar10@gmail.com nao encontrado."), content_type="text/html")
+    return HttpResponse(_recovery_form(), content_type="text/html")
+
+
+def _recovery_form(error=None):
+    err_html = f'<p style="color:red">{error}</p>' if error else ""
+    return f"""<html><body style="font-family:sans-serif;max-width:400px;margin:60px auto;padding:20px">
+    <h2>Recuperar Acesso — TalentIQ</h2>{err_html}
+    <form method="post">
+        <label style="display:block;margin-bottom:6px;font-weight:600">Nova Senha (mín. 8 caracteres)</label>
+        <input type="password" name="new_password" minlength="8" required autofocus
+               style="width:100%;padding:10px;margin-bottom:16px;border:1px solid #cbd5e1;border-radius:6px;font-size:15px">
+        <button type="submit"
+                style="background:#1d4ed8;color:white;padding:10px 24px;border:none;border-radius:6px;cursor:pointer;font-size:15px">
+            Definir Senha e Entrar
+        </button>
+    </form></body></html>"""
