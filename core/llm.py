@@ -5,10 +5,21 @@
 import json
 import logging
 from typing import Optional
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import config
+try:
+    import sys, os
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    import config
+except Exception:
+    from types import SimpleNamespace
+    from django.conf import settings as _s
+    config = SimpleNamespace(
+        LLM_ENGINE=getattr(_s, "LLM_ENGINE", "deterministic"),
+        GROK_API_KEY=getattr(_s, "GROK_API_KEY", ""),
+        GROK_BASE_URL="https://api.x.ai/v1",
+        GROK_MODEL="grok-3",
+        OPENAI_API_KEY="",
+        OPENAI_MODEL="gpt-4o",
+    )
 
 logger = logging.getLogger(__name__)
 

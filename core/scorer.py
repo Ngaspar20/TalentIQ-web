@@ -4,10 +4,23 @@ import json
 import re as _re
 import logging
 from typing import Dict, Any, List
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import config
+try:
+    import sys, os
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    import config
+except Exception:
+    from types import SimpleNamespace
+    from django.conf import settings as _s
+    config = SimpleNamespace(
+        LLM_ENGINE=getattr(_s, "LLM_ENGINE", "deterministic"),
+        GROK_API_KEY=getattr(_s, "GROK_API_KEY", ""),
+        GROK_BASE_URL="https://api.x.ai/v1",
+        GROK_MODEL="grok-3",
+        OPENAI_API_KEY="",
+        OPENAI_MODEL="gpt-4o",
+        SCORE_ALTO=75,
+        SCORE_MEDIO=50,
+    )
 from core.llm import get_llm_response
 
 logger = logging.getLogger(__name__)
