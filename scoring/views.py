@@ -68,6 +68,10 @@ def score_calculate(request):
     else:
         qs = Candidato.objects.filter(vaga=vaga, organisation=request.user.organisation)
 
+    import logging
+    log = logging.getLogger(__name__)
+    from core.scorer import _score_deterministic
+
     for candidato in qs:
         cand_dict = {
             "nome": candidato.nome,
@@ -78,29 +82,15 @@ def score_calculate(request):
             "resumo": candidato.resumo or "",
         }
         try:
-            resultado = calcular_fit(cand_dict, vaga_dict)
+            resultado = _score_deterministic(cand_dict, vaga_dict)
+            resultado["metodo"] = "Determinístico"
             candidato.score_fit = resultado.get("score_total", 0)
             candidato.perfil_completo = resultado
             candidato.save(update_fields=["score_fit", "perfil_completo"])
         except Exception as e:
-            import logging
-            logging.getLogger(__name__).error(f"Score error for {candidato.nome}: {e}", exc_info=True)
-            # Deterministic fallback directly
-            try:
-                from core.scorer import _score_deterministic
-                resultado = _score_deterministic(cand_dict, vaga_dict)
-                resultado["metodo"] = "Determinístico"
-                candidato.score_fit = resultado.get("score_total", 0)
-                candidato.perfil_completo = resultado
-                candidato.save(update_fields=["score_fit", "perfil_completo"])
-            except Exception as e2:
-                logging.getLogger(__name__).error(f"Deterministic fallback also failed: {e2}", exc_info=True)
+            log.error(f"Score error for {candidato.nome}: {e}", exc_info=True)
 
-    candidatos = Candidato.objects.filter(vaga=vaga).order_by("-score_fit")
-    return render(request, "scoring/_candidatos_tabela.html", {
-        "candidatos": candidatos,
-        "vaga": vaga,
-    })
+    return redirect(f"/scoring/?vaga={vaga_id}")
 
 
 def exportar_excel(request):

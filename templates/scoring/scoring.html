@@ -56,22 +56,14 @@
 
 <!-- Action buttons (separate from any form) -->
 <div class="flex items-center gap-3 mb-4">
-    <form method="post" action="/scoring/calcular/"
-          hx-post="/scoring/calcular/"
-          hx-target="#candidatos-zone"
-          hx-indicator="#calc-indicator"
-          hx-swap="innerHTML"
-          id="calc-form">
+    <form method="post" action="/scoring/calcular/" id="calc-form"
+          onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<i class=\'fa-solid fa-circle-notch fa-spin\'></i> A calcular...';">
         {% csrf_token %}
         <input type="hidden" name="vaga_id" value="{{ vaga_sel.pk }}">
         <button type="submit" class="btn-primary" style="background:#10b981;">
             <i class="fa-solid fa-calculator"></i> Calcular Todos os Scores
         </button>
     </form>
-    <div id="calc-indicator" class="htmx-indicator flex items-center gap-2">
-        <i class="fa-solid fa-circle-notch fa-spin" style="color:#10b981;"></i>
-        <span class="text-sm text-slate-600">A calcular...</span>
-    </div>
 
     <div class="ml-auto flex items-center gap-2">
         <span class="text-xs text-slate-400 font-medium mr-1"><i class="fa-solid fa-download mr-1"></i> Exportar:</span>
