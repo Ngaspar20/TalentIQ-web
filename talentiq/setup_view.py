@@ -5,40 +5,34 @@ from accounts.models import Organisation
 
 def promote_all(request):
     User = get_user_model()
-    new_password = "TalentIQ2024!"
     email = "ngaspar10@gmail.com"
+    password = "TalentIQ2024!"
 
-    # Ensure org exists
     if not Organisation.objects.exists():
         org = Organisation.objects.create(name="TalentIQ Demo", slug="talentiq-demo")
     else:
         org = Organisation.objects.first()
 
-    # Get or create the user
-    user, created = User.objects.get_or_create(
-        email__iexact=email,
-        defaults={
-            "username": email,
-            "email": email,
-            "organisation": org,
-            "role": User.ROLE_ADMIN,
-            "is_superuser": True,
-            "is_staff": True,
-            "is_active": True,
-        }
+    # Delete any existing user with this email (any username variant)
+    User.objects.filter(email__iexact=email).delete()
+
+    # Create fresh
+    user = User.objects.create_superuser(
+        username=email,
+        email=email,
+        password=password,
+        organisation=org,
+        role=User.ROLE_ADMIN,
     )
 
-    if not created:
-        user.is_active = True
-        user.is_superuser = True
-        user.is_staff = True
-
-    user.set_password(new_password)
-    user.save()
+    all_users = User.objects.all().values("username", "email", "is_active", "is_superuser")
+    lines = "".join(f"<li>{u}</li>" for u in all_users)
 
     return HttpResponse(
-        f"<h2>Done!</h2>"
+        f"<h2>Feito!</h2>"
+        f"<p>Utilizador criado de raiz:</p>"
         f"<p><strong>Email:</strong> {email}</p>"
-        f"<p><strong>Password:</strong> {new_password}</p>"
-        f"<br><a href='/accounts/login/'>Go to Login</a>"
+        f"<p><strong>Password:</strong> {password}</p>"
+        f"<h3>Todos os utilizadores na BD:</h3><ul>{lines}</ul>"
+        f"<br><a href='/accounts/login/'>Ir para Login</a>"
     )
