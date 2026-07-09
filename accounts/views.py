@@ -102,8 +102,12 @@ from django.views.decorators.csrf import csrf_exempt
 @csrf_exempt
 def reset_admin_password(request):
     """Emergency recovery: set admin password directly without needing the old one."""
+    import os
     from django.http import HttpResponse
     from .models import User
+    secret = os.environ.get("RECOVERY_SECRET", "")
+    if not secret or request.GET.get("token") != secret:
+        return HttpResponse("Acesso negado.", status=403, content_type="text/plain")
     if request.method == "POST":
         new_password = request.POST.get("new_password", "").strip()
         if len(new_password) < 8:
