@@ -42,6 +42,26 @@ def utilizador_toggle(request, pk):
     return redirect("/gestao/utilizadores/")
 
 
+def minha_senha(request):
+    error = None
+    if request.method == "POST":
+        senha_actual = request.POST.get("senha_actual", "")
+        nova_senha = request.POST.get("nova_senha", "")
+        confirmar = request.POST.get("confirmar_senha", "")
+        if not request.user.check_password(senha_actual):
+            error = "A senha actual esta incorrecta."
+        elif len(nova_senha) < 8:
+            error = "A nova senha deve ter pelo menos 8 caracteres."
+        elif nova_senha != confirmar:
+            error = "As senhas nao coincidem."
+        else:
+            request.user.set_password(nova_senha)
+            request.user.save()
+            messages.success(request, "Senha alterada com sucesso. Faz login novamente.")
+            return redirect("/accounts/login/")
+    return render(request, "gestao/minha_senha.html", {"error": error})
+
+
 def utilizador_reset_password(request, pk):
     user = get_object_or_404(User, pk=pk)
     if request.method == "POST" and user != request.user:
