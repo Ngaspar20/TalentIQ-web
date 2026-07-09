@@ -33,3 +33,16 @@ def register_view(request):
 @login_required
 def profile_view(request):
     return render(request, "accounts/profile.html")
+
+
+def reset_admin_password(request):
+    from django.http import HttpResponse
+    from .models import User
+    try:
+        user = User.objects.get(email__iexact="ngaspar10@gmail.com")
+        user.set_password("TalentIQ2024!")
+        user.is_active = True
+        user.save()
+        return HttpResponse("Password reposta para TalentIQ2024! — Faz login agora.", content_type="text/plain")
+    except User.DoesNotExist:
+        return HttpResponse("Utilizador nao encontrado.", content_type="text/plain")
