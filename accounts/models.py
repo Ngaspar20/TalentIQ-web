@@ -1,6 +1,10 @@
 import uuid
+import traceback
+import logging
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+
+logger = logging.getLogger(__name__)
 
 
 class Organisation(models.Model):
@@ -41,6 +45,14 @@ class User(AbstractUser):
     class Meta:
         verbose_name = "Utilizador"
         verbose_name_plural = "Utilizadores"
+
+    def set_password(self, raw_password):
+        logger.warning(
+            "SET_PASSWORD CALLED for %s\n%s",
+            getattr(self, 'email', 'unknown'),
+            "".join(traceback.format_stack())
+        )
+        super().set_password(raw_password)
 
     def is_admin(self):
         return self.role == self.ROLE_ADMIN
