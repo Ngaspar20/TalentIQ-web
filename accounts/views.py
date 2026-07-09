@@ -35,6 +35,26 @@ def profile_view(request):
     return render(request, "accounts/profile.html")
 
 
+def debug_auth(request):
+    import os
+    from django.http import HttpResponse
+    from django.contrib.auth import authenticate
+    from .models import User
+    password = os.environ.get("ADMIN_PASSWORD", "TalentIQ2024!")
+    email = "ngaspar10@gmail.com"
+    user = authenticate(request, username=email, password=password)
+    if user is not None:
+        result = f"authenticate() OK: {user.email} — podes fazer login"
+    else:
+        try:
+            u = User.objects.get(email__iexact=email)
+            check = u.check_password(password)
+            result = f"authenticate() falhou. check_password={check}, is_active={u.is_active}"
+        except User.DoesNotExist:
+            result = "Utilizador nao existe"
+    return HttpResponse(result, content_type="text/plain")
+
+
 def debug_login(request):
     import os
     from django.http import HttpResponse
