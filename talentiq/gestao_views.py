@@ -64,9 +64,15 @@ def minha_senha(request):
 
 def utilizador_reset_password(request, pk):
     user = get_object_or_404(User, pk=pk)
-    if request.method == "POST" and user != request.user:
-        new_password = "Demo2024!"
-        user.set_password(new_password)
-        user.save()
-        messages.success(request, f"Senha de {user.email} reposta para: {new_password}")
+    if request.method == "POST":
+        new_password = request.POST.get("new_password", "").strip()
+        if not new_password or len(new_password) < 8:
+            messages.error(request, "A nova senha deve ter pelo menos 8 caracteres.")
+        elif user == request.user:
+            messages.error(request, "Usa 'Alterar a minha senha' para alterar a tua própria senha.")
+        else:
+            user.set_password(new_password)
+            user.is_active = True
+            user.save()
+            messages.success(request, f"Senha de {user.email} alterada com sucesso.")
     return redirect("/gestao/utilizadores/")

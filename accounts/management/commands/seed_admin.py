@@ -16,25 +16,39 @@ class Command(BaseCommand):
         email = "ngaspar10@gmail.com"
         password = os.environ.get("ADMIN_PASSWORD", "TalentIQ2024!")
 
-        user, created = User.objects.get_or_create(
-            email__iexact=email,
-            defaults={
-                "username": email,
-                "email": email,
-                "organisation": org,
-                "role": User.ROLE_ADMIN,
-                "is_superuser": True,
-                "is_staff": True,
-                "is_active": True,
-            }
-        )
-
-        user.username = email
-        user.is_active = True
-        user.is_superuser = True
-        user.is_staff = True
-        user.organisation = org
-        user.set_password(password)
-        user.save()
-        action = "created" if created else "updated"
-        self.stdout.write(f"Admin {action}: {email}")
+        try:
+            user = User.objects.get(email__iexact=email)
+            # Existing user — only fix structural fields, NEVER touch the password.
+            # This preserves whatever password the user has set.
+            changed = False
+            if user.username != email:
+                user.username = email
+                changed = True
+            if not user.is_active:
+                user.is_active = True
+                changed = True
+            if not user.is_superuser:
+                user.is_superuser = True
+                changed = True
+            if not user.is_staff:
+                user.is_staff = True
+                changed = True
+            if user.organisation != org:
+                user.organisation = org
+                changed = True
+            if changed:
+                user.save()
+            self.stdout.write(f"Admin already exists: {email} (password unchanged)")
+        except User.DoesNotExist:
+            # New user — set everything including the initial password.
+            user = User.objects.create_user(
+                username=email,
+                email=email,
+                password=password,
+                organisation=org,
+                role=User.ROLE_ADMIN,
+                is_superuser=True,
+                is_staff=True,
+                is_active=True,
+            )
+            self.stdout.write(f"Admin created: {email} with password from ADMIN_PASSWORD")

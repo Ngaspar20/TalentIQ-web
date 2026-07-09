@@ -3,7 +3,7 @@
 <div class="p-6 max-w-5xl mx-auto">
 
   <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-bold text-slate-800">Gestao de Utilizadores</h1>
+    <h1 class="text-2xl font-bold text-slate-800">Gestão de Utilizadores</h1>
     <a href="/gestao/utilizadores/novo/" class="btn-primary">
       <i class="fa-solid fa-plus fa-fw"></i> Novo Utilizador
     </a>
@@ -25,15 +25,15 @@
           <th class="text-left px-4 py-3 text-slate-600 font-semibold">Nome</th>
           <th class="text-left px-4 py-3 text-slate-600 font-semibold">Perfil</th>
           <th class="text-left px-4 py-3 text-slate-600 font-semibold">Estado</th>
-          <th class="px-4 py-3 text-right text-slate-600 font-semibold">Acoes</th>
+          <th class="px-4 py-3 text-right text-slate-600 font-semibold">Acções</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-100">
         {% for u in utilizadores %}
-        <tr class="hover:bg-slate-50">
+        <tr class="hover:bg-slate-50" id="row-{{ u.pk }}">
           <td class="px-4 py-3 text-slate-800">
             {{ u.email }}
-            {% if u == request.user %}<span class="ml-2 text-xs text-slate-400">(voce)</span>{% endif %}
+            {% if u == request.user %}<span class="ml-2 text-xs text-slate-400">(você)</span>{% endif %}
           </td>
           <td class="px-4 py-3 text-slate-600">{{ u.get_full_name|default:"—" }}</td>
           <td class="px-4 py-3 text-slate-600">{{ u.get_role_display }}</td>
@@ -61,16 +61,36 @@
                     {% if u.is_active %}<i class="fa-solid fa-ban fa-fw"></i> Bloquear{% else %}<i class="fa-solid fa-check fa-fw"></i> Activar{% endif %}
                   </button>
                 </form>
-                <form method="post" action="/gestao/utilizadores/{{ u.pk }}/reset-password/" class="inline">
-                  {% csrf_token %}
-                  <button type="submit"
-                    class="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded border border-slate-300 text-slate-600 hover:bg-slate-50 font-medium">
-                    <i class="fa-solid fa-rotate-right fa-fw"></i> Repor Senha
-                  </button>
-                </form>
+
+                {# Reset password — inline form with new password field #}
+                <button type="button" onclick="toggleReset('{{ u.pk }}')"
+                  class="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded border border-slate-300 text-slate-600 hover:bg-slate-50 font-medium">
+                  <i class="fa-solid fa-key fa-fw"></i> Repor Senha
+                </button>
               {% endif %}
 
             </div>
+
+            {# Inline reset form — hidden until button clicked #}
+            {% if u != request.user %}
+            <div id="reset-{{ u.pk }}" class="hidden mt-2">
+              <form method="post" action="/gestao/utilizadores/{{ u.pk }}/reset-password/" class="flex items-center gap-2">
+                {% csrf_token %}
+                <input type="password" name="new_password" placeholder="Nova senha (min. 8 car.)"
+                  class="text-xs border border-slate-300 rounded px-2 py-1.5 w-48 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                  minlength="8" required>
+                <button type="submit"
+                  class="text-xs px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700 font-medium">
+                  Confirmar
+                </button>
+                <button type="button" onclick="toggleReset('{{ u.pk }}')"
+                  class="text-xs px-2 py-1.5 text-slate-400 hover:text-slate-600">
+                  ✕
+                </button>
+              </form>
+            </div>
+            {% endif %}
+
           </td>
         </tr>
         {% empty %}
@@ -80,10 +100,15 @@
     </table>
   </div>
 
-  <p class="mt-4 text-xs text-slate-400">
-    <i class="fa-solid fa-circle-info fa-fw"></i>
-    Repor Senha define a palavra-passe do utilizador para <strong>Demo2024!</strong> — comunica-lha e pede que a altere.
-  </p>
-
 </div>
+
+<script>
+function toggleReset(pk) {
+  const el = document.getElementById('reset-' + pk);
+  el.classList.toggle('hidden');
+  if (!el.classList.contains('hidden')) {
+    el.querySelector('input').focus();
+  }
+}
+</script>
 {% endblock %}
