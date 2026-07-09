@@ -1,6 +1,6 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% block content %}
-<div class="p-6 max-w-4xl mx-auto">
+<div class="p-6 max-w-5xl mx-auto">
 
   <div class="flex items-center justify-between mb-6">
     <h1 class="text-2xl font-bold text-slate-800">Gestao de Utilizadores</h1>
@@ -25,13 +25,16 @@
           <th class="text-left px-4 py-3 text-slate-600 font-semibold">Nome</th>
           <th class="text-left px-4 py-3 text-slate-600 font-semibold">Perfil</th>
           <th class="text-left px-4 py-3 text-slate-600 font-semibold">Estado</th>
-          <th class="px-4 py-3"></th>
+          <th class="px-4 py-3 text-right text-slate-600 font-semibold">Acoes</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-100">
         {% for u in utilizadores %}
         <tr class="hover:bg-slate-50">
-          <td class="px-4 py-3 text-slate-800">{{ u.email }}</td>
+          <td class="px-4 py-3 text-slate-800">
+            {{ u.email }}
+            {% if u == request.user %}<span class="ml-2 text-xs text-slate-400">(voce)</span>{% endif %}
+          </td>
           <td class="px-4 py-3 text-slate-600">{{ u.get_full_name|default:"—" }}</td>
           <td class="px-4 py-3 text-slate-600">{{ u.get_role_display }}</td>
           <td class="px-4 py-3">
@@ -41,23 +44,33 @@
               <span class="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">Inactivo</span>
             {% endif %}
           </td>
-          <td class="px-4 py-3 text-right space-x-2">
-            {% if u != request.user %}
-              <form method="post" action="/gestao/utilizadores/{{ u.pk }}/toggle/" class="inline">
-                {% csrf_token %}
-                <button type="submit" class="text-xs px-3 py-1 rounded border {% if u.is_active %}border-red-300 text-red-600 hover:bg-red-50{% else %}border-green-300 text-green-600 hover:bg-green-50{% endif %}">
-                  {% if u.is_active %}Bloquear{% else %}Activar{% endif %}
-                </button>
-              </form>
-              <form method="post" action="/gestao/utilizadores/{{ u.pk }}/reset-password/" class="inline">
-                {% csrf_token %}
-                <button type="submit" class="text-xs px-3 py-1 rounded border border-slate-300 text-slate-600 hover:bg-slate-50">
-                  Repor Senha
-                </button>
-              </form>
-            {% else %}
-              <span class="text-xs text-slate-400">(você)</span>
-            {% endif %}
+          <td class="px-4 py-3 text-right">
+            <div class="flex items-center justify-end gap-2 flex-wrap">
+
+              {% if u == request.user %}
+                <a href="/gestao/utilizadores/minha-senha/"
+                   class="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded border border-blue-300 text-blue-600 hover:bg-blue-50 font-medium">
+                  <i class="fa-solid fa-key fa-fw"></i> Alterar Senha
+                </a>
+              {% else %}
+                <form method="post" action="/gestao/utilizadores/{{ u.pk }}/toggle/" class="inline">
+                  {% csrf_token %}
+                  <button type="submit"
+                    class="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded border font-medium
+                    {% if u.is_active %}border-red-300 text-red-600 hover:bg-red-50{% else %}border-green-300 text-green-600 hover:bg-green-50{% endif %}">
+                    {% if u.is_active %}<i class="fa-solid fa-ban fa-fw"></i> Bloquear{% else %}<i class="fa-solid fa-check fa-fw"></i> Activar{% endif %}
+                  </button>
+                </form>
+                <form method="post" action="/gestao/utilizadores/{{ u.pk }}/reset-password/" class="inline">
+                  {% csrf_token %}
+                  <button type="submit"
+                    class="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded border border-slate-300 text-slate-600 hover:bg-slate-50 font-medium">
+                    <i class="fa-solid fa-rotate-right fa-fw"></i> Repor Senha
+                  </button>
+                </form>
+              {% endif %}
+
+            </div>
           </td>
         </tr>
         {% empty %}
@@ -66,5 +79,11 @@
       </tbody>
     </table>
   </div>
+
+  <p class="mt-4 text-xs text-slate-400">
+    <i class="fa-solid fa-circle-info fa-fw"></i>
+    Repor Senha define a palavra-passe do utilizador para <strong>Demo2024!</strong> — comunica-lha e pede que a altere.
+  </p>
+
 </div>
 {% endblock %}
