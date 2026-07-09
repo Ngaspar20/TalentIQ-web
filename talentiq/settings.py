@@ -118,6 +118,9 @@ LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/accounts/login/"
 
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
+SESSION_COOKIE_AGE = 86400 * 7  # 7 days
+
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
 
 # Supabase Storage

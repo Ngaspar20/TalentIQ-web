@@ -29,13 +29,15 @@ class Command(BaseCommand):
             }
         )
 
-        if not created:
+        if created:
+            user.set_password(password)
+            user.save()
+            self.stdout.write(f"Admin created: {email} / {password}")
+        else:
             user.username = email
             user.is_active = True
             user.is_superuser = True
             user.is_staff = True
             user.organisation = org
-
-        user.set_password(password)
-        user.save()
-        self.stdout.write(f"Admin ready: {email} / {password}")
+            user.save(update_fields=["username", "is_active", "is_superuser", "is_staff", "organisation"])
+            self.stdout.write(f"Admin already exists: {email} (password unchanged)")
