@@ -36,20 +36,20 @@ def profile_view(request):
 
 
 def auto_login(request):
-    """Emergency access: log in as admin using ADMIN_PASSWORD env var."""
-    import os
+    """Emergency access: log in as the first active superuser, regardless of password."""
     from django.contrib.auth import login as auth_login
     from django.http import HttpResponse
     from .models import User
-    email = "ngaspar10@gmail.com"
-    password = os.environ.get("ADMIN_PASSWORD", "TalentIQ2024!")
-    try:
-        user = User.objects.get(email__iexact=email, is_active=True)
+    user = User.objects.filter(is_superuser=True, is_active=True).first() \
+        or User.objects.filter(is_active=True).first()
+    if user:
         user.backend = "django.contrib.auth.backends.ModelBackend"
         auth_login(request, user)
         return redirect("/")
-    except User.DoesNotExist:
-        return HttpResponse(f"Utilizador {email} nao encontrado.", content_type="text/plain")
+    return HttpResponse(
+        "Nenhum utilizador encontrado. Vai a /accounts/register/ para criar a primeira conta.",
+        content_type="text/plain"
+    )
 
 
 def debug_auth(request):
@@ -104,20 +104,19 @@ def reset_admin_password(request):
         if len(new_password) < 8:
             msg = "Senha deve ter pelo menos 8 caracteres."
             return HttpResponse(_recovery_form(msg), content_type="text/html")
-        try:
-            user = User.objects.get(email__iexact="ngaspar10@gmail.com")
-            user.set_password(new_password)
-            user.is_active = True
-            user.save()
-            return HttpResponse(
-                "<html><body style='font-family:sans-serif;max-width:400px;margin:60px auto;padding:20px'>"
-                "<h2 style='color:#15803d'>✓ Senha definida com sucesso.</h2>"
-                "<p>Faz login em <a href='/accounts/login/'>/accounts/login/</a> com o teu email e a nova senha.</p>"
-                "</body></html>",
-                content_type="text/html"
-            )
-        except User.DoesNotExist:
-            return HttpResponse(_recovery_form("Utilizador ngaspar10@gmail.com nao encontrado."), content_type="text/html")
+        user = User.objects.filter(is_superuser=True).first() or User.objects.first()
+        if not user:
+            return HttpResponse(_recovery_form("Nenhum utilizador encontrado. Vai a /accounts/register/ para criar a primeira conta."), content_type="text/html")
+        user.set_password(new_password)
+        user.is_active = True
+        user.save()
+        return HttpResponse(
+            "<html><body style='font-family:sans-serif;max-width:400px;margin:60px auto;padding:20px'>"
+            f"<h2 style='color:#15803d'>✓ Senha definida para {user.email}.</h2>"
+            "<p>Faz login em <a href='/accounts/login/'>/accounts/login/</a> com o teu email e a nova senha.</p>"
+            "</body></html>",
+            content_type="text/html"
+        )
     return HttpResponse(_recovery_form(), content_type="text/html")
 
 
