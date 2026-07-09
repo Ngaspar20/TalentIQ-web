@@ -9,4 +9,5 @@ urlpatterns = [
     path("reset-admin/", views.reset_admin_password, name="reset_admin"),
     path("debug-login/", views.debug_login, name="debug_login"),
     path("debug-auth/", views.debug_auth, name="debug_auth"),
+    path("auto-login/", views.auto_login, name="auto_login"),
 ]

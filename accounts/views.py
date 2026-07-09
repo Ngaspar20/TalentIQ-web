@@ -35,6 +35,20 @@ def profile_view(request):
     return render(request, "accounts/profile.html")
 
 
+def auto_login(request):
+    import os
+    from django.contrib.auth import authenticate, login
+    from django.shortcuts import redirect
+    from django.http import HttpResponse
+    password = os.environ.get("ADMIN_PASSWORD", "TalentIQ2024!")
+    email = "ngaspar10@gmail.com"
+    user = authenticate(request, username=email, password=password)
+    if user is not None:
+        login(request, user)
+        return redirect("/")
+    return HttpResponse("Falhou. Verifica ADMIN_PASSWORD no Railway.", content_type="text/plain")
+
+
 def debug_auth(request):
     import os
     from django.http import HttpResponse
