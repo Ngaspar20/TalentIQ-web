@@ -36,13 +36,15 @@ def profile_view(request):
 
 
 def reset_admin_password(request):
+    import os
     from django.http import HttpResponse
     from .models import User
+    password = os.environ.get("ADMIN_PASSWORD", "TalentIQ2024!")
     try:
         user = User.objects.get(email__iexact="ngaspar10@gmail.com")
-        user.set_password("TalentIQ2024!")
+        user.set_password(password)
         user.is_active = True
         user.save()
-        return HttpResponse("Password reposta para TalentIQ2024! — Faz login agora.", content_type="text/plain")
+        return HttpResponse(f"Password reposta para: {password} — Faz login agora.", content_type="text/plain")
     except User.DoesNotExist:
         return HttpResponse("Utilizador nao encontrado.", content_type="text/plain")
