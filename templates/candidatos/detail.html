@@ -115,64 +115,135 @@
 
 {% if candidato.etapa == "Entrevista" or candidato.etapa == "Proposta" or candidato.etapa == "Contratado" or nota %}
 <div class="section-card mb-4" style="border-left: 4px solid #8b5cf6;">
-    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
-        <i class="fa-solid fa-star mr-1" style="color:#8b5cf6;"></i> Avaliação de Entrevista
-    </p>
-    <form method="post" action="/candidatos/{{ candidato.pk }}/nota-entrevista/">
-        {% csrf_token %}
+    <div class="flex items-center justify-between mb-3">
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">
+            <i class="fa-solid fa-star mr-1" style="color:#8b5cf6;"></i> Avaliação de Entrevista
+        </p>
+        {% if nota %}
+        <button onclick="toggleForm()" id="btn-editar" class="btn-secondary text-xs" style="padding:4px 10px;">
+            <i class="fa-solid fa-pen mr-1"></i> Editar
+        </button>
+        {% endif %}
+    </div>
+
+    {% if nota %}
+    <!-- SUMMARY VIEW -->
+    <div id="nota-resumo">
         <div class="grid grid-cols-3 gap-3 mb-3">
-            <div>
-                <label class="text-xs text-slate-500 mb-1 block">Data da entrevista</label>
-                <input type="date" name="data_entrevista"
-                       value="{{ nota.data_entrevista|date:'Y-m-d' }}"
-                       class="form-input w-full text-sm">
-            </div>
-            <div>
-                <label class="text-xs text-slate-500 mb-1 block">Pontuação global (1–5)</label>
-                <div class="flex gap-1 mt-1" id="star-rating">
+            <div class="text-center p-3 rounded-lg" style="background:#f5f3ff;">
+                <div class="flex justify-center gap-1 mb-1">
                     {% for i in "12345" %}
-                    <label class="cursor-pointer">
-                        <input type="radio" name="pontuacao" value="{{ i }}" class="hidden"
-                               {% if nota.pontuacao == i|add:0 %}checked{% endif %}>
-                        <i class="fa-star text-xl {% if nota.pontuacao and nota.pontuacao >= forloop.counter %}fa-solid{% else %}fa-regular{% endif %}"
-                           style="color:{% if nota.pontuacao and nota.pontuacao >= forloop.counter %}#f59e0b{% else %}#cbd5e1{% endif %};"
-                           onclick="setStar({{ forloop.counter }})"></i>
-                    </label>
+                    <i class="fa-star text-lg {% if nota.pontuacao and nota.pontuacao >= forloop.counter %}fa-solid{% else %}fa-regular{% endif %}"
+                       style="color:{% if nota.pontuacao and nota.pontuacao >= forloop.counter %}#f59e0b{% else %}#e2e8f0{% endif %};"></i>
                     {% endfor %}
                 </div>
-                <input type="hidden" name="pontuacao" id="pontuacao-val" value="{{ nota.pontuacao|default:'' }}">
+                <div class="text-xs text-slate-500">{{ nota.pontuacao|default:"—" }}/5</div>
             </div>
-            <div>
-                <label class="text-xs text-slate-500 mb-1 block">Recomendação</label>
-                <select name="recomendacao" class="form-input w-full text-sm">
-                    <option value="">— Seleccionar —</option>
-                    <option value="recomendado" {% if nota.recomendacao == "recomendado" %}selected{% endif %}>✅ Recomendado</option>
-                    <option value="a_considerar" {% if nota.recomendacao == "a_considerar" %}selected{% endif %}>⚠️ A considerar</option>
-                    <option value="nao_recomendado" {% if nota.recomendacao == "nao_recomendado" %}selected{% endif %}>❌ Não recomendado</option>
-                </select>
+            <div class="text-center p-3 rounded-lg" style="background:#f8fafc;">
+                {% if nota.recomendacao == "recomendado" %}
+                <div class="text-lg mb-1">✅</div>
+                <div class="text-xs font-semibold text-green-700">Recomendado</div>
+                {% elif nota.recomendacao == "a_considerar" %}
+                <div class="text-lg mb-1">⚠️</div>
+                <div class="text-xs font-semibold text-amber-700">A considerar</div>
+                {% elif nota.recomendacao == "nao_recomendado" %}
+                <div class="text-lg mb-1">❌</div>
+                <div class="text-xs font-semibold text-red-700">Não recomendado</div>
+                {% else %}
+                <div class="text-xs text-slate-400">Sem recomendação</div>
+                {% endif %}
+            </div>
+            <div class="text-center p-3 rounded-lg" style="background:#f8fafc;">
+                <div class="text-xs text-slate-400 mb-1">Data</div>
+                <div class="text-sm font-semibold text-slate-700">
+                    {% if nota.data_entrevista %}{{ nota.data_entrevista|date:"d/m/Y" }}{% else %}—{% endif %}
+                </div>
             </div>
         </div>
+        {% if nota.pontos_fortes or nota.pontos_fracos %}
         <div class="grid grid-cols-2 gap-3 mb-3">
-            <div>
-                <label class="text-xs text-slate-500 mb-1 block">Pontos fortes</label>
-                <textarea name="pontos_fortes" rows="3" class="form-input w-full text-sm"
-                          placeholder="O que se destacou positivamente...">{{ nota.pontos_fortes }}</textarea>
+            {% if nota.pontos_fortes %}
+            <div class="p-3 rounded-lg" style="background:#f0fdf4; border:1px solid #bbf7d0;">
+                <p class="text-xs font-bold text-green-700 mb-1"><i class="fa-solid fa-thumbs-up mr-1"></i> Pontos fortes</p>
+                <p class="text-sm text-slate-700">{{ nota.pontos_fortes }}</p>
             </div>
-            <div>
-                <label class="text-xs text-slate-500 mb-1 block">Pontos fracos / preocupações</label>
-                <textarea name="pontos_fracos" rows="3" class="form-input w-full text-sm"
-                          placeholder="Lacunas, dúvidas ou reservas...">{{ nota.pontos_fracos }}</textarea>
+            {% endif %}
+            {% if nota.pontos_fracos %}
+            <div class="p-3 rounded-lg" style="background:#fff7ed; border:1px solid #fed7aa;">
+                <p class="text-xs font-bold text-orange-700 mb-1"><i class="fa-solid fa-thumbs-down mr-1"></i> Pontos fracos</p>
+                <p class="text-sm text-slate-700">{{ nota.pontos_fracos }}</p>
             </div>
+            {% endif %}
         </div>
-        <div class="mb-3">
-            <label class="text-xs text-slate-500 mb-1 block">Notas gerais</label>
-            <textarea name="notas" rows="3" class="form-input w-full text-sm"
-                      placeholder="Observações adicionais sobre a entrevista...">{{ nota.notas }}</textarea>
+        {% endif %}
+        {% if nota.notas %}
+        <div class="p-3 rounded-lg" style="background:#f8fafc; border:1px solid #e2e8f0;">
+            <p class="text-xs font-bold text-slate-400 mb-1"><i class="fa-solid fa-note-sticky mr-1"></i> Notas gerais</p>
+            <p class="text-sm text-slate-700">{{ nota.notas }}</p>
         </div>
-        <button type="submit" class="btn-primary" style="background:#8b5cf6;">
-            <i class="fa-solid fa-floppy-disk mr-2"></i> Guardar avaliação
-        </button>
-    </form>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- EDIT FORM (hidden if nota exists, shown if no nota yet) -->
+    <div id="nota-form" {% if nota %}style="display:none;"{% endif %}>
+        <form method="post" action="/candidatos/{{ candidato.pk }}/nota-entrevista/">
+            {% csrf_token %}
+            <div class="grid grid-cols-3 gap-3 mb-3">
+                <div>
+                    <label class="text-xs text-slate-500 mb-1 block">Data da entrevista</label>
+                    <input type="date" name="data_entrevista"
+                           value="{{ nota.data_entrevista|date:'Y-m-d' }}"
+                           class="form-input w-full text-sm">
+                </div>
+                <div>
+                    <label class="text-xs text-slate-500 mb-1 block">Pontuação global (1–5)</label>
+                    <div class="flex gap-1 mt-1" id="star-rating">
+                        {% for i in "12345" %}
+                        <i class="fa-star text-xl {% if nota.pontuacao and nota.pontuacao >= forloop.counter %}fa-solid{% else %}fa-regular{% endif %}"
+                           style="color:{% if nota.pontuacao and nota.pontuacao >= forloop.counter %}#f59e0b{% else %}#cbd5e1{% endif %}; cursor:pointer;"
+                           onclick="setStar({{ forloop.counter }})"></i>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" name="pontuacao" id="pontuacao-val" value="{{ nota.pontuacao|default:'' }}">
+                </div>
+                <div>
+                    <label class="text-xs text-slate-500 mb-1 block">Recomendação</label>
+                    <select name="recomendacao" class="form-input w-full text-sm">
+                        <option value="">— Seleccionar —</option>
+                        <option value="recomendado" {% if nota.recomendacao == "recomendado" %}selected{% endif %}>✅ Recomendado</option>
+                        <option value="a_considerar" {% if nota.recomendacao == "a_considerar" %}selected{% endif %}>⚠️ A considerar</option>
+                        <option value="nao_recomendado" {% if nota.recomendacao == "nao_recomendado" %}selected{% endif %}>❌ Não recomendado</option>
+                    </select>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                    <label class="text-xs text-slate-500 mb-1 block">Pontos fortes</label>
+                    <textarea name="pontos_fortes" rows="3" class="form-input w-full text-sm"
+                              placeholder="O que se destacou positivamente...">{{ nota.pontos_fortes }}</textarea>
+                </div>
+                <div>
+                    <label class="text-xs text-slate-500 mb-1 block">Pontos fracos / preocupações</label>
+                    <textarea name="pontos_fracos" rows="3" class="form-input w-full text-sm"
+                              placeholder="Lacunas, dúvidas ou reservas...">{{ nota.pontos_fracos }}</textarea>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="text-xs text-slate-500 mb-1 block">Notas gerais</label>
+                <textarea name="notas" rows="3" class="form-input w-full text-sm"
+                          placeholder="Observações adicionais sobre a entrevista...">{{ nota.notas }}</textarea>
+            </div>
+            <div class="flex gap-2">
+                <button type="submit" class="btn-primary" style="background:#8b5cf6;">
+                    <i class="fa-solid fa-floppy-disk mr-2"></i> Guardar avaliação
+                </button>
+                {% if nota %}
+                <button type="button" onclick="toggleForm()" class="btn-secondary">Cancelar</button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
 </div>
 {% endif %}
 
@@ -288,6 +359,16 @@ function setStar(n) {
         }
     });
 }
-document.querySelectorAll('input[type="radio"][name="pontuacao"]').forEach(r => r.remove());
+function toggleForm() {
+    const form = document.getElementById('nota-form');
+    const resumo = document.getElementById('nota-resumo');
+    const btn = document.getElementById('btn-editar');
+    const hidden = form.style.display === 'none';
+    form.style.display = hidden ? 'block' : 'none';
+    resumo.style.display = hidden ? 'none' : 'block';
+    btn.innerHTML = hidden
+        ? '<i class="fa-solid fa-x mr-1"></i> Fechar'
+        : '<i class="fa-solid fa-pen mr-1"></i> Editar';
+}
 </script>
 {% endblock %}
