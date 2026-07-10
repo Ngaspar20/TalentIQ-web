@@ -57,3 +57,25 @@ class Candidato(models.Model):
         if self.score_fit >= 50:
             return "medio"
         return "baixo"
+
+
+class NotaEntrevista(models.Model):
+    RECOMENDACAO_CHOICES = [
+        ("recomendado", "Recomendado"),
+        ("a_considerar", "A considerar"),
+        ("nao_recomendado", "Não recomendado"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    candidato = models.OneToOneField(Candidato, on_delete=models.CASCADE, related_name="nota_entrevista")
+    data_entrevista = models.DateField(null=True, blank=True)
+    pontuacao = models.PositiveSmallIntegerField(null=True, blank=True, help_text="1–5")
+    recomendacao = models.CharField(max_length=20, choices=RECOMENDACAO_CHOICES, blank=True)
+    notas = models.TextField(blank=True)
+    pontos_fortes = models.TextField(blank=True)
+    pontos_fracos = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Entrevista — {self.candidato.nome}"

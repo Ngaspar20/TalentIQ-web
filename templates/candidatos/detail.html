@@ -113,6 +113,69 @@
     </div>
 </div>
 
+{% if candidato.etapa == "Entrevista" or candidato.etapa == "Proposta" or candidato.etapa == "Contratado" or nota %}
+<div class="section-card mb-4" style="border-left: 4px solid #8b5cf6;">
+    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
+        <i class="fa-solid fa-star mr-1" style="color:#8b5cf6;"></i> Avaliação de Entrevista
+    </p>
+    <form method="post" action="/candidatos/{{ candidato.pk }}/nota-entrevista/">
+        {% csrf_token %}
+        <div class="grid grid-cols-3 gap-3 mb-3">
+            <div>
+                <label class="text-xs text-slate-500 mb-1 block">Data da entrevista</label>
+                <input type="date" name="data_entrevista"
+                       value="{{ nota.data_entrevista|date:'Y-m-d' }}"
+                       class="form-input w-full text-sm">
+            </div>
+            <div>
+                <label class="text-xs text-slate-500 mb-1 block">Pontuação global (1–5)</label>
+                <div class="flex gap-1 mt-1" id="star-rating">
+                    {% for i in "12345" %}
+                    <label class="cursor-pointer">
+                        <input type="radio" name="pontuacao" value="{{ i }}" class="hidden"
+                               {% if nota.pontuacao == i|add:0 %}checked{% endif %}>
+                        <i class="fa-star text-xl {% if nota.pontuacao and nota.pontuacao >= forloop.counter %}fa-solid{% else %}fa-regular{% endif %}"
+                           style="color:{% if nota.pontuacao and nota.pontuacao >= forloop.counter %}#f59e0b{% else %}#cbd5e1{% endif %};"
+                           onclick="setStar({{ forloop.counter }})"></i>
+                    </label>
+                    {% endfor %}
+                </div>
+                <input type="hidden" name="pontuacao" id="pontuacao-val" value="{{ nota.pontuacao|default:'' }}">
+            </div>
+            <div>
+                <label class="text-xs text-slate-500 mb-1 block">Recomendação</label>
+                <select name="recomendacao" class="form-input w-full text-sm">
+                    <option value="">— Seleccionar —</option>
+                    <option value="recomendado" {% if nota.recomendacao == "recomendado" %}selected{% endif %}>✅ Recomendado</option>
+                    <option value="a_considerar" {% if nota.recomendacao == "a_considerar" %}selected{% endif %}>⚠️ A considerar</option>
+                    <option value="nao_recomendado" {% if nota.recomendacao == "nao_recomendado" %}selected{% endif %}>❌ Não recomendado</option>
+                </select>
+            </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-3">
+            <div>
+                <label class="text-xs text-slate-500 mb-1 block">Pontos fortes</label>
+                <textarea name="pontos_fortes" rows="3" class="form-input w-full text-sm"
+                          placeholder="O que se destacou positivamente...">{{ nota.pontos_fortes }}</textarea>
+            </div>
+            <div>
+                <label class="text-xs text-slate-500 mb-1 block">Pontos fracos / preocupações</label>
+                <textarea name="pontos_fracos" rows="3" class="form-input w-full text-sm"
+                          placeholder="Lacunas, dúvidas ou reservas...">{{ nota.pontos_fracos }}</textarea>
+            </div>
+        </div>
+        <div class="mb-3">
+            <label class="text-xs text-slate-500 mb-1 block">Notas gerais</label>
+            <textarea name="notas" rows="3" class="form-input w-full text-sm"
+                      placeholder="Observações adicionais sobre a entrevista...">{{ nota.notas }}</textarea>
+        </div>
+        <button type="submit" class="btn-primary" style="background:#8b5cf6;">
+            <i class="fa-solid fa-floppy-disk mr-2"></i> Guardar avaliação
+        </button>
+    </form>
+</div>
+{% endif %}
+
 <div class="grid grid-cols-2 gap-4">
     <!-- Left column -->
     <div>
@@ -211,4 +274,20 @@
         {% endif %}
     </div>
 </div>
+
+<script>
+function setStar(n) {
+    document.getElementById('pontuacao-val').value = n;
+    document.querySelectorAll('#star-rating i').forEach((star, i) => {
+        if (i < n) {
+            star.className = 'fa-solid fa-star text-xl';
+            star.style.color = '#f59e0b';
+        } else {
+            star.className = 'fa-regular fa-star text-xl';
+            star.style.color = '#cbd5e1';
+        }
+    });
+}
+document.querySelectorAll('input[type="radio"][name="pontuacao"]').forEach(r => r.remove());
+</script>
 {% endblock %}

@@ -65,7 +65,9 @@ def candidato_create(request):
 
 def candidato_detail(request, pk):
     candidato = get_object_or_404(org_candidatos(request), pk=pk)
-    return render(request, "candidatos/detail.html", {"candidato": candidato})
+    from .models import NotaEntrevista
+    nota = NotaEntrevista.objects.filter(candidato=candidato).first()
+    return render(request, "candidatos/detail.html", {"candidato": candidato, "nota": nota})
 
 
 def candidato_edit(request, pk):
@@ -261,6 +263,24 @@ def download_carta(request, pk):
     )
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+
+@require_POST
+def guardar_nota_entrevista(request, pk):
+    candidato = get_object_or_404(org_candidatos(request), pk=pk)
+    from .models import NotaEntrevista
+
+    nota, _ = NotaEntrevista.objects.get_or_create(candidato=candidato)
+    nota.data_entrevista = request.POST.get("data_entrevista") or None
+    pontuacao = request.POST.get("pontuacao", "")
+    nota.pontuacao = int(pontuacao) if pontuacao.isdigit() and 1 <= int(pontuacao) <= 5 else None
+    nota.recomendacao = request.POST.get("recomendacao", "")
+    nota.notas = request.POST.get("notas", "").strip()
+    nota.pontos_fortes = request.POST.get("pontos_fortes", "").strip()
+    nota.pontos_fracos = request.POST.get("pontos_fracos", "").strip()
+    nota.save()
+    messages.success(request, "Notas de entrevista guardadas.")
+    return redirect("candidato_detail", pk=pk)
 
 
 @require_POST
