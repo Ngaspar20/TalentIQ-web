@@ -176,8 +176,17 @@ def gerar_carta(request, pk):
     org = candidato.organisation.name if hasattr(candidato, 'organisation') and candidato.organisation else "a nossa organização"
     data_raw = request.POST.get("data_entrevista", "") or request.GET.get("data_entrevista", "")
     hora = request.POST.get("hora_entrevista", "")
+    formato = request.POST.get("formato_entrevista", "presencial")
     local = request.POST.get("local_entrevista", "")
-    parts = [p for p in [data_raw, hora, local] if p]
+    plataforma = request.POST.get("plataforma_virtual", "")
+    link = request.POST.get("link_virtual", "")
+    if formato == "virtual":
+        local_info = f"entrevista virtual via {plataforma}"
+        if link:
+            local_info += f" ({link})"
+    else:
+        local_info = local
+    parts = [p for p in [data_raw, hora, local_info] if p]
     data_entrevista = ", ".join(parts)
 
     texto = _gerar_texto_carta(tipo, nome, vaga, org, data_entrevista)

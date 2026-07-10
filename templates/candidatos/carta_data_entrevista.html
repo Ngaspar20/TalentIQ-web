@@ -16,7 +16,7 @@
 </div>
 
 <div class="section-card" style="max-width: 520px;">
-    <p class="text-sm font-semibold text-slate-700 mb-4">Indique a data e hora da entrevista para incluir na carta:</p>
+    <p class="text-sm font-semibold text-slate-700 mb-4">Indique os detalhes da entrevista para incluir na carta:</p>
 
     <form method="post" action="/candidatos/{{ candidato.pk }}/carta/?tipo={{ tipo }}&gerar=1">
         {% csrf_token %}
@@ -28,12 +28,38 @@
             <label>Hora da entrevista</label>
             <input type="time" name="hora_entrevista" class="form-input">
         </div>
-        <div class="mb-6">
-            <label>Local / formato</label>
-            <input type="text" name="local_entrevista" class="form-input"
-                   placeholder="Ex: Sala de reuniões, Piso 2 / Google Meet">
+        <div class="mb-4">
+            <label>Formato da entrevista</label>
+            <select name="formato_entrevista" class="form-input" id="formato-select" onchange="toggleFormato(this.value)">
+                <option value="presencial">Presencial</option>
+                <option value="virtual">Virtual (videochamada)</option>
+            </select>
         </div>
-        <div class="flex items-center gap-3">
+
+        <div class="mb-4" id="campo-local">
+            <label>Local</label>
+            <input type="text" name="local_entrevista" class="form-input"
+                   placeholder="Ex: Sala de reunioes, Piso 2 — Rua X, n.o 10">
+        </div>
+
+        <div id="campo-virtual" style="display:none;">
+            <div class="mb-4">
+                <label>Plataforma</label>
+                <select name="plataforma_virtual" class="form-input">
+                    <option value="Google Meet">Google Meet</option>
+                    <option value="Microsoft Teams">Microsoft Teams</option>
+                    <option value="Zoom">Zoom</option>
+                    <option value="Skype">Skype</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label>Link da reuniao (opcional)</label>
+                <input type="text" name="link_virtual" class="form-input"
+                       placeholder="Ex: https://meet.google.com/abc-defg-hij">
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3 mt-2">
             <button type="submit" class="btn-primary">
                 <i class="fa-solid fa-sparkles mr-2"></i> Gerar carta
             </button>
@@ -41,4 +67,11 @@
         </div>
     </form>
 </div>
+
+<script>
+function toggleFormato(value) {
+    document.getElementById('campo-local').style.display = value === 'presencial' ? 'block' : 'none';
+    document.getElementById('campo-virtual').style.display = value === 'virtual' ? 'block' : 'none';
+}
+</script>
 {% endblock %}
