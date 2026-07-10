@@ -273,9 +273,16 @@ A: Interesse genuino, qualidade e pertinencia das questoes colocadas."""
 
     request.session[f"perguntas_{pk}"] = texto
 
+    categorias_parsed = _parse_perguntas(texto)
+    categorias = [
+        {"nome": nome, "perguntas": rows}
+        for nome, rows in categorias_parsed
+    ]
+
     return render(request, "vagas/perguntas_preview.html", {
         "vaga": vaga,
         "texto": texto,
+        "categorias": categorias,
     })
 
 
@@ -319,9 +326,39 @@ def _parse_perguntas(texto):
 
 def download_perguntas(request, pk):
     vaga = get_object_or_404(org_vagas(request), pk=pk)
-    texto = request.POST.get("texto", "") or request.session.get(f"perguntas_{pk}", "")
 
-    if not texto:
+    # Build structured data from the editable form POST
+    cat_nomes = request.POST.getlist("cat_nome[]")
+    perguntas = request.POST.getlist("pergunta[]")
+    avaliar = request.POST.getlist("avaliar[]")
+
+    categorias = []
+    if cat_nomes and perguntas:
+        # Pair perguntas/avaliar with categories by position
+        # Each category owns the questions between its index markers
+        # We use hidden cat_index[] to map questions to categories
+        cat_indices = request.POST.getlist("cat_index[]")
+        if cat_indices:
+            buckets = {i: [] for i in range(len(cat_nomes))}
+            for i, (p, a) in enumerate(zip(perguntas, avaliar)):
+                cat_i = int(cat_indices[i]) if i < len(cat_indices) else len(cat_nomes) - 1
+                buckets[cat_i].append((p, a))
+            for i, nome in enumerate(cat_nomes):
+                categorias.append((nome, buckets.get(i, [])))
+        else:
+            # Fallback: split evenly if no index markers
+            chunk = max(1, len(perguntas) // max(len(cat_nomes), 1))
+            for i, nome in enumerate(cat_nomes):
+                rows = list(zip(perguntas[i*chunk:(i+1)*chunk], avaliar[i*chunk:(i+1)*chunk]))
+                categorias.append((nome, rows))
+    else:
+        # No POST data — fall back to session text
+        texto = request.session.get(f"perguntas_{pk}", "")
+        if not texto:
+            return redirect("vaga_detail", pk=pk)
+        categorias = _parse_perguntas(texto)
+
+    if not categorias:
         return redirect("vaga_detail", pk=pk)
 
     from docx import Document as DocxDocument
@@ -355,9 +392,6 @@ def download_perguntas(request, pk):
     sub.font.color.rgb = RGBColor(0x64, 0x74, 0x8B)
 
     doc.add_paragraph()
-
-    # Parse into structured sections
-    categorias = _parse_perguntas(texto)
 
     # Table column widths in cm (total ~17cm for A4 with 1" margins)
     COL_NUM   = Cm(0.8)
