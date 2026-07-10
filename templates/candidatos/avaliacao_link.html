@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Link de Avaliação — {{ candidato.nome }}{% endblock %}
+{% block breadcrumb %}
+<a href="/candidatos/" class="hover:text-slate-700">Candidatos</a>
+<span class="mx-2">›</span>
+<a href="/candidatos/{{ candidato.pk }}/" class="hover:text-slate-700">{{ candidato.nome }}</a>
+<span class="mx-2">›</span> Link de Avaliação
+{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h1 class="flex items-center gap-3">
+        <i class="fa-solid fa-link" style="color:#8b5cf6;"></i> Link de Avaliação gerado
+    </h1>
+    <p>{{ candidato.nome }} — {% if candidato.vaga %}{{ candidato.vaga.titulo }}{% endif %}</p>
+</div>
+
+<div class="section-card mb-4" style="max-width:640px;">
+    <p class="text-sm font-semibold text-slate-700 mb-2">Envie este link ao presidente do júri:</p>
+    <div class="flex items-center gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
+        <input type="text" id="link-field" value="{{ link }}" readonly
+               class="flex-1 bg-transparent text-sm text-slate-700 focus:outline-none font-mono">
+        <button onclick="copyLink()" class="btn-primary text-xs" style="padding:6px 14px; background:#8b5cf6;" id="copy-btn">
+            <i class="fa-solid fa-copy mr-1"></i> Copiar
+        </button>
+    </div>
+
+    <div class="mt-4 p-3 rounded-lg text-sm space-y-1" style="background:#f5f3ff; border:1px solid #ddd6fe;">
+        <p><i class="fa-solid fa-circle-info mr-2" style="color:#8b5cf6;"></i><strong>Como funciona:</strong></p>
+        <p class="text-slate-600 ml-5">1. O presidente do júri abre o link (sem precisar de conta)</p>
+        <p class="text-slate-600 ml-5">2. Preenche a avaliação da entrevista com pontuação e recomendação</p>
+        <p class="text-slate-600 ml-5">3. Submete — aparece no perfil do candidato para confirmação</p>
+        <p class="text-slate-600 ml-5">4. Ao confirmar, o candidato avança automaticamente no pipeline</p>
+    </div>
+</div>
+
+<a href="/candidatos/{{ candidato.pk }}/" class="btn-secondary">
+    <i class="fa-solid fa-arrow-left mr-1"></i> Voltar ao candidato
+</a>
+
+<script>
+function copyLink() {
+    navigator.clipboard.writeText(document.getElementById('link-field').value).then(() => {
+        const btn = document.getElementById('copy-btn');
+        btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Copiado!';
+        btn.style.background = '#16a34a';
+        setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-copy mr-1"></i> Copiar'; btn.style.background = '#8b5cf6'; }, 2000);
+    });
+}
+</script>
+{% endblock %}

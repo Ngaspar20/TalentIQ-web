@@ -59,6 +59,37 @@ class Candidato(models.Model):
         return "baixo"
 
 
+class AvaliacaoSession(models.Model):
+    ESTADO_PENDENTE = "pendente"
+    ESTADO_SUBMETIDA = "submetida"
+    ESTADO_CONFIRMADA = "confirmada"
+    ESTADO_CHOICES = [
+        (ESTADO_PENDENTE, "Pendente"),
+        (ESTADO_SUBMETIDA, "Submetida pelo Júri"),
+        (ESTADO_CONFIRMADA, "Confirmada por HR"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    candidato = models.ForeignKey("Candidato", on_delete=models.CASCADE, related_name="avaliacao_sessions")
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default=ESTADO_PENDENTE)
+    pontuacao = models.PositiveSmallIntegerField(null=True, blank=True)
+    recomendacao = models.CharField(max_length=20, blank=True)
+    notas = models.TextField(blank=True)
+    pontos_fortes = models.TextField(blank=True)
+    pontos_fracos = models.TextField(blank=True)
+    data_entrevista = models.DateField(null=True, blank=True)
+    chair_email = models.EmailField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Avaliação {self.candidato.nome} — {self.get_estado_display()}"
+
+
 class NotaEntrevista(models.Model):
     RECOMENDACAO_CHOICES = [
         ("recomendado", "Recomendado"),

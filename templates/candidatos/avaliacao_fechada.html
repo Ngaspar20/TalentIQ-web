@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avaliação Fechada</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body style="background:#f8fafc; font-family:system-ui, sans-serif;">
+<div style="max-width:520px; margin:6rem auto; text-align:center; padding:2rem;">
+    <div style="background:white; border-radius:12px; border:1px solid #e2e8f0; padding:2.5rem;">
+        <i class="fa-solid fa-lock" style="color:#94a3b8; font-size:3rem; margin-bottom:1rem; display:block;"></i>
+        <h1 style="font-size:1.3rem; font-weight:700; color:#1e293b; margin-bottom:0.5rem;">Avaliação já confirmada</h1>
+        <p style="color:#64748b; font-size:0.9rem;">
+            A avaliação de <strong>{{ session.candidato.nome }}</strong> já foi confirmada pelos Recursos Humanos e não pode ser alterada.
+        </p>
+    </div>
+</div>
+</body>
+</html>

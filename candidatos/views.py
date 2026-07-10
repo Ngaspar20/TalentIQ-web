@@ -65,9 +65,14 @@ def candidato_create(request):
 
 def candidato_detail(request, pk):
     candidato = get_object_or_404(org_candidatos(request), pk=pk)
-    from .models import NotaEntrevista
+    from .models import NotaEntrevista, AvaliacaoSession
     nota = NotaEntrevista.objects.filter(candidato=candidato).first()
-    return render(request, "candidatos/detail.html", {"candidato": candidato, "nota": nota})
+    avaliacao_session = candidato.avaliacao_sessions.order_by("-created_at").first()
+    return render(request, "candidatos/detail.html", {
+        "candidato": candidato,
+        "nota": nota,
+        "avaliacao_session": avaliacao_session,
+    })
 
 
 def candidato_edit(request, pk):
@@ -263,6 +268,79 @@ def download_carta(request, pk):
     )
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+
+def enviar_avaliacao_juri(request, pk):
+    candidato = get_object_or_404(org_candidatos(request), pk=pk)
+    if request.method != "POST":
+        return redirect("candidato_detail", pk=pk)
+    from .models import AvaliacaoSession
+    chair_email = request.POST.get("chair_email", "").strip()
+    session = AvaliacaoSession.objects.create(candidato=candidato, chair_email=chair_email)
+    link = request.build_absolute_uri(f"/candidatos/avaliacao/{session.token}/")
+    return render(request, "candidatos/avaliacao_link.html", {
+        "candidato": candidato,
+        "session": session,
+        "link": link,
+    })
+
+
+def avaliacao_juri_view(request, token):
+    from .models import AvaliacaoSession
+    session = get_object_or_404(AvaliacaoSession, token=token)
+    if session.estado == AvaliacaoSession.ESTADO_CONFIRMADA:
+        return render(request, "candidatos/avaliacao_fechada.html", {"session": session})
+    if request.method == "POST":
+        session.data_entrevista = request.POST.get("data_entrevista") or None
+        p = request.POST.get("pontuacao", "")
+        session.pontuacao = int(p) if p.isdigit() and 1 <= int(p) <= 5 else None
+        session.recomendacao = request.POST.get("recomendacao", "")
+        session.pontos_fortes = request.POST.get("pontos_fortes", "").strip()
+        session.pontos_fracos = request.POST.get("pontos_fracos", "").strip()
+        session.notas = request.POST.get("notas", "").strip()
+        session.estado = AvaliacaoSession.ESTADO_SUBMETIDA
+        session.save()
+        return render(request, "candidatos/avaliacao_obrigado.html", {"session": session})
+    return render(request, "candidatos/avaliacao_juri.html", {
+        "session": session,
+        "candidato": session.candidato,
+    })
+
+
+def avaliacao_confirmar(request, pk, session_id):
+    candidato = get_object_or_404(org_candidatos(request), pk=pk)
+    from .models import AvaliacaoSession
+    session = get_object_or_404(AvaliacaoSession, pk=session_id, candidato=candidato)
+    if request.method != "POST":
+        return redirect("candidato_detail", pk=pk)
+
+    session.estado = AvaliacaoSession.ESTADO_CONFIRMADA
+    session.save()
+
+    # Copy evaluation to NotaEntrevista for persistent display
+    from .models import NotaEntrevista
+    nota, _ = NotaEntrevista.objects.get_or_create(candidato=candidato)
+    nota.data_entrevista = session.data_entrevista
+    nota.pontuacao = session.pontuacao
+    nota.recomendacao = session.recomendacao
+    nota.pontos_fortes = session.pontos_fortes
+    nota.pontos_fracos = session.pontos_fracos
+    nota.notas = session.notas
+    nota.save()
+
+    # Auto-transition candidate stage
+    rec = session.recomendacao
+    if rec == "recomendado":
+        candidato.etapa = "Proposta"
+        messages.success(request, f"{candidato.nome} avançou para Proposta. Carta de oferta disponível.")
+    elif rec == "nao_recomendado":
+        candidato.etapa = "Rejeitado"
+        messages.warning(request, f"{candidato.nome} marcado como Rejeitado. Carta de rejeição disponível.")
+    else:
+        messages.info(request, f"Avaliação confirmada. {candidato.nome} mantém-se em avaliação.")
+    candidato.save()
+
+    return redirect("candidato_detail", pk=pk)
 
 
 @require_POST

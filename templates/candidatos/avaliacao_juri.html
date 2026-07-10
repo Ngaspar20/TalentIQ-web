@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avaliação de Entrevista — {{ candidato.nome }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        body { font-family: system-ui, sans-serif; background: #f8fafc; }
+        .form-input { width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 12px; font-size: 0.875rem; }
+        .form-input:focus { outline: none; border-color: #8b5cf6; box-shadow: 0 0 0 2px rgba(139,92,246,0.15); }
+        .btn-primary { background: #8b5cf6; color: white; padding: 10px 24px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; border: none; cursor: pointer; }
+        .btn-primary:hover { background: #7c3aed; }
+        .rec-card { border: 2px solid #e2e8f0; border-radius: 10px; padding: 1rem; cursor: pointer; text-align: center; transition: all 0.15s; }
+        .rec-card:hover { border-color: #8b5cf6; background: #f5f3ff; }
+        .rec-card.selected-rec { border-color: #8b5cf6; background: #f5f3ff; }
+        .rec-card.selected-recomendado { border-color: #16a34a; background: #f0fdf4; }
+        .rec-card.selected-a_considerar { border-color: #d97706; background: #fffbeb; }
+        .rec-card.selected-nao_recomendado { border-color: #dc2626; background: #fef2f2; }
+    </style>
+</head>
+<body>
+<div style="max-width: 640px; margin: 0 auto; padding: 2rem 1rem;">
+
+    <div style="margin-bottom: 1.5rem;">
+        <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.25rem;">
+            <i class="fa-solid fa-star" style="color:#8b5cf6; font-size:1.4rem;"></i>
+            <h1 style="font-size:1.3rem; font-weight:700; color:#1e293b; margin:0;">Avaliação de Entrevista</h1>
+        </div>
+        <p style="color:#64748b; font-size:0.9rem; margin:0 0 0 2.1rem;">
+            {{ candidato.nome }}{% if candidato.vaga %} — {{ candidato.vaga.titulo }}{% endif %}
+        </p>
+    </div>
+
+    <div style="background:#f5f3ff; border:1px solid #ddd6fe; border-left:4px solid #8b5cf6; border-radius:8px; padding:0.75rem 1rem; margin-bottom:1.5rem; font-size:0.85rem; color:#5b21b6;">
+        <i class="fa-solid fa-circle-info mr-2"></i>
+        Preencha a avaliação da entrevista. Após submeter, os Recursos Humanos irão confirmar e o candidato avançará no processo.
+    </div>
+
+    <form method="post" id="form-avaliacao">
+        {% csrf_token %}
+
+        <!-- Date -->
+        <div style="background:white; border:1px solid #e2e8f0; border-radius:10px; padding:1rem; margin-bottom:1rem;">
+            <label style="font-size:0.8rem; font-weight:600; color:#475569; display:block; margin-bottom:0.5rem;">Data da entrevista</label>
+            <input type="date" name="data_entrevista" class="form-input" style="max-width:200px;">
+        </div>
+
+        <!-- Star rating -->
+        <div style="background:white; border:1px solid #e2e8f0; border-radius:10px; padding:1rem; margin-bottom:1rem;">
+            <label style="font-size:0.8rem; font-weight:600; color:#475569; display:block; margin-bottom:0.75rem;">Pontuação global do candidato</label>
+            <div style="display:flex; gap:0.75rem; align-items:center; margin-bottom:0.5rem;">
+                {% for i in "12345" %}
+                <i class="fa-regular fa-star" style="font-size:2rem; color:#cbd5e1; cursor:pointer;" onclick="setStar({{ forloop.counter }})" id="star-{{ forloop.counter }}"></i>
+                {% endfor %}
+                <span id="star-label" style="font-size:0.85rem; color:#94a3b8; margin-left:0.5rem;">Clique para classificar</span>
+            </div>
+            <input type="hidden" name="pontuacao" id="pontuacao-val">
+            <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:#94a3b8; max-width:180px;">
+                <span>Muito fraco</span><span>Excelente</span>
+            </div>
+        </div>
+
+        <!-- Recommendation -->
+        <div style="background:white; border:1px solid #e2e8f0; border-radius:10px; padding:1rem; margin-bottom:1rem;">
+            <label style="font-size:0.8rem; font-weight:600; color:#475569; display:block; margin-bottom:0.75rem;">Recomendação</label>
+            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:0.75rem;">
+                <div class="rec-card" onclick="setRec('recomendado', this)" id="rec-recomendado">
+                    <div style="font-size:1.5rem; margin-bottom:0.25rem;">✅</div>
+                    <div style="font-size:0.8rem; font-weight:600; color:#15803d;">Recomendado</div>
+                    <div style="font-size:0.7rem; color:#64748b; margin-top:0.25rem;">Avançar para proposta</div>
+                </div>
+                <div class="rec-card" onclick="setRec('a_considerar', this)" id="rec-a_considerar">
+                    <div style="font-size:1.5rem; margin-bottom:0.25rem;">⚠️</div>
+                    <div style="font-size:0.8rem; font-weight:600; color:#d97706;">A considerar</div>
+                    <div style="font-size:0.7rem; color:#64748b; margin-top:0.25rem;">Manter em avaliação</div>
+                </div>
+                <div class="rec-card" onclick="setRec('nao_recomendado', this)" id="rec-nao_recomendado">
+                    <div style="font-size:1.5rem; margin-bottom:0.25rem;">❌</div>
+                    <div style="font-size:0.8rem; font-weight:600; color:#dc2626;">Não recomendado</div>
+                    <div style="font-size:0.7rem; color:#64748b; margin-top:0.25rem;">Encerrar candidatura</div>
+                </div>
+            </div>
+            <input type="hidden" name="recomendacao" id="rec-val">
+        </div>
+
+        <!-- Strengths & weaknesses -->
+        <div style="background:white; border:1px solid #e2e8f0; border-radius:10px; padding:1rem; margin-bottom:1rem;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                <div>
+                    <label style="font-size:0.8rem; font-weight:600; color:#15803d; display:block; margin-bottom:0.5rem;">
+                        <i class="fa-solid fa-thumbs-up mr-1"></i> Pontos fortes
+                    </label>
+                    <textarea name="pontos_fortes" rows="4" class="form-input"
+                              placeholder="O que se destacou positivamente..."></textarea>
+                </div>
+                <div>
+                    <label style="font-size:0.8rem; font-weight:600; color:#d97706; display:block; margin-bottom:0.5rem;">
+                        <i class="fa-solid fa-thumbs-down mr-1"></i> Pontos fracos
+                    </label>
+                    <textarea name="pontos_fracos" rows="4" class="form-input"
+                              placeholder="Lacunas, dúvidas ou reservas..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- General notes -->
+        <div style="background:white; border:1px solid #e2e8f0; border-radius:10px; padding:1rem; margin-bottom:1.5rem;">
+            <label style="font-size:0.8rem; font-weight:600; color:#475569; display:block; margin-bottom:0.5rem;">Notas gerais</label>
+            <textarea name="notas" rows="3" class="form-input" placeholder="Observações adicionais sobre a entrevista..."></textarea>
+        </div>
+
+        <button type="submit" class="btn-primary" id="submit-btn" disabled style="opacity:0.5; width:100%;">
+            <i class="fa-solid fa-paper-plane mr-2"></i> Submeter avaliação
+        </button>
+        <p style="text-align:center; font-size:0.75rem; color:#94a3b8; margin-top:0.75rem;">
+            Seleccione uma recomendação para activar o envio
+        </p>
+    </form>
+</div>
+
+<script>
+const starLabels = ['', 'Muito fraco', 'Fraco', 'Adequado', 'Bom', 'Excelente'];
+
+function setStar(n) {
+    document.getElementById('pontuacao-val').value = n;
+    for (let i = 1; i <= 5; i++) {
+        const s = document.getElementById('star-' + i);
+        s.className = i <= n ? 'fa-solid fa-star' : 'fa-regular fa-star';
+        s.style.color = i <= n ? '#f59e0b' : '#cbd5e1';
+        s.style.fontSize = '2rem';
+        s.style.cursor = 'pointer';
+    }
+    document.getElementById('star-label').textContent = starLabels[n];
+    document.getElementById('star-label').style.color = '#f59e0b';
+}
+
+function setRec(val, el) {
+    document.getElementById('rec-val').value = val;
+    document.querySelectorAll('.rec-card').forEach(c => {
+        c.className = 'rec-card';
+    });
+    el.className = `rec-card selected-${val}`;
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    document.querySelector('p[style*="Seleccione"]').style.display = 'none';
+}
+</script>
+</body>
+</html>
