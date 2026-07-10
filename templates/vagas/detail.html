@@ -12,6 +12,9 @@
         <p>{% if vaga.organizacao %}{{ vaga.organizacao }}{% endif %}{% if vaga.local %} · {{ vaga.local }}{% endif %}</p>
     </div>
     <div class="flex gap-2">
+        <a href="/vagas/{{ vaga.pk }}/perguntas-entrevista/" class="btn-primary" style="background:#f59e0b;">
+            <i class="fa-solid fa-clipboard-question mr-1"></i> Guião de Entrevista
+        </a>
         <a href="/vagas/{{ vaga.pk }}/editar/" class="btn-secondary"><i class="fa-solid fa-pen"></i> Editar</a>
         <a href="/vagas/" class="btn-secondary"><i class="fa-solid fa-arrow-left"></i> Voltar</a>
     </div>

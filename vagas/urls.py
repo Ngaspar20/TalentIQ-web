@@ -9,4 +9,6 @@ urlpatterns = [
     path("<uuid:pk>/eliminar/", views.vaga_delete, name="vaga_delete"),
     path("parse-tor/", views.parse_tor_view, name="parse_tor"),
     path("analyse-tor/", views.analyse_tor_view, name="analyse_tor"),
+    path("<uuid:pk>/perguntas-entrevista/", views.gerar_perguntas_entrevista, name="gerar_perguntas"),
+    path("<uuid:pk>/perguntas-entrevista/download/", views.download_perguntas, name="download_perguntas"),
 ]

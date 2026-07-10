@@ -159,3 +159,155 @@ def analyse_tor_view(request):
         "metodo": extraido.get("metodo_extracao", "IA"),
     })
 
+
+def gerar_perguntas_entrevista(request, pk):
+    vaga = get_object_or_404(org_vagas(request), pk=pk)
+
+    competencias = ", ".join(vaga.competencias_requeridas) if vaga.competencias_requeridas else "nao especificadas"
+    responsabilidades = "; ".join(vaga.responsabilidades) if vaga.responsabilidades else "nao especificadas"
+    descricao = vaga.descricao or ""
+
+    from core.llm import get_llm_response
+
+    prompt = f"""Gera um guiao estruturado de perguntas de entrevista em portugues europeu para o cargo de {vaga.titulo}.
+
+Informacao da vaga:
+- Cargo: {vaga.titulo}
+- Departamento: {vaga.departamento}
+- Formacao minima: {vaga.nivel_formacao or 'nao especificada'}
+- Experiencia minima: {vaga.anos_experiencia_min} anos
+- Competencias requeridas: {competencias}
+- Responsabilidades: {responsabilidades}
+- Descricao: {descricao[:500] if descricao else 'nao disponivel'}
+
+Organiza as perguntas nas seguintes categorias:
+1. Apresentacao e motivacao (3 perguntas)
+2. Experiencia e historial profissional (4 perguntas)
+3. Competencias tecnicas especificas ao cargo (4 perguntas)
+4. Competencias comportamentais e trabalho em equipa (3 perguntas)
+5. Situacoes hipoteticas e resolucao de problemas (3 perguntas)
+6. Questoes finais do candidato (mencionar que o candidato pode fazer perguntas)
+
+Para cada pergunta inclui uma nota breve sobre o que avaliar na resposta.
+Usa um formato claro e profissional adequado para imprimir e usar na sala de entrevista."""
+
+    system = "Es um especialista em recursos humanos e seleccao de pessoal. Escreve em portugues europeu formal."
+    texto = get_llm_response(prompt, system)
+
+    if not texto:
+        linhas_comp = "\n".join([f"- Demonstre conhecimento em {c}" for c in vaga.competencias_requeridas[:4]]) if vaga.competencias_requeridas else "- Competencias relevantes para o cargo"
+        texto = f"""GUIAO DE PERGUNTAS DE ENTREVISTA
+Cargo: {vaga.titulo}
+Departamento: {vaga.departamento}
+
+1. APRESENTACAO E MOTIVACAO
+   a) Apresente-se brevemente e descreva o seu percurso profissional.
+      (Avaliar: capacidade de sintese, clareza de comunicacao)
+   b) O que o/a motivou a candidatar-se a este cargo na nossa organizacao?
+      (Avaliar: conhecimento da organizacao, motivacao genuina)
+   c) Onde se ve profissionalmente daqui a 5 anos?
+      (Avaliar: ambicao, alinhamento com a organizacao)
+
+2. EXPERIENCIA E HISTORIAL PROFISSIONAL
+   a) Descreva a sua experiencia mais relevante para este cargo.
+      (Avaliar: alinhamento com os requisitos da vaga)
+   b) Qual foi o maior desafio profissional que enfrentou e como o resolveu?
+      (Avaliar: capacidade de resolucao de problemas)
+   c) Descreva um projecto do qual se orgulha particularmente.
+      (Avaliar: realizacoes concretas, impacto)
+   d) Porque saiu ou pretende sair do seu emprego actual?
+      (Avaliar: maturidade profissional, honestidade)
+
+3. COMPETENCIAS TECNICAS
+{linhas_comp}
+   a) Como avalia o seu nivel de competencia nas areas requeridas para este cargo?
+      (Avaliar: auto-consciencia, honestidade)
+   b) Que ferramentas e metodologias utiliza regularmente no seu trabalho?
+      (Avaliar: conhecimento pratico)
+
+4. COMPETENCIAS COMPORTAMENTAIS
+   a) Como gere situacoes de conflito com colegas ou superiores?
+      (Avaliar: inteligencia emocional, comunicacao)
+   b) Descreva uma situacao em que teve de trabalhar sob pressao.
+      (Avaliar: resistencia ao stress, organizacao)
+   c) Como prefere receber feedback sobre o seu trabalho?
+      (Avaliar: abertura a aprendizagem)
+
+5. SITUACOES HIPOTETICAS
+   a) Se tivesse de gerir varias tarefas urgentes em simultaneo, como procederia?
+      (Avaliar: gestao de prioridades)
+   b) Se discordasse de uma decisao do seu superior, como agiria?
+      (Avaliar: assertividade, respeito hierarquico)
+   c) Como se adaptaria rapidamente a uma mudanca inesperada de objectivos?
+      (Avaliar: flexibilidade, adaptabilidade)
+
+6. QUESTOES DO CANDIDATO
+   Dar espaco ao candidato para colocar questoes sobre o cargo, a organizacao e as condicoes de trabalho.
+   (Avaliar: interesse genuino, qualidade das questoes)
+
+---
+Entrevistadores: ______________________
+Data: ______________________
+Candidato/a: {vaga.titulo}"""
+
+    request.session[f"perguntas_{pk}"] = texto
+
+    return render(request, "vagas/perguntas_preview.html", {
+        "vaga": vaga,
+        "texto": texto,
+    })
+
+
+def download_perguntas(request, pk):
+    vaga = get_object_or_404(org_vagas(request), pk=pk)
+    texto = request.POST.get("texto", "") or request.session.get(f"perguntas_{pk}", "")
+
+    if not texto:
+        return redirect("vaga_detail", pk=pk)
+
+    from docx import Document as DocxDocument
+    from docx.shared import Pt, Inches
+    import io
+    from datetime import date
+
+    doc = DocxDocument()
+    section = doc.sections[0]
+    section.top_margin = Inches(1)
+    section.bottom_margin = Inches(1)
+    section.left_margin = Inches(1.2)
+    section.right_margin = Inches(1.2)
+
+    org_name = vaga.organisation.name if vaga.organisation else "Organizacao"
+
+    p = doc.add_paragraph()
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run(f"GUIAO DE ENTREVISTA — {vaga.titulo.upper()}")
+    run.bold = True
+    run.font.size = Pt(13)
+
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p.add_run(f"{org_name} | {date.today().strftime('%d/%m/%Y')}").font.size = Pt(10)
+
+    doc.add_paragraph()
+
+    for line in texto.split('\n'):
+        p = doc.add_paragraph(line if line.strip() else "")
+        p.paragraph_format.space_after = Pt(3)
+        for run in p.runs:
+            run.font.size = Pt(10)
+
+    buffer = io.BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+
+    safe_titulo = vaga.titulo.replace(' ', '_')
+    filename = f"perguntas_entrevista_{safe_titulo}.docx"
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+

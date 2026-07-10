@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Guiao de Entrevista — {{ vaga.titulo }}{% endblock %}
+{% block breadcrumb %}
+<a href="/vagas/" class="hover:text-slate-700">Vagas</a>
+<span class="mx-2">›</span>
+<a href="/vagas/{{ vaga.pk }}/" class="hover:text-slate-700">{{ vaga.titulo }}</a>
+<span class="mx-2">›</span> Guiao de Entrevista
+{% endblock %}
+{% block content %}
+
+<div class="page-header flex items-center justify-between">
+    <div>
+        <h1 class="flex items-center gap-3">
+            <i class="fa-solid fa-clipboard-question" style="color:#f59e0b;"></i> Guiao de Perguntas de Entrevista
+        </h1>
+        <p>{{ vaga.titulo }} — {{ vaga.departamento }}</p>
+    </div>
+    <a href="/vagas/{{ vaga.pk }}/" class="btn-secondary">
+        <i class="fa-solid fa-arrow-left"></i> Voltar
+    </a>
+</div>
+
+<div class="section-card mb-4" style="border-left: 4px solid #f59e0b;">
+    <div class="flex items-center gap-2 mb-1">
+        <i class="fa-solid fa-circle-info" style="color:#f59e0b;"></i>
+        <span class="text-sm font-semibold text-slate-700">Reveja e edite o guiao antes de fazer o download</span>
+    </div>
+    <p class="text-sm text-slate-500">O guiao foi gerado automaticamente com base nos requisitos da vaga. Pode editar directamente antes de transferir.</p>
+</div>
+
+<form method="post" action="/vagas/{{ vaga.pk }}/perguntas-entrevista/download/">
+    {% csrf_token %}
+    <div class="section-card mb-4">
+        <textarea name="texto" rows="30" class="form-input w-full font-mono text-sm"
+                  style="line-height: 1.7; resize: vertical;">{{ texto }}</textarea>
+    </div>
+    <div class="flex items-center gap-3">
+        <button type="submit" class="btn-primary" style="background:#f59e0b;">
+            <i class="fa-solid fa-file-word mr-2"></i> Transferir Guiao em Word
+        </button>
+        <a href="/vagas/{{ vaga.pk }}/" class="btn-secondary">Cancelar</a>
+        <span class="ml-auto text-xs text-slate-400">
+            <i class="fa-solid fa-sparkles mr-1" style="color:#f59e0b;"></i> Gerado por IA — reveja sempre antes de usar
+        </span>
+    </div>
+</form>
+
+{% endblock %}
