@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guião de Entrevista — {{ vaga.titulo }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        body { font-family: system-ui, sans-serif; background: #f8fafc; }
+        .form-input { width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 12px; font-size: 0.875rem; }
+        .form-input:focus { outline: none; border-color: #f59e0b; box-shadow: 0 0 0 2px rgba(245,158,11,0.15); }
+        .btn-primary { background: #f59e0b; color: white; padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 0.875rem; border: none; cursor: pointer; }
+        .btn-primary:hover { background: #d97706; }
+        .btn-secondary { background: white; color: #475569; padding: 8px 16px; border-radius: 8px; font-weight: 500; font-size: 0.875rem; border: 1px solid #e2e8f0; cursor: pointer; text-decoration: none; display: inline-block; }
+    </style>
+</head>
+<body>
+<div style="max-width: 780px; margin: 0 auto; padding: 2rem 1rem;">
+
+    <div style="margin-bottom: 1.5rem;">
+        <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.25rem;">
+            <i class="fa-solid fa-clipboard-question" style="color:#f59e0b; font-size:1.4rem;"></i>
+            <h1 style="font-size:1.3rem; font-weight:700; color:#1e293b; margin:0;">Guião de Perguntas de Entrevista</h1>
+        </div>
+        <p style="color:#64748b; font-size:0.9rem; margin:0 0 0 2.1rem;">{{ vaga.titulo }}{% if vaga.departamento %} — {{ vaga.departamento }}{% endif %}</p>
+    </div>
+
+    <div style="background:#fffbeb; border:1px solid #fde68a; border-left:4px solid #f59e0b; border-radius:8px; padding:0.75rem 1rem; margin-bottom:1.5rem; font-size:0.85rem; color:#92400e;">
+        <i class="fa-solid fa-circle-info mr-2"></i>
+        Edite as perguntas abaixo conforme necessário. Pode adicionar, remover ou alterar qualquer pergunta. Quando terminar, clique em <strong>Submeter para aprovação</strong>.
+    </div>
+
+    <form method="post" id="form-juri">
+        {% csrf_token %}
+        <div id="categorias-container">
+        {% for cat in categorias %}
+        <div style="background:white; border:1px solid #e2e8f0; border-radius:10px; padding:1rem; margin-bottom:1rem;" class="categoria-block">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem; gap:1rem;">
+                <input type="text" name="cat_nome[]" value="{{ cat.nome }}"
+                       style="font-weight:700; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.05em; color:#374151; background:transparent; border:none; border-bottom:1px solid #e2e8f0; padding-bottom:4px; flex:1; outline:none;">
+                <button type="button" onclick="addPergunta(this)"
+                        style="background:#f1f5f9; color:#475569; border:1px solid #e2e8f0; border-radius:6px; padding:4px 10px; font-size:0.75rem; cursor:pointer; white-space:nowrap;">
+                    <i class="fa-solid fa-plus mr-1"></i> Adicionar pergunta
+                </button>
+            </div>
+            <div class="perguntas-list" style="display:flex; flex-direction:column; gap:0.5rem;">
+            {% for p, a in cat.perguntas %}
+            <div class="pergunta-row" style="display:flex; align-items:flex-start; gap:0.5rem; background:#f8fafc; border-radius:6px; padding:0.5rem;">
+                <div style="flex:1; display:flex; flex-direction:column; gap:4px;">
+                    <input type="hidden" name="cat_index[]" value="{{ forloop.parentloop.counter0 }}">
+                    <input type="text" name="pergunta[]" value="{{ p }}" placeholder="Pergunta..." class="form-input">
+                    <input type="text" name="avaliar[]" value="{{ a }}" placeholder="O que avaliar..." class="form-input" style="background:#f1f5f9; font-size:0.8rem; color:#64748b;">
+                </div>
+                <button type="button" onclick="removePergunta(this)"
+                        style="margin-top:4px; background:none; border:none; color:#cbd5e1; cursor:pointer; padding:4px;" title="Remover">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            </div>
+            {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+        </div>
+
+        <div style="display:flex; align-items:center; gap:0.75rem; margin-top:1.5rem; padding-top:1rem; border-top:1px solid #e2e8f0;">
+            <button type="submit" class="btn-primary">
+                <i class="fa-solid fa-paper-plane mr-2"></i> Submeter para aprovação
+            </button>
+            <button type="button" onclick="addCategoria()" class="btn-secondary">
+                <i class="fa-solid fa-folder-plus mr-1"></i> Nova categoria
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+function getCatIndex(btn) {
+    const cats = Array.from(document.querySelectorAll('.categoria-block'));
+    return cats.indexOf(btn.closest('.categoria-block'));
+}
+
+function addPergunta(btn) {
+    const catIndex = getCatIndex(btn);
+    const list = btn.closest('.categoria-block').querySelector('.perguntas-list');
+    const row = document.createElement('div');
+    row.className = 'pergunta-row';
+    row.style = 'display:flex; align-items:flex-start; gap:0.5rem; background:#f8fafc; border-radius:6px; padding:0.5rem;';
+    row.innerHTML = `
+        <div style="flex:1; display:flex; flex-direction:column; gap:4px;">
+            <input type="hidden" name="cat_index[]" value="${catIndex}">
+            <input type="text" name="pergunta[]" value="" placeholder="Pergunta..." class="form-input">
+            <input type="text" name="avaliar[]" value="" placeholder="O que avaliar..." class="form-input" style="background:#f1f5f9; font-size:0.8rem; color:#64748b;">
+        </div>
+        <button type="button" onclick="removePergunta(this)"
+                style="margin-top:4px; background:none; border:none; color:#cbd5e1; cursor:pointer; padding:4px;">
+            <i class="fa-solid fa-trash-can"></i>
+        </button>`;
+    list.appendChild(row);
+    row.querySelector('input[name="pergunta[]"]').focus();
+}
+
+function removePergunta(btn) {
+    btn.closest('.pergunta-row').remove();
+}
+
+function addCategoria() {
+    const container = document.getElementById('categorias-container');
+    const catIndex = container.querySelectorAll('.categoria-block').length;
+    const div = document.createElement('div');
+    div.className = 'categoria-block';
+    div.style = 'background:white; border:1px solid #e2e8f0; border-radius:10px; padding:1rem; margin-bottom:1rem;';
+    div.innerHTML = `
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem; gap:1rem;">
+            <input type="text" name="cat_nome[]" value="NOVA CATEGORIA"
+                   style="font-weight:700; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.05em; color:#374151; background:transparent; border:none; border-bottom:1px solid #e2e8f0; padding-bottom:4px; flex:1; outline:none;">
+            <button type="button" onclick="addPergunta(this)"
+                    style="background:#f1f5f9; color:#475569; border:1px solid #e2e8f0; border-radius:6px; padding:4px 10px; font-size:0.75rem; cursor:pointer; white-space:nowrap;">
+                <i class="fa-solid fa-plus mr-1"></i> Adicionar pergunta
+            </button>
+        </div>
+        <div class="perguntas-list" style="display:flex; flex-direction:column; gap:0.5rem;"></div>`;
+    container.appendChild(div);
+    div.querySelector('input[name="cat_nome[]"]').select();
+}
+</script>
+</body>
+</html>

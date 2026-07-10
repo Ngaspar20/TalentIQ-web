@@ -59,7 +59,9 @@ def vaga_create(request):
 
 def vaga_detail(request, pk):
     vaga = get_object_or_404(org_vagas(request), pk=pk)
-    return render(request, "vagas/detail.html", {"vaga": vaga})
+    from .models import InterviewGuideSession
+    guiao_session = vaga.guiao_sessions.order_by("-created_at").first()
+    return render(request, "vagas/detail.html", {"vaga": vaga, "guiao_session": guiao_session})
 
 
 def vaga_edit(request, pk):
@@ -286,6 +288,245 @@ A: Interesse genuino, qualidade e pertinencia das questoes colocadas."""
     })
 
 
+def enviar_guiao_juri(request, pk):
+    """HR generates a tokenized link and sends to committee chair."""
+    vaga = get_object_or_404(org_vagas(request), pk=pk)
+
+    if request.method != "POST":
+        return redirect("vaga_detail", pk=pk)
+
+    from core.llm import get_llm_response
+
+    competencias = ", ".join(vaga.competencias_requeridas) if vaga.competencias_requeridas else "nao especificadas"
+    responsabilidades = "; ".join(vaga.responsabilidades) if vaga.responsabilidades else "nao especificadas"
+    descricao = vaga.descricao or ""
+
+    prompt = f"""Gera um guiao estruturado de perguntas de entrevista em portugues europeu para o cargo de {vaga.titulo}.
+
+Informacao da vaga:
+- Cargo: {vaga.titulo}
+- Departamento: {vaga.departamento}
+- Formacao minima: {vaga.nivel_formacao or 'nao especificada'}
+- Experiencia minima: {vaga.anos_experiencia_min} anos
+- Competencias requeridas: {competencias}
+- Responsabilidades: {responsabilidades}
+- Descricao: {descricao[:500] if descricao else 'nao disponivel'}
+
+TOTAL DE PERGUNTAS: exactamente 10, distribuidas assim:
+
+## APRESENTACAO E MOTIVACAO
+P: [pergunta completa]
+A: [o que avaliar na resposta, em 1 frase]
+P: [pergunta completa]
+A: [o que avaliar na resposta, em 1 frase]
+
+## EXPERIENCIA E HISTORIAL PROFISSIONAL
+P: [pergunta completa]
+A: [o que avaliar]
+P: [pergunta completa]
+A: [o que avaliar]
+
+## COMPETENCIAS TECNICAS
+P: [pergunta tecnica especifica ao cargo de {vaga.titulo}]
+A: [o que avaliar]
+P: [pergunta tecnica especifica ao cargo de {vaga.titulo}]
+A: [o que avaliar]
+P: [pergunta tecnica especifica ao cargo de {vaga.titulo}]
+A: [o que avaliar]
+
+## COMPETENCIAS COMPORTAMENTAIS
+P: [pergunta comportamental]
+A: [o que avaliar]
+P: [pergunta comportamental]
+A: [o que avaliar]
+
+## SITUACOES HIPOTETICAS
+P: [situacao hipotetica relevante para o cargo]
+A: [o que avaliar]
+
+## QUESTOES DO CANDIDATO
+P: Dar espaco ao/a candidato/a para colocar questoes sobre o cargo e a organizacao.
+A: Interesse genuino, qualidade e pertinencia das questoes colocadas."""
+
+    system = "Es um especialista em recursos humanos e seleccao de pessoal. Escreve em portugues europeu formal. Segue o formato pedido rigorosamente."
+    texto = get_llm_response(prompt, system) or _fallback_texto(vaga)
+
+    chair_email = request.POST.get("chair_email", "").strip()
+
+    from .models import InterviewGuideSession
+    session = InterviewGuideSession.objects.create(
+        vaga=vaga,
+        texto_gerado=texto,
+        chair_email=chair_email,
+    )
+
+    link = request.build_absolute_uri(f"/vagas/juri/{session.token}/")
+    messages.success(request, f"Link gerado com sucesso.")
+    return render(request, "vagas/guiao_link.html", {
+        "vaga": vaga,
+        "session": session,
+        "link": link,
+    })
+
+
+def _fallback_texto(vaga):
+    if vaga.competencias_requeridas:
+        c1 = vaga.competencias_requeridas[0]
+        c2 = vaga.competencias_requeridas[1] if len(vaga.competencias_requeridas) > 1 else c1
+        comp = (
+            f"P: Descreva a sua experiencia com {c1} e como a aplicou em contexto profissional.\n"
+            f"A: Profundidade de conhecimento, exemplos concretos, relevancia para o cargo.\n"
+            f"P: Como utilizaria {c2} nas responsabilidades diarias deste cargo?\n"
+            f"A: Aplicacao pratica, raciocinio tecnico, alinhamento com a funcao.\n"
+            f"P: Como se mantém actualizado/a nas tendencias da sua area profissional?\n"
+            f"A: Curiosidade intelectual, iniciativa de aprendizagem continua.\n"
+        )
+    else:
+        comp = (
+            "P: Quais sao as suas principais competencias tecnicas relevantes para este cargo?\n"
+            "A: Alinhamento com os requisitos, profundidade de conhecimento.\n"
+            "P: Descreva uma situacao em que teve de aprender rapidamente uma nova ferramenta.\n"
+            "A: Capacidade de aprendizagem, adaptacao, proactividade.\n"
+            "P: Como garante a qualidade do seu trabalho tecnico?\n"
+            "A: Metodo, atencao ao detalhe, orientacao para resultados.\n"
+        )
+    return f"""## APRESENTACAO E MOTIVACAO
+P: Apresente-se brevemente e descreva o seu percurso profissional.
+A: Capacidade de sintese, clareza de comunicacao, coerencia do percurso.
+P: O que o/a motivou a candidatar-se a este cargo na nossa organizacao?
+A: Conhecimento da organizacao, motivacao genuina, alinhamento de valores.
+
+## EXPERIENCIA E HISTORIAL PROFISSIONAL
+P: Descreva a sua experiencia mais relevante para o cargo de {vaga.titulo}.
+A: Alinhamento com os requisitos da vaga, profundidade e qualidade da experiencia.
+P: Qual foi o maior desafio profissional que enfrentou e como o resolveu?
+A: Capacidade de resolucao de problemas, resiliencia, aprendizagem com a experiencia.
+
+## COMPETENCIAS TECNICAS
+{comp}
+## COMPETENCIAS COMPORTAMENTAIS
+P: Como gere situacoes de conflito com colegas ou superiores hierarquicos?
+A: Inteligencia emocional, comunicacao assertiva, capacidade de mediar.
+P: Descreva uma situacao em que teve de trabalhar sob pressao e com prazos apertados.
+A: Resistencia ao stress, organizacao, capacidade de priorizar.
+
+## SITUACOES HIPOTETICAS
+P: Se tivesse de gerir varias tarefas urgentes em simultaneo, como procederia?
+A: Gestao de prioridades, metodologia de trabalho, pedido de apoio quando necessario.
+
+## QUESTOES DO CANDIDATO
+P: Dar espaco ao/a candidato/a para colocar questoes sobre o cargo e a organizacao.
+A: Interesse genuino, qualidade e pertinencia das questoes colocadas."""
+
+
+def guiao_juri_view(request, token):
+    """Public view for committee chair — no login required."""
+    from .models import InterviewGuideSession
+    session = get_object_or_404(InterviewGuideSession, token=token)
+
+    if session.estado == InterviewGuideSession.ESTADO_APROVADO:
+        return render(request, "vagas/guiao_juri_fechado.html", {"session": session})
+
+    texto = session.texto_editado or session.texto_gerado
+    categorias_parsed = _parse_perguntas(texto)
+    categorias = [{"nome": nome, "perguntas": rows} for nome, rows in categorias_parsed]
+
+    if request.method == "POST":
+        cat_nomes = request.POST.getlist("cat_nome[]")
+        perguntas = request.POST.getlist("pergunta[]")
+        avaliar = request.POST.getlist("avaliar[]")
+        cat_indices = request.POST.getlist("cat_index[]")
+
+        linhas = []
+        for nome in cat_nomes:
+            linhas.append(f"## {nome}")
+        texto_novo = _reconstruct_texto(cat_nomes, perguntas, avaliar, cat_indices)
+
+        session.texto_editado = texto_novo
+        session.estado = InterviewGuideSession.ESTADO_SUBMETIDO
+        session.save()
+
+        return render(request, "vagas/guiao_juri_obrigado.html", {"session": session})
+
+    return render(request, "vagas/guiao_juri.html", {
+        "session": session,
+        "vaga": session.vaga,
+        "categorias": categorias,
+    })
+
+
+def _reconstruct_texto(cat_nomes, perguntas, avaliar, cat_indices):
+    """Rebuild P:/A: text from form POST data."""
+    buckets = {i: [] for i in range(len(cat_nomes))}
+    for i, (p, a) in enumerate(zip(perguntas, avaliar)):
+        try:
+            cat_i = int(cat_indices[i])
+        except (IndexError, ValueError):
+            cat_i = len(cat_nomes) - 1
+        buckets[cat_i].append((p, a))
+
+    lines = []
+    for i, nome in enumerate(cat_nomes):
+        lines.append(f"## {nome}")
+        for p, a in buckets.get(i, []):
+            if p.strip():
+                lines.append(f"P: {p}")
+                lines.append(f"A: {a}")
+    return "\n".join(lines)
+
+
+def guiao_aprovar(request, pk, session_id):
+    """HR reviews and approves the chair's submitted guide."""
+    vaga = get_object_or_404(org_vagas(request), pk=pk)
+    from .models import InterviewGuideSession
+    session = get_object_or_404(InterviewGuideSession, pk=session_id, vaga=vaga)
+
+    texto = session.texto_editado or session.texto_gerado
+    categorias_parsed = _parse_perguntas(texto)
+    categorias = [{"nome": nome, "perguntas": rows} for nome, rows in categorias_parsed]
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+        if action == "aprovar":
+            # Save any HR edits before approving
+            cat_nomes = request.POST.getlist("cat_nome[]")
+            perguntas_list = request.POST.getlist("pergunta[]")
+            avaliar_list = request.POST.getlist("avaliar[]")
+            cat_indices = request.POST.getlist("cat_index[]")
+            if cat_nomes and perguntas_list:
+                session.texto_editado = _reconstruct_texto(cat_nomes, perguntas_list, avaliar_list, cat_indices)
+            session.estado = InterviewGuideSession.ESTADO_APROVADO
+            session.save()
+            messages.success(request, "Guião aprovado. Pode agora fazer o download.")
+            return redirect("guiao_download", pk=pk, session_id=session.pk)
+        elif action == "devolver":
+            session.estado = InterviewGuideSession.ESTADO_PENDENTE
+            session.save()
+            messages.info(request, "Guião devolvido ao presidente do júri para revisão.")
+            return redirect("vaga_detail", pk=pk)
+
+    return render(request, "vagas/guiao_aprovar.html", {
+        "vaga": vaga,
+        "session": session,
+        "categorias": categorias,
+    })
+
+
+def guiao_download(request, pk, session_id):
+    """Download approved guide as Word scoring table."""
+    vaga = get_object_or_404(org_vagas(request), pk=pk)
+    from .models import InterviewGuideSession
+    session = get_object_or_404(InterviewGuideSession, pk=session_id, vaga=vaga)
+
+    if session.estado != InterviewGuideSession.ESTADO_APROVADO:
+        messages.error(request, "O guião ainda não foi aprovado.")
+        return redirect("vaga_detail", pk=pk)
+
+    texto = session.texto_final()
+    categorias = _parse_perguntas(texto)
+    return _build_word_doc(vaga, categorias)
+
+
 def _parse_perguntas(texto):
     """Parse structured interview guide text into list of (categoria, [(pergunta, avaliar)])."""
     categorias = []
@@ -324,50 +565,13 @@ def _parse_perguntas(texto):
     return categorias
 
 
-def download_perguntas(request, pk):
-    vaga = get_object_or_404(org_vagas(request), pk=pk)
-
-    # Build structured data from the editable form POST
-    cat_nomes = request.POST.getlist("cat_nome[]")
-    perguntas = request.POST.getlist("pergunta[]")
-    avaliar = request.POST.getlist("avaliar[]")
-
-    categorias = []
-    if cat_nomes and perguntas:
-        # Pair perguntas/avaliar with categories by position
-        # Each category owns the questions between its index markers
-        # We use hidden cat_index[] to map questions to categories
-        cat_indices = request.POST.getlist("cat_index[]")
-        if cat_indices:
-            buckets = {i: [] for i in range(len(cat_nomes))}
-            for i, (p, a) in enumerate(zip(perguntas, avaliar)):
-                cat_i = int(cat_indices[i]) if i < len(cat_indices) else len(cat_nomes) - 1
-                buckets[cat_i].append((p, a))
-            for i, nome in enumerate(cat_nomes):
-                categorias.append((nome, buckets.get(i, [])))
-        else:
-            # Fallback: split evenly if no index markers
-            chunk = max(1, len(perguntas) // max(len(cat_nomes), 1))
-            for i, nome in enumerate(cat_nomes):
-                rows = list(zip(perguntas[i*chunk:(i+1)*chunk], avaliar[i*chunk:(i+1)*chunk]))
-                categorias.append((nome, rows))
-    else:
-        # No POST data — fall back to session text
-        texto = request.session.get(f"perguntas_{pk}", "")
-        if not texto:
-            return redirect("vaga_detail", pk=pk)
-        categorias = _parse_perguntas(texto)
-
-    if not categorias:
-        return redirect("vaga_detail", pk=pk)
-
+def _build_word_doc(vaga, categorias):
     from docx import Document as DocxDocument
     from docx.shared import Pt, Inches, Cm, RGBColor
     from docx.enum.text import WD_ALIGN_PARAGRAPH
     from docx.oxml.ns import qn
     from docx.oxml import OxmlElement
     import io
-    from datetime import date
 
     doc = DocxDocument()
     section = doc.sections[0]
@@ -378,7 +582,6 @@ def download_perguntas(request, pk):
 
     org_name = vaga.organisation.name if vaga.organisation else "Organizacao"
 
-    # Title
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = p.add_run(f"GUIAO DE ENTREVISTA — {vaga.titulo.upper()}")
@@ -393,7 +596,6 @@ def download_perguntas(request, pk):
 
     doc.add_paragraph()
 
-    # Table column widths in cm (total ~17cm for A4 with 1" margins)
     COL_NUM   = Cm(0.8)
     COL_PERG  = Cm(8.5)
     COL_AVAL  = Cm(4.5)
@@ -421,59 +623,39 @@ def download_perguntas(request, pk):
         if color:
             run.font.color.rgb = color
 
-    if not categorias:
-        # Fallback: plain text if parsing found nothing
-        for line in texto.split('\n'):
-            p = doc.add_paragraph(line if line.strip() else "")
-            for r in p.runs:
-                r.font.size = Pt(10)
-    else:
-        for cat_name, rows in categorias:
-            # Category header (full-width merged row)
-            table = doc.add_table(rows=1, cols=5)
-            table.style = 'Table Grid'
-            table.autofit = False
+    for cat_name, rows in categorias:
+        table = doc.add_table(rows=1, cols=5)
+        table.style = 'Table Grid'
+        table.autofit = False
+        for i, w in enumerate([COL_NUM, COL_PERG, COL_AVAL, COL_SCORE, COL_NOTAS]):
+            table.columns[i].width = w
 
-            # Set widths
-            for i, w in enumerate([COL_NUM, COL_PERG, COL_AVAL, COL_SCORE, COL_NOTAS]):
-                table.columns[i].width = w
+        hdr_row = table.rows[0]
+        hdr_row.cells[0].merge(hdr_row.cells[4])
+        hdr_cell = hdr_row.cells[0]
+        set_cell_bg(hdr_cell, '1E3A5F')
+        cell_para(hdr_cell, cat_name, bold=True, size=10,
+                  align=WD_ALIGN_PARAGRAPH.LEFT, color=RGBColor(0xFF, 0xFF, 0xFF))
 
-            # Category header row — merge all cells
-            hdr_row = table.rows[0]
-            hdr_row.cells[0].merge(hdr_row.cells[4])
-            hdr_cell = hdr_row.cells[0]
-            set_cell_bg(hdr_cell, '1E3A5F')
-            cell_para(hdr_cell, cat_name, bold=True, size=10,
-                      align=WD_ALIGN_PARAGRAPH.LEFT,
-                      color=RGBColor(0xFF, 0xFF, 0xFF))
+        col_row = table.add_row()
+        for i, label in enumerate(['#', 'Pergunta', 'O que avaliar', '1–5', 'Notas']):
+            set_cell_bg(col_row.cells[i], 'D0DCF0')
+            cell_para(col_row.cells[i], label, bold=True, size=8, align=WD_ALIGN_PARAGRAPH.CENTER)
 
-            # Column header row
-            col_row = table.add_row()
-            col_row.cells[0].width = COL_NUM
-            labels = ['#', 'Pergunta', 'O que avaliar', '1–5', 'Notas']
-            bg = 'D0DCF0'
-            for i, label in enumerate(labels):
-                set_cell_bg(col_row.cells[i], bg)
-                cell_para(col_row.cells[i], label, bold=True, size=8,
-                          align=WD_ALIGN_PARAGRAPH.CENTER)
+        for idx, (pergunta, av) in enumerate(rows, 1):
+            r = table.add_row()
+            cell_para(r.cells[0], str(idx), align=WD_ALIGN_PARAGRAPH.CENTER)
+            cell_para(r.cells[1], pergunta)
+            cell_para(r.cells[2], av, color=RGBColor(0x44, 0x55, 0x66))
+            cell_para(r.cells[3], '', align=WD_ALIGN_PARAGRAPH.CENTER)
+            cell_para(r.cells[4], '')
+            for cell in r.cells:
+                for para in cell.paragraphs:
+                    para.paragraph_format.space_before = Pt(4)
+                    para.paragraph_format.space_after = Pt(4)
 
-            # Question rows
-            for idx, (pergunta, avaliar) in enumerate(rows, 1):
-                r = table.add_row()
-                cell_para(r.cells[0], str(idx), align=WD_ALIGN_PARAGRAPH.CENTER)
-                cell_para(r.cells[1], pergunta)
-                cell_para(r.cells[2], avaliar, color=RGBColor(0x44, 0x55, 0x66))
-                cell_para(r.cells[3], '', align=WD_ALIGN_PARAGRAPH.CENTER)
-                cell_para(r.cells[4], '')
-                # Taller notes rows
-                for cell in r.cells:
-                    for para in cell.paragraphs:
-                        para.paragraph_format.space_before = Pt(4)
-                        para.paragraph_format.space_after = Pt(4)
+        doc.add_paragraph()
 
-            doc.add_paragraph()
-
-    # Footer note
     p = doc.add_paragraph()
     run = p.add_run("Pontuação: 1 = Muito fraco   2 = Fraco   3 = Adequado   4 = Bom   5 = Excelente")
     run.font.size = Pt(8)
@@ -492,4 +674,27 @@ def download_perguntas(request, pk):
     )
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+
+def download_perguntas(request, pk):
+    vaga = get_object_or_404(org_vagas(request), pk=pk)
+
+    cat_nomes = request.POST.getlist("cat_nome[]")
+    perguntas = request.POST.getlist("pergunta[]")
+    avaliar_list = request.POST.getlist("avaliar[]")
+    cat_indices = request.POST.getlist("cat_index[]")
+
+    if cat_nomes and perguntas:
+        texto = _reconstruct_texto(cat_nomes, perguntas, avaliar_list, cat_indices)
+        categorias = _parse_perguntas(texto)
+    else:
+        texto = request.session.get(f"perguntas_{pk}", "")
+        if not texto:
+            return redirect("vaga_detail", pk=pk)
+        categorias = _parse_perguntas(texto)
+
+    if not categorias:
+        return redirect("vaga_detail", pk=pk)
+
+    return _build_word_doc(vaga, categorias)
 

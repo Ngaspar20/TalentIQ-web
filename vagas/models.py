@@ -73,3 +73,33 @@ class Vaga(models.Model):
 
     def short_id(self):
         return str(self.id)[:8]
+
+
+class InterviewGuideSession(models.Model):
+    ESTADO_PENDENTE = "pendente"
+    ESTADO_SUBMETIDO = "submetido"
+    ESTADO_APROVADO = "aprovado"
+    ESTADO_CHOICES = [
+        (ESTADO_PENDENTE, "Pendente"),
+        (ESTADO_SUBMETIDO, "Submetido pelo Júri"),
+        (ESTADO_APROVADO, "Aprovado"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    vaga = models.ForeignKey(Vaga, on_delete=models.CASCADE, related_name="guiao_sessions")
+    texto_gerado = models.TextField()
+    texto_editado = models.TextField(blank=True)
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default=ESTADO_PENDENTE)
+    chair_email = models.EmailField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Guião {self.vaga.titulo} — {self.get_estado_display()}"
+
+    def texto_final(self):
+        return self.texto_editado or self.texto_gerado

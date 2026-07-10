@@ -11,4 +11,8 @@ urlpatterns = [
     path("analyse-tor/", views.analyse_tor_view, name="analyse_tor"),
     path("<uuid:pk>/perguntas-entrevista/", views.gerar_perguntas_entrevista, name="gerar_perguntas"),
     path("<uuid:pk>/perguntas-entrevista/download/", views.download_perguntas, name="download_perguntas"),
+    path("<uuid:pk>/enviar-juri/", views.enviar_guiao_juri, name="enviar_guiao_juri"),
+    path("<uuid:pk>/guiao/<uuid:session_id>/aprovar/", views.guiao_aprovar, name="guiao_aprovar"),
+    path("<uuid:pk>/guiao/<uuid:session_id>/download/", views.guiao_download, name="guiao_download"),
+    path("juri/<uuid:token>/", views.guiao_juri_view, name="guiao_juri"),
 ]

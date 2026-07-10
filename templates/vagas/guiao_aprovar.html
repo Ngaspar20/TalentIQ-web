@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Aprovar Guião — {{ vaga.titulo }}{% endblock %}
+{% block breadcrumb %}
+<a href="/vagas/" class="hover:text-slate-700">Vagas</a>
+<span class="mx-2">›</span>
+<a href="/vagas/{{ vaga.pk }}/" class="hover:text-slate-700">{{ vaga.titulo }}</a>
+<span class="mx-2">›</span> Aprovar Guião
+{% endblock %}
+{% block content %}
+
+<div class="page-header flex items-center justify-between">
+    <div>
+        <h1 class="flex items-center gap-3">
+            <i class="fa-solid fa-clipboard-check" style="color:#f59e0b;"></i> Aprovar Guião de Entrevista
+        </h1>
+        <p>{{ vaga.titulo }} — submetido pelo presidente do júri</p>
+    </div>
+    <a href="/vagas/{{ vaga.pk }}/" class="btn-secondary">
+        <i class="fa-solid fa-arrow-left"></i> Voltar
+    </a>
+</div>
+
+<div class="section-card mb-4" style="border-left:4px solid #f59e0b;">
+    <p class="text-sm text-slate-600">
+        <i class="fa-solid fa-circle-info mr-2" style="color:#f59e0b;"></i>
+        Reveja as perguntas abaixo. Pode editar antes de aprovar. Ao aprovar, o guião fica disponível para download em Word.
+    </p>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <div id="categorias-container">
+    {% for cat in categorias %}
+    <div class="section-card mb-3 categoria-block">
+        <div class="flex items-center justify-between mb-3">
+            <input type="text" name="cat_nome[]" value="{{ cat.nome }}"
+                   class="font-bold text-slate-700 text-sm uppercase tracking-widest bg-transparent border-b border-slate-200 focus:outline-none focus:border-amber-400 w-full mr-4">
+            <button type="button" onclick="addPergunta(this)" class="btn-secondary text-xs whitespace-nowrap" style="padding:4px 10px;">
+                <i class="fa-solid fa-plus mr-1"></i> Adicionar
+            </button>
+        </div>
+        <div class="perguntas-list space-y-2">
+        {% for p, a in cat.perguntas %}
+        <div class="pergunta-row flex items-start gap-2 p-2 bg-slate-50 rounded-lg">
+            <div class="flex-1 space-y-1">
+                <input type="hidden" name="cat_index[]" value="{{ forloop.parentloop.counter0 }}">
+                <input type="text" name="pergunta[]" value="{{ p }}" placeholder="Pergunta..." class="form-input w-full text-sm" style="padding:6px 10px;">
+                <input type="text" name="avaliar[]" value="{{ a }}" placeholder="O que avaliar..." class="form-input w-full text-xs text-slate-500" style="padding:5px 10px; background:#f8fafc;">
+            </div>
+            <button type="button" onclick="removePergunta(this)" class="mt-1 text-slate-300 hover:text-red-400 transition-colors">
+                <i class="fa-solid fa-trash-can"></i>
+            </button>
+        </div>
+        {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+    </div>
+
+    <div class="flex items-center gap-3 mt-4 pt-4 border-t border-slate-100">
+        <button type="submit" name="action" value="aprovar" class="btn-primary" style="background:#16a34a;">
+            <i class="fa-solid fa-circle-check mr-2"></i> Aprovar e desbloquear download
+        </button>
+        <button type="submit" name="action" value="devolver"
+                class="btn-secondary"
+                onclick="return confirm('Devolver ao presidente do júri para revisão?')">
+            <i class="fa-solid fa-rotate-left mr-2"></i> Devolver ao júri
+        </button>
+    </div>
+</form>
+
+<script>
+function getCatIndex(btn) {
+    return Array.from(document.querySelectorAll('.categoria-block')).indexOf(btn.closest('.categoria-block'));
+}
+function addPergunta(btn) {
+    const catIndex = getCatIndex(btn);
+    const list = btn.closest('.categoria-block').querySelector('.perguntas-list');
+    const row = document.createElement('div');
+    row.className = 'pergunta-row flex items-start gap-2 p-2 bg-slate-50 rounded-lg';
+    row.innerHTML = `
+        <div class="flex-1 space-y-1">
+            <input type="hidden" name="cat_index[]" value="${catIndex}">
+            <input type="text" name="pergunta[]" value="" placeholder="Pergunta..." class="form-input w-full text-sm" style="padding:6px 10px;">
+            <input type="text" name="avaliar[]" value="" placeholder="O que avaliar..." class="form-input w-full text-xs text-slate-500" style="padding:5px 10px; background:#f8fafc;">
+        </div>
+        <button type="button" onclick="removePergunta(this)" class="mt-1 text-slate-300 hover:text-red-400 transition-colors">
+            <i class="fa-solid fa-trash-can"></i>
+        </button>`;
+    list.appendChild(row);
+    row.querySelector('input[name="pergunta[]"]').focus();
+}
+function removePergunta(btn) { btn.closest('.pergunta-row').remove(); }
+</script>
+{% endblock %}
