@@ -9,4 +9,6 @@ urlpatterns = [
     path("<uuid:pk>/eliminar/", views.candidato_delete, name="candidato_delete"),
     path("parse-cv/", views.parse_cv_view, name="parse_cv"),
     path("analyse-cv/", views.analyse_cv_view, name="analyse_cv"),
+    path("<uuid:pk>/carta/", views.gerar_carta, name="gerar_carta"),
+    path("<uuid:pk>/carta/download/", views.download_carta, name="download_carta"),
 ]
