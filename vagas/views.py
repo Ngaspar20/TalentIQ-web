@@ -182,9 +182,9 @@ Informacao da vaga:
 
 Usa EXACTAMENTE este formato para cada categoria e pergunta (sem adicionar mais texto):
 
+TOTAL DE PERGUNTAS: exactamente 10, distribuidas assim:
+
 ## APRESENTACAO E MOTIVACAO
-P: [pergunta completa]
-A: [o que avaliar na resposta, em 1 frase]
 P: [pergunta completa]
 A: [o que avaliar na resposta, em 1 frase]
 P: [pergunta completa]
@@ -193,22 +193,26 @@ A: [o que avaliar na resposta, em 1 frase]
 ## EXPERIENCIA E HISTORIAL PROFISSIONAL
 P: [pergunta completa]
 A: [o que avaliar]
-[mais 3 perguntas no mesmo formato]
+P: [pergunta completa]
+A: [o que avaliar]
 
 ## COMPETENCIAS TECNICAS
 P: [pergunta tecnica especifica ao cargo de {vaga.titulo}]
 A: [o que avaliar]
-[mais 3 perguntas no mesmo formato]
+P: [pergunta tecnica especifica ao cargo de {vaga.titulo}]
+A: [o que avaliar]
+P: [pergunta tecnica especifica ao cargo de {vaga.titulo}]
+A: [o que avaliar]
 
 ## COMPETENCIAS COMPORTAMENTAIS
 P: [pergunta comportamental]
 A: [o que avaliar]
-[mais 2 perguntas no mesmo formato]
+P: [pergunta comportamental]
+A: [o que avaliar]
 
 ## SITUACOES HIPOTETICAS
-P: [situacao hipotetica]
+P: [situacao hipotetica relevante para o cargo]
 A: [o que avaliar]
-[mais 2 perguntas no mesmo formato]
 
 ## QUESTOES DO CANDIDATO
 P: Dar espaco ao/a candidato/a para colocar questoes sobre o cargo e a organizacao.
@@ -218,50 +222,50 @@ A: Interesse genuino, qualidade e pertinencia das questoes colocadas."""
     texto = get_llm_response(prompt, system)
 
     if not texto:
-        comp_perguntas = ""
         if vaga.competencias_requeridas:
-            for c in vaga.competencias_requeridas[:3]:
-                comp_perguntas += f"P: Descreva a sua experiencia com {c} e como a aplicou em contexto profissional.\nA: Profundidade de conhecimento, exemplos concretos, relevancia para o cargo.\n"
+            c1 = vaga.competencias_requeridas[0]
+            c2 = vaga.competencias_requeridas[1] if len(vaga.competencias_requeridas) > 1 else c1
+            comp_perguntas = (
+                f"P: Descreva a sua experiencia com {c1} e como a aplicou em contexto profissional.\n"
+                f"A: Profundidade de conhecimento, exemplos concretos, relevancia para o cargo.\n"
+                f"P: Como utilizaria {c2} nas responsabilidades diarias deste cargo?\n"
+                f"A: Aplicacao pratica, raciocinio tecnico, alinhamento com a funcao.\n"
+                f"P: Como se mantém actualizado/a nas tendencias da sua area profissional?\n"
+                f"A: Curiosidade intelectual, iniciativa de aprendizagem continua.\n"
+            )
         else:
-            comp_perguntas = "P: Quais sao as suas principais competencias tecnicas relevantes para este cargo?\nA: Alinhamento com os requisitos, profundidade de conhecimento.\n"
+            comp_perguntas = (
+                "P: Quais sao as suas principais competencias tecnicas relevantes para este cargo?\n"
+                "A: Alinhamento com os requisitos, profundidade de conhecimento.\n"
+                "P: Descreva uma situacao em que teve de aprender rapidamente uma nova ferramenta ou metodologia.\n"
+                "A: Capacidade de aprendizagem, adaptacao, proactividade.\n"
+                "P: Como garante a qualidade do seu trabalho tecnico?\n"
+                "A: Metodo, atencao ao detalhe, orientacao para resultados.\n"
+            )
 
         texto = f"""## APRESENTACAO E MOTIVACAO
 P: Apresente-se brevemente e descreva o seu percurso profissional.
 A: Capacidade de sintese, clareza de comunicacao, coerencia do percurso.
 P: O que o/a motivou a candidatar-se a este cargo na nossa organizacao?
 A: Conhecimento da organizacao, motivacao genuina, alinhamento de valores.
-P: Onde se ve profissionalmente daqui a 5 anos?
-A: Ambicao realista, alinhamento com a funcao e a organizacao.
 
 ## EXPERIENCIA E HISTORIAL PROFISSIONAL
 P: Descreva a sua experiencia mais relevante para o cargo de {vaga.titulo}.
 A: Alinhamento com os requisitos da vaga, profundidade e qualidade da experiencia.
 P: Qual foi o maior desafio profissional que enfrentou e como o resolveu?
 A: Capacidade de resolucao de problemas, resiliencia, aprendizagem com a experiencia.
-P: Descreva um projecto ou realizacao profissional da qual se orgulha particularmente.
-A: Realizacoes concretas, impacto mensuravel, iniciativa propria.
-P: Porque saiu ou pretende sair do seu emprego actual?
-A: Maturidade profissional, honestidade, ausencia de conflitos desnecessarios.
 
 ## COMPETENCIAS TECNICAS
-{comp_perguntas}P: Como se mantém actualizado/a nas tendencias e novidades da sua area profissional?
-A: Curiosidade intelectual, iniciativa de aprendizagem continua.
-
+{comp_perguntas}
 ## COMPETENCIAS COMPORTAMENTAIS
 P: Como gere situacoes de conflito com colegas ou superiores hierarquicos?
 A: Inteligencia emocional, comunicacao assertiva, capacidade de mediar.
 P: Descreva uma situacao em que teve de trabalhar sob pressao e com prazos apertados.
 A: Resistencia ao stress, organizacao, capacidade de priorizar.
-P: Como prefere receber feedback sobre o seu trabalho?
-A: Abertura a aprendizagem, maturidade profissional, orientacao para a melhoria.
 
 ## SITUACOES HIPOTETICAS
 P: Se tivesse de gerir varias tarefas urgentes em simultaneo, como procederia?
 A: Gestao de prioridades, metodologia de trabalho, pedido de apoio quando necessario.
-P: Se discordasse de uma decisao do seu superior hierarquico, como agiria?
-A: Assertividade, respeito pela hierarquia, capacidade de argumentar construtivamente.
-P: Como se adaptaria rapidamente a uma mudanca inesperada de objectivos ou prioridades?
-A: Flexibilidade, adaptabilidade, atitude positiva perante a mudanca.
 
 ## QUESTOES DO CANDIDATO
 P: Dar espaco ao/a candidato/a para colocar questoes sobre o cargo e a organizacao.
