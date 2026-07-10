@@ -172,24 +172,22 @@
             <a href="/" class="sidebar-link {% if request.path == '/' %}active{% endif %}">
                 <i class="fa-solid fa-house fa-fw"></i> Dashboard
             </a>
+
+            <div style="margin: 12px 0 4px; padding: 0 8px;">
+                <span style="font-size:0.68rem; font-weight:700; color:#93c5fd; letter-spacing:0.08em; text-transform:uppercase;">Recrutamento</span>
+            </div>
             <a href="/vagas/" class="sidebar-link {% if '/vagas/' in request.path %}active{% endif %}">
-                <i class="fa-solid fa-briefcase fa-fw"></i> Criar Vaga
-            </a>
-            <a href="/candidatos/" class="sidebar-link {% if '/candidatos/' in request.path %}active{% endif %}">
-                <i class="fa-solid fa-file-arrow-up fa-fw"></i> Carregar CV
-            </a>
-            <a href="/scoring/" class="sidebar-link {% if '/scoring/' in request.path and 'geral' not in request.path %}active{% endif %}">
-                <i class="fa-solid fa-chart-bar fa-fw"></i> Pontuação Fit
+                <i class="fa-solid fa-briefcase fa-fw"></i> Vagas
             </a>
             <a href="/pipeline/" class="sidebar-link {% if '/pipeline/' in request.path %}active{% endif %}">
                 <i class="fa-solid fa-filter fa-fw"></i> Pipeline
             </a>
             <a href="/scoring/geral/" class="sidebar-link {% if 'geral' in request.path %}active{% endif %}">
-                <i class="fa-solid fa-ranking-star fa-fw"></i> Scoring Geral
+                <i class="fa-solid fa-ranking-star fa-fw"></i> Ranking Geral
             </a>
 
             <div style="margin: 12px 0 4px; padding: 0 8px;">
-                <span style="font-size:0.68rem; font-weight:700; color:#93c5fd; letter-spacing:0.08em; text-transform:uppercase;">Ajuda</span>
+                <span style="font-size:0.68rem; font-weight:700; color:#93c5fd; letter-spacing:0.08em; text-transform:uppercase;">Sistema</span>
             </div>
             <a href="/ajuda/" class="sidebar-link {% if '/ajuda/' in request.path %}active{% endif %}">
                 <i class="fa-solid fa-circle-question fa-fw"></i> Como Funciona

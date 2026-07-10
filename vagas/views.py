@@ -5,6 +5,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
 from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
 from .models import Vaga
 
 # Make sure core/ is on the path
@@ -33,6 +34,8 @@ def vaga_create(request):
         responsabilidades_raw = request.POST.get("responsabilidades_input", "")
         responsabilidades = [r.strip().lstrip("â€¢").strip() for r in responsabilidades_raw.splitlines() if r.strip()]
 
+        tor_filename = request.POST.get("tor_filename", "").strip()
+
         vaga = Vaga.objects.create(
             organisation=request.user.organisation,
             titulo=titulo,
@@ -48,7 +51,9 @@ def vaga_create(request):
             competencias_requeridas=competencias,
             responsabilidades=responsabilidades,
             descricao=request.POST.get("descricao", "").strip(),
-            origem="Manual",
+            tor_file_path=tor_filename,
+            tor_aprovado=False,
+            origem="ToR" if tor_filename else "Manual",
             created_by=request.user,
         )
         messages.success(request, f"Vaga '{vaga.titulo}' criada com sucesso!")
@@ -73,29 +78,54 @@ def vaga_detail(request, pk):
     cands_entrevista = [c for c in todos if c.etapa == "Entrevista"]
     cands_decisao   = [c for c in todos if c.etapa in ("Proposta", "Contratado", "Rejeitado")]
 
-    # Attach latest avaliacao_session to each candidate in entrevista
+    # Build entrevista list with attached avaliacao_session (avoids underscore attr in templates)
+    eval_session_map = {}
     if cands_entrevista:
         ids = [c.pk for c in cands_entrevista]
-        sessions = (
-            AvaliacaoSession.objects
-            .filter(candidato_id__in=ids)
-            .order_by("candidato_id", "-created_at")
-        )
-        session_map = {}
-        for s in sessions:
-            if s.candidato_id not in session_map:
-                session_map[s.candidato_id] = s
-        for c in cands_entrevista:
-            c._avaliacao_session = session_map.get(c.pk)
+        for s in AvaliacaoSession.objects.filter(candidato_id__in=ids).order_by("candidato_id", "-created_at"):
+            if s.candidato_id not in eval_session_map:
+                eval_session_map[s.candidato_id] = s
+
+    cands_entrevista_data = [
+        {"candidato": c, "avaliacao_session": eval_session_map.get(c.pk),
+         "nota": getattr(c, "nota_entrevista", None)}
+        for c in cands_entrevista
+    ]
+
+    n_scored = sum(1 for c in todos if c.score_fit is not None)
+
+    from .models import ComiteSession
+    comite_sessions = list(vaga.comite_sessions.all())
 
     return render(request, "vagas/detail.html", {
         "vaga": vaga,
         "guiao_session": guiao_session,
         "cands_triagem": cands_triagem,
-        "cands_entrevista": cands_entrevista,
+        "cands_entrevista_data": cands_entrevista_data,
         "cands_decisao": cands_decisao,
         "total_candidatos": len(todos),
+        "n_entrevista": len(cands_entrevista),
+        "n_scored": n_scored,
+        "comite_sessions": comite_sessions,
     })
+
+
+@require_POST
+def vaga_confirmar_analise(request, pk):
+    vaga = get_object_or_404(org_vagas(request), pk=pk)
+    vaga.tor_analisado = True
+    vaga.save(update_fields=["tor_analisado"])
+    messages.success(request, "Análise IA confirmada. Pode agora aprovar os Termos de Referência.")
+    return redirect("vaga_detail", pk=pk)
+
+
+@require_POST
+def vaga_aprovar_tor(request, pk):
+    vaga = get_object_or_404(org_vagas(request), pk=pk)
+    vaga.tor_aprovado = True
+    vaga.save(update_fields=["tor_aprovado"])
+    messages.success(request, f"Termos de Referência de '{vaga.titulo}' aprovados.")
+    return redirect("vaga_detail", pk=pk)
 
 
 def vaga_edit(request, pk):
@@ -708,6 +738,320 @@ def _build_word_doc(vaga, categorias):
     )
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+
+@require_POST
+def comite_adicionar_avaliador(request, pk):
+    vaga = get_object_or_404(org_vagas(request), pk=pk)
+    from .models import ComiteSession
+    nome = request.POST.get("nome", "").strip()
+    email = request.POST.get("email", "").strip()
+    if not nome:
+        messages.error(request, "O nome do avaliador é obrigatório.")
+        return redirect("vaga_detail", pk=pk)
+    if not email:
+        messages.error(request, "O email do avaliador é obrigatório.")
+        return redirect("vaga_detail", pk=pk)
+    ComiteSession.objects.create(vaga=vaga, avaliador_nome=nome, avaliador_email=email)
+    return redirect(f"/vagas/{pk}/?show_comite=1")
+
+
+@require_POST
+def comite_remover_avaliador(request, pk, session_pk):
+    from .models import ComiteSession
+    vaga = get_object_or_404(org_vagas(request), pk=pk)
+    session = get_object_or_404(ComiteSession, pk=session_pk, vaga=vaga)
+    session.delete()
+    messages.success(request, "Membro removido do comité.")
+    return redirect("vaga_detail", pk=pk)
+
+
+@require_POST
+def comite_repor_avaliacao(request, pk, session_pk):
+    from .models import ComiteSession, ComiteAvaliacao
+    vaga = get_object_or_404(org_vagas(request), pk=pk)
+    session = get_object_or_404(ComiteSession, pk=session_pk, vaga=vaga)
+    ComiteAvaliacao.objects.filter(session=session).delete()
+    session.estado = ComiteSession.ESTADO_PENDENTE
+    session.save(update_fields=["estado"])
+    messages.success(request, f"Avaliação de {session.avaliador_nome} reposta. O membro pode voltar a preencher com o guião actualizado.")
+    return redirect("vaga_detail", pk=pk)
+
+
+def comite_avaliacao_view(request, token):
+    from .models import ComiteSession, ComiteAvaliacao, InterviewGuideSession
+    from candidatos.models import Candidato
+
+    session = get_object_or_404(ComiteSession, token=token)
+    vaga = session.vaga
+
+    secoes = []
+    perguntas = []
+    guiao = (InterviewGuideSession.objects
+             .filter(vaga=vaga, estado=InterviewGuideSession.ESTADO_APROVADO)
+             .order_by("-created_at").first())
+    if guiao:
+        import re
+        current_secao = {"titulo": "", "perguntas": []}
+        for line in guiao.texto_final().splitlines():
+            # Section heading: ## Heading or **Heading**
+            heading = re.match(r'^#{1,3}\s*(.+)', line) or re.match(r'^\*{1,2}(.+?)\*{1,2}\s*$', line)
+            if heading:
+                if current_secao["perguntas"]:
+                    secoes.append(current_secao)
+                current_secao = {"titulo": heading.group(1).strip().rstrip(':'), "perguntas": []}
+                continue
+            # Format: "P: pergunta" (used by _reconstruct_texto)
+            p_match = re.match(r'^P:\s*(.+)', line)
+            if p_match:
+                q = p_match.group(1).strip()
+                if len(q) > 8:
+                    current_secao["perguntas"].append(q)
+                    perguntas.append(q)
+                continue
+            # Fallback: numbered questions "1. pergunta"
+            q_match = re.match(r'^\s*\d+[\.\)]\s*(.+)', line)
+            if q_match:
+                q = q_match.group(1).strip()
+                if len(q) > 8:
+                    current_secao["perguntas"].append(q)
+                    perguntas.append(q)
+        if current_secao["perguntas"]:
+            secoes.append(current_secao)
+        if not secoes and perguntas:
+            secoes = [{"titulo": "Perguntas de Entrevista", "perguntas": perguntas}]
+        # Add flat index to each question so template can name fields c{pk}_resp_{idx}
+        flat_idx = 0
+        for s in secoes:
+            qs_with_idx = []
+            for q in s["perguntas"]:
+                qs_with_idx.append({"texto": q, "idx": flat_idx})
+                flat_idx += 1
+            s["perguntas"] = qs_with_idx
+
+    candidatos = Candidato.objects.filter(vaga=vaga, etapa="Entrevista").order_by("nome")
+
+    if request.method == "POST":
+        for c in candidatos:
+            p = request.POST.get(f"c{c.pk}_pontuacao", "")
+            ComiteAvaliacao.objects.update_or_create(
+                session=session, candidato=c,
+                defaults={
+                    "pontuacao": int(p) if p.isdigit() and 1 <= int(p) <= 5 else None,
+                    "recomendacao": request.POST.get(f"c{c.pk}_recomendacao", ""),
+                    "pontos_fortes": request.POST.get(f"c{c.pk}_pontos_fortes", "").strip(),
+                    "pontos_fracos": request.POST.get(f"c{c.pk}_pontos_fracos", "").strip(),
+                    "notas": request.POST.get(f"c{c.pk}_notas", "").strip(),
+                    "data_entrevista": request.POST.get(f"c{c.pk}_data_entrevista") or None,
+                    "respostas_perguntas": [
+                        {
+                            "pergunta": q,
+                            "nota": request.POST.get(f"c{c.pk}_resp_{i}", "").strip(),
+                            "score": request.POST.get(f"c{c.pk}_qscore_{i}", ""),
+                        }
+                        for i, q in enumerate(perguntas)
+                    ],
+                }
+            )
+        session.estado = ComiteSession.ESTADO_SUBMETIDO
+        session.save(update_fields=["estado"])
+        return render(request, "vagas/comite_obrigado.html", {"session": session, "vaga": vaga})
+
+    existing = {a.candidato_id: a for a in ComiteAvaliacao.objects.filter(session=session)}
+    return render(request, "vagas/comite_avaliacao.html", {
+        "session": session,
+        "vaga": vaga,
+        "candidatos": candidatos,
+        "secoes": secoes,
+        "perguntas": perguntas,
+        "guiao": guiao,
+        "existing": existing,
+    })
+
+
+@login_required
+def comite_resultados(request, pk):
+    from .models import ComiteSession, ComiteAvaliacao
+    from candidatos.models import Candidato
+
+    vaga = get_object_or_404(org_vagas(request), pk=pk)
+    sessions = list(vaga.comite_sessions.prefetch_related("avaliacoes__candidato").order_by("created_at"))
+    candidatos = list(Candidato.objects.filter(vaga=vaga, etapa="Entrevista").order_by("nome"))
+
+    # Build matrix: candidato → list of (session, avaliacao|None)
+    matrix = []
+    for c in candidatos:
+        row = []
+        for s in sessions:
+            av = next((a for a in s.avaliacoes.all() if a.candidato_id == c.pk), None)
+            row.append({"session": s, "av": av})
+        matrix.append({"candidato": c, "avaliacoes": row})
+
+    return render(request, "vagas/comite_resultados.html", {
+        "vaga": vaga,
+        "sessions": sessions,
+        "matrix": matrix,
+    })
+
+
+@require_POST
+def comite_confirmar_decisoes(request, pk):
+    from .models import ComiteSession, ComiteAvaliacao
+    from candidatos.models import Candidato, NotaEntrevista
+    from django.db import transaction
+    from collections import defaultdict
+
+    vaga = get_object_or_404(org_vagas(request), pk=pk)
+    candidatos = Candidato.objects.filter(vaga=vaga, etapa="Entrevista")
+
+    with transaction.atomic():
+        for c in candidatos:
+            avaliacoes = ComiteAvaliacao.objects.filter(
+                session__vaga=vaga, session__estado=ComiteSession.ESTADO_SUBMETIDO, candidato=c
+            )
+            if not avaliacoes.exists():
+                continue
+            pontuacoes = [a.pontuacao for a in avaliacoes if a.pontuacao]
+            media = round(sum(pontuacoes) / len(pontuacoes)) if pontuacoes else None
+            recomendacoes = [a.recomendacao for a in avaliacoes if a.recomendacao]
+            rec_final = max(set(recomendacoes), key=recomendacoes.count) if recomendacoes else ""
+            notas_concat = "\n\n".join(
+                f"[{a.session.avaliador_nome}]: {a.notas}" for a in avaliacoes if a.notas
+            )
+            NotaEntrevista.objects.update_or_create(
+                candidato=c,
+                defaults={"pontuacao": media, "recomendacao": rec_final, "notas": notas_concat}
+            )
+    messages.success(request, "Avaliações do comité consolidadas. Confirme agora a decisão final para cada candidato.")
+    return redirect("vaga_detail", pk=pk)
+
+
+@require_POST
+def candidato_decisao_final(request, pk, candidato_pk):
+    from candidatos.models import Candidato
+    vaga = get_object_or_404(org_vagas(request), pk=pk)
+    candidato = get_object_or_404(Candidato, pk=candidato_pk, vaga=vaga)
+    decisao = request.POST.get("decisao", "")
+    etapa_map = {"contratar": "Proposta", "rejeitar": "Rejeitado", "considerar": "Entrevista"}
+    nova_etapa = etapa_map.get(decisao)
+    if nova_etapa:
+        candidato.etapa = nova_etapa
+        candidato.save(update_fields=["etapa"])
+        messages.success(request, f"Decisão registada para {candidato.nome}.")
+    return redirect("vaga_detail", pk=pk)
+
+
+@require_POST
+def enviar_avaliacao_grupo(request, pk):
+    import uuid as _uuid
+    vaga = get_object_or_404(org_vagas(request), pk=pk)
+    from candidatos.models import Candidato, AvaliacaoSession
+
+    # Generate group token if not set
+    if not vaga.avaliacao_group_token:
+        vaga.avaliacao_group_token = _uuid.uuid4()
+        vaga.save(update_fields=["avaliacao_group_token"])
+
+    chair_email = request.POST.get("chair_email", "").strip()
+
+    # Create AvaliacaoSession for every entrevista candidate that doesn't have one
+    cands_entrevista = Candidato.objects.filter(
+        vaga=vaga, organisation=request.user.organisation, etapa="Entrevista"
+    )
+    for c in cands_entrevista:
+        if not AvaliacaoSession.objects.filter(candidato=c).exists():
+            AvaliacaoSession.objects.create(candidato=c, chair_email=chair_email)
+        elif chair_email:
+            AvaliacaoSession.objects.filter(candidato=c).update(chair_email=chair_email)
+
+    return redirect(f"/vagas/{pk}/?show_av_link=1")
+
+
+def avaliacao_grupo_juri(request, token):
+    from candidatos.models import AvaliacaoSession, Candidato
+    from .models import InterviewGuideSession
+
+    vaga = get_object_or_404(Vaga, avaliacao_group_token=token)
+
+    # Get interview questions from approved guide
+    perguntas = []
+    guiao = (InterviewGuideSession.objects
+             .filter(vaga=vaga, estado=InterviewGuideSession.ESTADO_APROVADO)
+             .order_by("-created_at").first())
+    if guiao:
+        import re
+        for m in re.finditer(r'^\s*\d+[\.\)]\s*(.+)', guiao.texto_final(), re.MULTILINE):
+            q = m.group(1).strip()
+            if len(q) > 10:
+                perguntas.append(q)
+
+    sessions = (AvaliacaoSession.objects
+                .filter(candidato__vaga=vaga)
+                .select_related("candidato")
+                .order_by("candidato__nome"))
+
+    if request.method == "POST":
+        for session in sessions:
+            if session.estado == AvaliacaoSession.ESTADO_CONFIRMADA:
+                continue
+            prefix = f"c{session.candidato.pk}_"
+            p = request.POST.get(f"{prefix}pontuacao", "")
+            session.pontuacao = int(p) if p.isdigit() and 1 <= int(p) <= 5 else None
+            session.recomendacao = request.POST.get(f"{prefix}recomendacao", "")
+            session.pontos_fortes = request.POST.get(f"{prefix}pontos_fortes", "").strip()
+            session.pontos_fracos = request.POST.get(f"{prefix}pontos_fracos", "").strip()
+            session.notas = request.POST.get(f"{prefix}notas", "").strip()
+            session.data_entrevista = request.POST.get(f"{prefix}data_entrevista") or None
+            respostas = []
+            for i, q in enumerate(perguntas):
+                nota = request.POST.get(f"{prefix}resp_{i}", "").strip()
+                respostas.append({"pergunta": q, "nota": nota})
+            session.respostas_perguntas = respostas
+            session.estado = AvaliacaoSession.ESTADO_SUBMETIDA
+            session.save()
+        return render(request, "candidatos/avaliacao_obrigado.html", {"session": sessions.first()})
+
+    return render(request, "vagas/avaliacao_grupo_juri.html", {
+        "vaga": vaga,
+        "sessions": sessions,
+        "perguntas": perguntas,
+    })
+
+
+@require_POST
+def confirmar_avaliacoes_grupo(request, pk):
+    from candidatos.models import AvaliacaoSession, Candidato, NotaEntrevista
+    from django.db import transaction
+
+    vaga = get_object_or_404(org_vagas(request), pk=pk)
+    sessions = AvaliacaoSession.objects.filter(
+        candidato__vaga=vaga,
+        estado=AvaliacaoSession.ESTADO_SUBMETIDA
+    ).select_related("candidato")
+
+    with transaction.atomic():
+        for session in sessions:
+            candidato = session.candidato
+            AvaliacaoSession.objects.filter(pk=session.pk).update(
+                estado=AvaliacaoSession.ESTADO_CONFIRMADA
+            )
+            NotaEntrevista.objects.update_or_create(
+                candidato=candidato,
+                defaults={
+                    "data_entrevista": session.data_entrevista,
+                    "pontuacao": session.pontuacao,
+                    "recomendacao": session.recomendacao,
+                    "pontos_fortes": session.pontos_fortes,
+                    "pontos_fracos": session.pontos_fracos,
+                    "notas": session.notas,
+                }
+            )
+            rec = session.recomendacao
+            nova_etapa = "Proposta" if rec == "recomendado" else ("Rejeitado" if rec == "nao_recomendado" else candidato.etapa)
+            Candidato.objects.filter(pk=candidato.pk).update(etapa=nova_etapa)
+
+    messages.success(request, "Avaliações confirmadas. Os candidatos foram actualizados.")
+    return redirect("vaga_detail", pk=pk)
 
 
 def shortlist(request, pk):

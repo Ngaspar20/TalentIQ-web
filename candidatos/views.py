@@ -42,6 +42,10 @@ def candidato_create(request):
             except Vaga.DoesNotExist:
                 pass
 
+        if vaga and not vaga.tor_aprovado:
+            messages.error(request, "Os Termos de Referência desta vaga ainda não foram aprovados. Aprove o ToR antes de carregar CVs.")
+            return redirect("vaga_detail", pk=vaga.pk)
+
         candidato = Candidato.objects.create(
             organisation=request.user.organisation,
             vaga=vaga,
@@ -59,7 +63,7 @@ def candidato_create(request):
         messages.success(request, f"Candidato '{candidato.nome}' adicionado com sucesso!")
         return redirect("candidato_list")
 
-    vagas = Vaga.objects.filter(organisation=request.user.organisation, estado="Aberta")
+    vagas = Vaga.objects.filter(organisation=request.user.organisation, estado="Aberta", tor_aprovado=True)
     return render(request, "candidatos/create.html", {"vagas": vagas})
 
 
@@ -285,11 +289,33 @@ def enviar_avaliacao_juri(request, pk):
     })
 
 
+def _extrair_perguntas(texto):
+    """Extract numbered questions from interview guide text."""
+    import re
+    perguntas = []
+    for m in re.finditer(r'^\s*\d+[\.\)]\s*(.+)', texto, re.MULTILINE):
+        q = m.group(1).strip()
+        if len(q) > 10:
+            perguntas.append(q)
+    return perguntas
+
+
 def avaliacao_juri_view(request, token):
     from .models import AvaliacaoSession
+    from vagas.models import InterviewGuideSession
     session = get_object_or_404(AvaliacaoSession, token=token)
     if session.estado == AvaliacaoSession.ESTADO_CONFIRMADA:
         return render(request, "candidatos/avaliacao_fechada.html", {"session": session})
+
+    # Get interview questions from approved guide for this vaga
+    perguntas = []
+    if session.candidato.vaga:
+        guiao = (InterviewGuideSession.objects
+                 .filter(vaga=session.candidato.vaga, estado=InterviewGuideSession.ESTADO_APROVADO)
+                 .order_by("-created_at").first())
+        if guiao:
+            perguntas = _extrair_perguntas(guiao.texto_final())
+
     if request.method == "POST":
         session.data_entrevista = request.POST.get("data_entrevista") or None
         p = request.POST.get("pontuacao", "")
@@ -298,12 +324,20 @@ def avaliacao_juri_view(request, token):
         session.pontos_fortes = request.POST.get("pontos_fortes", "").strip()
         session.pontos_fracos = request.POST.get("pontos_fracos", "").strip()
         session.notas = request.POST.get("notas", "").strip()
+        # Save per-question responses
+        respostas = []
+        for i, pergunta in enumerate(perguntas):
+            nota = request.POST.get(f"resp_{i}", "").strip()
+            respostas.append({"pergunta": pergunta, "nota": nota})
+        session.respostas_perguntas = respostas
         session.estado = AvaliacaoSession.ESTADO_SUBMETIDA
         session.save()
         return render(request, "candidatos/avaliacao_obrigado.html", {"session": session})
+
     return render(request, "candidatos/avaliacao_juri.html", {
         "session": session,
         "candidato": session.candidato,
+        "perguntas": perguntas,
     })
 
 

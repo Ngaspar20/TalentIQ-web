@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Resultados do Comité — {{ vaga.titulo }}{% endblock %}
+
+{% block content %}
+<div style="max-width:1000px;margin:0 auto;padding:1.5rem 1rem 4rem;">
+
+  <div style="margin-bottom:1.5rem;">
+    <a href="/vagas/{{ vaga.pk }}/" style="font-size:.82rem;color:#7c3aed;text-decoration:none;">
+      <i class="fa-solid fa-arrow-left" style="margin-right:.35rem;"></i>Voltar à vaga
+    </a>
+    <h1 style="font-size:1.3rem;font-weight:800;color:#1e293b;margin-top:.5rem;">Resultados do Comité de Avaliação</h1>
+    <p style="font-size:.875rem;color:#64748b;margin-top:.2rem;">{{ vaga.titulo }}{% if vaga.organizacao %} · {{ vaga.organizacao }}{% endif %}</p>
+  </div>
+
+  {% if not sessions %}
+  <div style="background:#f8fafc;border:1.5px dashed #cbd5e1;border-radius:12px;padding:2rem;text-align:center;color:#64748b;">
+    <i class="fa-solid fa-users" style="font-size:2rem;margin-bottom:.75rem;display:block;color:#cbd5e1;"></i>
+    Ainda não existem membros no comité de avaliação.
+  </div>
+  {% else %}
+
+  {% for item in matrix %}
+  {% with c=item.candidato avs=item.avaliacoes %}
+  <div style="background:white;border:1.5px solid #e2e8f0;border-radius:14px;margin-bottom:1.75rem;overflow:hidden;">
+
+    <!-- Candidate header -->
+    <div style="background:linear-gradient(90deg,#1e293b,#334155);color:white;padding:1rem 1.25rem;display:flex;align-items:center;gap:.85rem;">
+      <div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;flex-shrink:0;">
+        {{ forloop.counter }}
+      </div>
+      <div>
+        <div style="font-weight:700;font-size:1.05rem;">{{ c.nome }}</div>
+        <div style="font-size:.78rem;opacity:.75;">
+          {% if c.score_fit %}Score de fit: {{ c.score_fit }}/100{% endif %}
+          {% if c.formacao %} · {{ c.formacao }}{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Evaluations per member -->
+    {% for entry in avs %}
+    {% with s=entry.session av=entry.av %}
+    <div style="border-bottom:1px solid #f1f5f9;padding:1.25rem 1.5rem;">
+
+      <!-- Member header -->
+      <div style="display:flex;align-items:center;gap:.65rem;margin-bottom:1rem;">
+        <div style="width:32px;height:32px;border-radius:50%;background:{% if s.estado == 'submetido' %}#ede9fe{% else %}#f1f5f9{% endif %};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class="fa-solid fa-user" style="color:{% if s.estado == 'submetido' %}#7c3aed{% else %}#94a3b8{% endif %};font-size:.8rem;"></i>
+        </div>
+        <div style="flex:1;">
+          <span style="font-weight:700;font-size:.9rem;color:#1e293b;">{{ s.avaliador_nome }}</span>
+          {% if s.avaliador_email %}<span style="font-size:.78rem;color:#64748b;margin-left:.4rem;">· {{ s.avaliador_email }}</span>{% endif %}
+        </div>
+        {% if av %}
+          {% if av.recomendacao == 'recomendado' %}
+            <span style="font-size:.75rem;font-weight:700;padding:.25rem .65rem;border-radius:999px;background:#dcfce7;color:#15803d;">✅ Recomendado</span>
+          {% elif av.recomendacao == 'a_considerar' %}
+            <span style="font-size:.75rem;font-weight:700;padding:.25rem .65rem;border-radius:999px;background:#fef9c3;color:#92400e;">⚠️ A considerar</span>
+          {% elif av.recomendacao == 'nao_recomendado' %}
+            <span style="font-size:.75rem;font-weight:700;padding:.25rem .65rem;border-radius:999px;background:#fee2e2;color:#dc2626;">❌ Não recomendado</span>
+          {% endif %}
+          {% if av.pontuacao %}
+          <span style="font-size:.75rem;font-weight:700;padding:.25rem .65rem;border-radius:999px;background:#fef3c7;color:#92400e;">
+            {% for i in "12345" %}{% if forloop.counter <= av.pontuacao %}★{% else %}☆{% endif %}{% endfor %} {{ av.pontuacao }}/5
+          </span>
+          {% endif %}
+        {% else %}
+          <span style="font-size:.75rem;font-weight:700;padding:.25rem .65rem;border-radius:999px;background:#f1f5f9;color:#94a3b8;">Aguarda submissão</span>
+        {% endif %}
+      </div>
+
+      {% if av %}
+
+        <!-- Per-question responses -->
+        {% if av.respostas_perguntas %}
+        <div style="margin-bottom:1rem;">
+          <p style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#7c3aed;margin-bottom:.6rem;">
+            <i class="fa-solid fa-comments" style="margin-right:.3rem;"></i>Avaliação por pergunta
+          </p>
+          {% for r in av.respostas_perguntas %}
+          <div style="border:1px solid #ede9fe;border-radius:8px;padding:.75rem 1rem;margin-bottom:.5rem;background:#faf5ff;">
+            <div style="display:flex;align-items:flex-start;gap:.5rem;margin-bottom:.4rem;">
+              <span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#7c3aed;color:white;font-size:.65rem;font-weight:800;flex-shrink:0;margin-top:1px;">{{ forloop.counter }}</span>
+              <p style="font-size:.82rem;font-weight:600;color:#1e293b;line-height:1.5;">{{ r.pergunta }}</p>
+            </div>
+            {% if r.score %}
+            <div style="margin-bottom:.35rem;">
+              {% for i in "12345" %}
+                <span style="color:{% if forloop.counter <= r.score|add:'0' %}#f59e0b{% else %}#cbd5e1{% endif %};">★</span>
+              {% endfor %}
+              <span style="font-size:.72rem;color:#94a3b8;margin-left:.25rem;">{{ r.score }}/5</span>
+            </div>
+            {% endif %}
+            {% if r.nota %}
+            <p style="font-size:.82rem;color:#475569;line-height:1.55;white-space:pre-line;">{{ r.nota }}</p>
+            {% else %}
+            <p style="font-size:.78rem;color:#94a3b8;font-style:italic;">Sem notas registadas</p>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Strengths / weaknesses -->
+        {% if av.pontos_fortes or av.pontos_fracos %}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1rem;">
+          <div>
+            <p style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#15803d;margin-bottom:.4rem;"><i class="fa-solid fa-thumbs-up" style="margin-right:.3rem;"></i>Pontos fortes</p>
+            <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:.75rem;font-size:.83rem;color:#166534;white-space:pre-line;min-height:60px;">
+              {{ av.pontos_fortes|default:"—" }}
+            </div>
+          </div>
+          <div>
+            <p style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#d97706;margin-bottom:.4rem;"><i class="fa-solid fa-thumbs-down" style="margin-right:.3rem;"></i>Pontos fracos</p>
+            <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:.75rem;font-size:.83rem;color:#92400e;white-space:pre-line;min-height:60px;">
+              {{ av.pontos_fracos|default:"—" }}
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Notes -->
+        {% if av.notas %}
+        <div>
+          <p style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#64748b;margin-bottom:.4rem;"><i class="fa-regular fa-note-sticky" style="margin-right:.3rem;"></i>Notas adicionais</p>
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.75rem;font-size:.83rem;color:#475569;white-space:pre-line;">
+            {{ av.notas }}
+          </div>
+        </div>
+        {% endif %}
+
+      {% else %}
+      <p style="font-size:.83rem;color:#94a3b8;font-style:italic;">Este membro ainda não submeteu a sua avaliação.</p>
+      {% endif %}
+
+    </div>
+    {% endwith %}
+    {% endfor %}
+
+  </div>
+  {% endwith %}
+  {% endfor %}
+
+  {% endif %}
+
+</div>
+{% endblock %}

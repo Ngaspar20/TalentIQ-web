@@ -78,6 +78,7 @@ class AvaliacaoSession(models.Model):
     notas = models.TextField(blank=True)
     pontos_fortes = models.TextField(blank=True)
     pontos_fracos = models.TextField(blank=True)
+    respostas_perguntas = models.JSONField(default=list)
     data_entrevista = models.DateField(null=True, blank=True)
     chair_email = models.EmailField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

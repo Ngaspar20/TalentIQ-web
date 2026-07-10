@@ -4,117 +4,157 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Avaliação de Entrevista — {{ candidato.nome }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        body { font-family: system-ui, sans-serif; background: #f8fafc; }
-        .form-input { width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 12px; font-size: 0.875rem; }
-        .form-input:focus { outline: none; border-color: #8b5cf6; box-shadow: 0 0 0 2px rgba(139,92,246,0.15); }
-        .btn-primary { background: #8b5cf6; color: white; padding: 10px 24px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; border: none; cursor: pointer; }
-        .btn-primary:hover { background: #7c3aed; }
-        .rec-card { border: 2px solid #e2e8f0; border-radius: 10px; padding: 1rem; cursor: pointer; text-align: center; transition: all 0.15s; }
-        .rec-card:hover { border-color: #8b5cf6; background: #f5f3ff; }
-        .rec-card.selected-rec { border-color: #8b5cf6; background: #f5f3ff; }
-        .rec-card.selected-recomendado { border-color: #16a34a; background: #f0fdf4; }
-        .rec-card.selected-a_considerar { border-color: #d97706; background: #fffbeb; }
-        .rec-card.selected-nao_recomendado { border-color: #dc2626; background: #fef2f2; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: #f1f5f9; color: #1e293b; }
+        .page { max-width: 700px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+        .card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+        .card-title { font-size: .78rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 1rem; display: flex; align-items: center; gap: .5rem; }
+        label { font-size: .82rem; font-weight: 600; color: #475569; display: block; margin-bottom: .4rem; }
+        textarea, input[type=date] { width: 100%; border: 1px solid #e2e8f0; border-radius: 7px; padding: 8px 12px; font-size: .875rem; font-family: inherit; resize: vertical; }
+        textarea:focus, input[type=date]:focus { outline: none; border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139,92,246,.12); }
+        .rec-card { border: 2px solid #e2e8f0; border-radius: 10px; padding: .85rem .75rem; cursor: pointer; text-align: center; transition: all .15s; }
+        .rec-card:hover { border-color: #a78bfa; background: #faf5ff; }
+        .selected-recomendado { border-color: #16a34a !important; background: #f0fdf4 !important; }
+        .selected-a_considerar { border-color: #d97706 !important; background: #fffbeb !important; }
+        .selected-nao_recomendado { border-color: #dc2626 !important; background: #fef2f2 !important; }
+        .btn-submit { background: #8b5cf6; color: white; padding: 13px 28px; border-radius: 9px; font-weight: 700; font-size: .95rem; border: none; cursor: pointer; width: 100%; margin-top: .5rem; }
+        .btn-submit:hover { background: #7c3aed; }
+        .btn-submit:disabled { opacity: .45; cursor: not-allowed; }
+        .q-block { border: 1px solid #ede9fe; border-radius: 9px; padding: 1rem; margin-bottom: .75rem; background: #faf5ff; }
+        .q-num { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #8b5cf6; color: white; font-size: .7rem; font-weight: 800; flex-shrink: 0; }
+        .q-text { font-size: .875rem; font-weight: 600; color: #1e293b; line-height: 1.5; }
+        .progress-bar { background: #ede9fe; border-radius: 999px; height: 6px; margin-bottom: 1.5rem; overflow: hidden; }
+        .progress-fill { background: #8b5cf6; height: 100%; border-radius: 999px; transition: width .3s; }
+        .section-divider { display: flex; align-items: center; gap: .75rem; margin: 1.5rem 0 1rem; }
+        .section-divider span { font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: #94a3b8; white-space: nowrap; }
+        .section-divider::before, .section-divider::after { content: ''; flex: 1; height: 1px; background: #e2e8f0; }
+        .summary-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1rem; font-size: .85rem; color: #475569; line-height: 1.7; }
+        .star-row { display: flex; gap: .6rem; align-items: center; }
+        .star-btn { font-size: 1.8rem; color: #cbd5e1; cursor: pointer; border: none; background: none; padding: 0; transition: transform .1s; }
+        .star-btn:hover { transform: scale(1.15); }
     </style>
 </head>
 <body>
-<div style="max-width: 640px; margin: 0 auto; padding: 2rem 1rem;">
+<div class="page">
 
-    <div style="margin-bottom: 1.5rem;">
-        <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.25rem;">
-            <i class="fa-solid fa-star" style="color:#8b5cf6; font-size:1.4rem;"></i>
-            <h1 style="font-size:1.3rem; font-weight:700; color:#1e293b; margin:0;">Avaliação de Entrevista</h1>
+    <!-- Header -->
+    <div style="margin-bottom:1.25rem;">
+        <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.2rem;">
+            <i class="fa-solid fa-star" style="color:#8b5cf6;font-size:1.3rem;"></i>
+            <h1 style="font-size:1.25rem;font-weight:800;color:#1e293b;">Avaliação de Entrevista</h1>
         </div>
-        <p style="color:#64748b; font-size:0.9rem; margin:0 0 0 2.1rem;">
+        <p style="color:#64748b;font-size:.875rem;margin-left:1.9rem;">
             {{ candidato.nome }}{% if candidato.vaga %} — {{ candidato.vaga.titulo }}{% endif %}
         </p>
     </div>
 
-    <div style="background:#f5f3ff; border:1px solid #ddd6fe; border-left:4px solid #8b5cf6; border-radius:8px; padding:0.75rem 1rem; margin-bottom:1.5rem; font-size:0.85rem; color:#5b21b6;">
-        <i class="fa-solid fa-circle-info mr-2"></i>
-        Preencha a avaliação da entrevista. Após submeter, os Recursos Humanos irão confirmar e o candidato avançará no processo.
+    <!-- Progress -->
+    <div class="progress-bar"><div class="progress-fill" id="progress" style="width:0%"></div></div>
+
+    <!-- Info banner -->
+    <div style="background:#f5f3ff;border:1px solid #ddd6fe;border-left:4px solid #8b5cf6;border-radius:8px;padding:.7rem 1rem;margin-bottom:1.5rem;font-size:.82rem;color:#5b21b6;">
+        <i class="fa-solid fa-circle-info" style="margin-right:.4rem;"></i>
+        Preencha a avaliação. Após submeter, o RH confirma e o candidato avança no processo.
     </div>
 
     <form method="post" id="form-avaliacao">
         {% csrf_token %}
 
         <!-- Date -->
-        <div style="background:white; border:1px solid #e2e8f0; border-radius:10px; padding:1rem; margin-bottom:1rem;">
-            <label style="font-size:0.8rem; font-weight:600; color:#475569; display:block; margin-bottom:0.5rem;">Data da entrevista</label>
-            <input type="date" name="data_entrevista" class="form-input" style="max-width:200px;">
+        <div class="card">
+            <div class="card-title"><i class="fa-regular fa-calendar"></i> Data da entrevista</div>
+            <input type="date" name="data_entrevista" style="max-width:200px;">
         </div>
+
+        {% if perguntas %}
+        <!-- Per-question section -->
+        <div class="section-divider"><span>Avaliação por pergunta</span></div>
+        <p style="font-size:.8rem;color:#94a3b8;margin-bottom:.75rem;">Para cada pergunta do guião, registe as notas ou observações sobre a resposta do candidato.</p>
+
+        {% for pergunta in perguntas %}
+        <div class="q-block">
+            <div style="display:flex;align-items:flex-start;gap:.65rem;margin-bottom:.6rem;">
+                <span class="q-num">{{ forloop.counter }}</span>
+                <p class="q-text">{{ pergunta }}</p>
+            </div>
+            <textarea name="resp_{{ forloop.counter0 }}" rows="2"
+                      placeholder="Observações sobre a resposta do candidato..."
+                      style="background:white;"></textarea>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <!-- Summary -->
+        <div class="section-divider"><span>Sumário da avaliação</span></div>
 
         <!-- Star rating -->
-        <div style="background:white; border:1px solid #e2e8f0; border-radius:10px; padding:1rem; margin-bottom:1rem;">
-            <label style="font-size:0.8rem; font-weight:600; color:#475569; display:block; margin-bottom:0.75rem;">Pontuação global do candidato</label>
-            <div style="display:flex; gap:0.75rem; align-items:center; margin-bottom:0.5rem;">
+        <div class="card">
+            <div class="card-title"><i class="fa-solid fa-chart-simple"></i> Pontuação global</div>
+            <div class="star-row">
                 {% for i in "12345" %}
-                <i class="fa-regular fa-star" style="font-size:2rem; color:#cbd5e1; cursor:pointer;" onclick="setStar({{ forloop.counter }})" id="star-{{ forloop.counter }}"></i>
+                <button type="button" class="star-btn" onclick="setStar({{ forloop.counter }})" id="star-{{ forloop.counter }}">
+                    <i class="fa-regular fa-star"></i>
+                </button>
                 {% endfor %}
-                <span id="star-label" style="font-size:0.85rem; color:#94a3b8; margin-left:0.5rem;">Clique para classificar</span>
+                <span id="star-label" style="font-size:.85rem;color:#94a3b8;margin-left:.25rem;">Clique para classificar</span>
             </div>
-            <input type="hidden" name="pontuacao" id="pontuacao-val">
-            <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:#94a3b8; max-width:180px;">
+            <div style="display:flex;justify-content:space-between;font-size:.68rem;color:#cbd5e1;max-width:185px;margin-top:.3rem;padding-left:.1rem;">
                 <span>Muito fraco</span><span>Excelente</span>
             </div>
-        </div>
-
-        <!-- Recommendation -->
-        <div style="background:white; border:1px solid #e2e8f0; border-radius:10px; padding:1rem; margin-bottom:1rem;">
-            <label style="font-size:0.8rem; font-weight:600; color:#475569; display:block; margin-bottom:0.75rem;">Recomendação</label>
-            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:0.75rem;">
-                <div class="rec-card" onclick="setRec('recomendado', this)" id="rec-recomendado">
-                    <div style="font-size:1.5rem; margin-bottom:0.25rem;">✅</div>
-                    <div style="font-size:0.8rem; font-weight:600; color:#15803d;">Recomendado</div>
-                    <div style="font-size:0.7rem; color:#64748b; margin-top:0.25rem;">Avançar para proposta</div>
-                </div>
-                <div class="rec-card" onclick="setRec('a_considerar', this)" id="rec-a_considerar">
-                    <div style="font-size:1.5rem; margin-bottom:0.25rem;">⚠️</div>
-                    <div style="font-size:0.8rem; font-weight:600; color:#d97706;">A considerar</div>
-                    <div style="font-size:0.7rem; color:#64748b; margin-top:0.25rem;">Manter em avaliação</div>
-                </div>
-                <div class="rec-card" onclick="setRec('nao_recomendado', this)" id="rec-nao_recomendado">
-                    <div style="font-size:1.5rem; margin-bottom:0.25rem;">❌</div>
-                    <div style="font-size:0.8rem; font-weight:600; color:#dc2626;">Não recomendado</div>
-                    <div style="font-size:0.7rem; color:#64748b; margin-top:0.25rem;">Encerrar candidatura</div>
-                </div>
-            </div>
-            <input type="hidden" name="recomendacao" id="rec-val">
+            <input type="hidden" name="pontuacao" id="pontuacao-val">
         </div>
 
         <!-- Strengths & weaknesses -->
-        <div style="background:white; border:1px solid #e2e8f0; border-radius:10px; padding:1rem; margin-bottom:1rem;">
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+        <div class="card">
+            <div class="card-title"><i class="fa-solid fa-scale-balanced"></i> Pontos fortes e fracos</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
                 <div>
-                    <label style="font-size:0.8rem; font-weight:600; color:#15803d; display:block; margin-bottom:0.5rem;">
-                        <i class="fa-solid fa-thumbs-up mr-1"></i> Pontos fortes
-                    </label>
-                    <textarea name="pontos_fortes" rows="4" class="form-input"
-                              placeholder="O que se destacou positivamente..."></textarea>
+                    <label style="color:#15803d;"><i class="fa-solid fa-thumbs-up" style="margin-right:.3rem;"></i>Pontos fortes</label>
+                    <textarea name="pontos_fortes" rows="4" placeholder="O que se destacou positivamente..."></textarea>
                 </div>
                 <div>
-                    <label style="font-size:0.8rem; font-weight:600; color:#d97706; display:block; margin-bottom:0.5rem;">
-                        <i class="fa-solid fa-thumbs-down mr-1"></i> Pontos fracos
-                    </label>
-                    <textarea name="pontos_fracos" rows="4" class="form-input"
-                              placeholder="Lacunas, dúvidas ou reservas..."></textarea>
+                    <label style="color:#d97706;"><i class="fa-solid fa-thumbs-down" style="margin-right:.3rem;"></i>Pontos fracos</label>
+                    <textarea name="pontos_fracos" rows="4" placeholder="Lacunas, dúvidas ou reservas..."></textarea>
                 </div>
             </div>
         </div>
 
         <!-- General notes -->
-        <div style="background:white; border:1px solid #e2e8f0; border-radius:10px; padding:1rem; margin-bottom:1.5rem;">
-            <label style="font-size:0.8rem; font-weight:600; color:#475569; display:block; margin-bottom:0.5rem;">Notas gerais</label>
-            <textarea name="notas" rows="3" class="form-input" placeholder="Observações adicionais sobre a entrevista..."></textarea>
+        <div class="card">
+            <div class="card-title"><i class="fa-regular fa-note-sticky"></i> Notas gerais</div>
+            <textarea name="notas" rows="3" placeholder="Observações adicionais sobre a entrevista e o candidato..."></textarea>
         </div>
 
-        <button type="submit" class="btn-primary" id="submit-btn" disabled style="opacity:0.5; width:100%;">
-            <i class="fa-solid fa-paper-plane mr-2"></i> Submeter avaliação
+        <!-- Recommendation -->
+        <div class="card">
+            <div class="card-title"><i class="fa-solid fa-gavel"></i> Decisão de recomendação</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;">
+                <div class="rec-card" onclick="setRec('recomendado',this)" id="rec-recomendado">
+                    <div style="font-size:1.6rem;margin-bottom:.3rem;">✅</div>
+                    <div style="font-size:.82rem;font-weight:700;color:#15803d;">Recomendado</div>
+                    <div style="font-size:.7rem;color:#64748b;margin-top:.2rem;">Avançar para proposta</div>
+                </div>
+                <div class="rec-card" onclick="setRec('a_considerar',this)" id="rec-a_considerar">
+                    <div style="font-size:1.6rem;margin-bottom:.3rem;">⚠️</div>
+                    <div style="font-size:.82rem;font-weight:700;color:#d97706;">A considerar</div>
+                    <div style="font-size:.7rem;color:#64748b;margin-top:.2rem;">Manter em avaliação</div>
+                </div>
+                <div class="rec-card" onclick="setRec('nao_recomendado',this)" id="rec-nao_recomendado">
+                    <div style="font-size:1.6rem;margin-bottom:.3rem;">❌</div>
+                    <div style="font-size:.82rem;font-weight:700;color:#dc2626;">Não recomendado</div>
+                    <div style="font-size:.7rem;color:#64748b;margin-top:.2rem;">Encerrar candidatura</div>
+                </div>
+            </div>
+            <input type="hidden" name="recomendacao" id="rec-val">
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn-submit" id="submit-btn" disabled>
+            <i class="fa-solid fa-paper-plane" style="margin-right:.5rem;"></i> Submeter avaliação
         </button>
-        <p style="text-align:center; font-size:0.75rem; color:#94a3b8; margin-top:0.75rem;">
+        <p id="submit-hint" style="text-align:center;font-size:.75rem;color:#94a3b8;margin-top:.6rem;">
             Seleccione uma recomendação para activar o envio
         </p>
     </form>
@@ -122,18 +162,30 @@
 
 <script>
 const starLabels = ['', 'Muito fraco', 'Fraco', 'Adequado', 'Bom', 'Excelente'];
+const totalFields = document.querySelectorAll('textarea, input[type=date]').length + 3; // +stars+rec+submit
+let filledCount = 0;
+
+function updateProgress() {
+    const filled = [...document.querySelectorAll('textarea')].filter(t => t.value.trim()).length
+                 + (document.getElementById('pontuacao-val').value ? 1 : 0)
+                 + (document.getElementById('rec-val').value ? 1 : 0);
+    const total = document.querySelectorAll('textarea').length + 2;
+    document.getElementById('progress').style.width = Math.round(filled / total * 100) + '%';
+}
+
+document.querySelectorAll('textarea').forEach(t => t.addEventListener('input', updateProgress));
 
 function setStar(n) {
     document.getElementById('pontuacao-val').value = n;
     for (let i = 1; i <= 5; i++) {
-        const s = document.getElementById('star-' + i);
-        s.className = i <= n ? 'fa-solid fa-star' : 'fa-regular fa-star';
-        s.style.color = i <= n ? '#f59e0b' : '#cbd5e1';
-        s.style.fontSize = '2rem';
-        s.style.cursor = 'pointer';
+        const btn = document.getElementById('star-' + i);
+        const icon = btn.querySelector('i');
+        icon.className = i <= n ? 'fa-solid fa-star' : 'fa-regular fa-star';
+        icon.style.color = i <= n ? '#f59e0b' : '#cbd5e1';
     }
     document.getElementById('star-label').textContent = starLabels[n];
     document.getElementById('star-label').style.color = '#f59e0b';
+    updateProgress();
 }
 
 function setRec(val, el) {
@@ -141,11 +193,11 @@ function setRec(val, el) {
     document.querySelectorAll('.rec-card').forEach(c => {
         c.className = 'rec-card';
     });
-    el.className = `rec-card selected-${val}`;
-    const btn = document.getElementById('submit-btn');
-    btn.disabled = false;
-    btn.style.opacity = '1';
-    document.querySelector('p[style*="Seleccione"]').style.display = 'none';
+    el.classList.add('selected-' + val);
+    document.getElementById('submit-btn').disabled = false;
+    const hint = document.getElementById('submit-hint');
+    if (hint) hint.style.display = 'none';
+    updateProgress();
 }
 </script>
 </body>

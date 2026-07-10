@@ -90,7 +90,8 @@ def score_calculate(request):
         except Exception as e:
             log.error(f"Score error for {candidato.nome}: {e}", exc_info=True)
 
-    return redirect(f"/scoring/?vaga={vaga_id}")
+    next_url = request.POST.get("next") or f"/scoring/?vaga={vaga_id}"
+    return redirect(next_url)
 
 
 def exportar_excel(request):

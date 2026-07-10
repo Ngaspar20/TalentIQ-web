@@ -8,10 +8,9 @@
 
 {% block content %}
 
-{# ── Header ─────────────────────────────────────────────────────────────── #}
 <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;gap:1rem;flex-wrap:wrap;">
   <div>
-    <h1 style="font-size:1.4rem;font-weight:800;color:#1e293b;margin:0 0 .25rem;display:flex;align-items:center;gap:.6rem;">
+    <h1 style="font-size:1.35rem;font-weight:800;color:#1e293b;margin:0 0 .2rem;display:flex;align-items:center;gap:.6rem;">
       <i class="fa-solid fa-briefcase" style="color:#1d4ed8;"></i> {{ vaga.titulo }}
     </h1>
     <p style="color:#64748b;font-size:.875rem;margin:0;">
@@ -24,503 +23,940 @@
       </span>
     </p>
   </div>
-  <div style="display:flex;gap:.5rem;flex-shrink:0;">
-    <a href="/vagas/{{ vaga.pk }}/editar/" class="btn-secondary" style="font-size:.8rem;padding:6px 12px;">
-      <i class="fa-solid fa-pen"></i> Editar vaga
-    </a>
-    <a href="/vagas/" class="btn-secondary" style="font-size:.8rem;padding:6px 12px;">
-      <i class="fa-solid fa-arrow-left"></i> Vagas
-    </a>
-  </div>
+  <a href="/vagas/{{ vaga.pk }}/editar/" class="btn-secondary" style="font-size:.8rem;padding:6px 14px;flex-shrink:0;">
+    <i class="fa-solid fa-pen"></i> Editar vaga
+  </a>
 </div>
 
-{# ── Progress bar ────────────────────────────────────────────────────────── #}
-<div style="display:flex;align-items:center;margin-bottom:2rem;overflow-x:auto;padding-bottom:.25rem;gap:0;">
-
-  {% with s1=cands_triagem|length s2=cands_entrevista|length s3=cands_decisao|length %}
-
-  {# Step 1: Candidaturas #}
-  {% if s1 %}<div class="pb-step pb-done">{% else %}<div class="pb-step pb-todo">{% endif %}
-    <button onclick="scrollTo('step-1')" class="pb-btn {% if s1 %}pb-btn-done{% else %}pb-btn-todo{% endif %}">
-      <span class="pb-num {% if s1 %}pb-num-done{% else %}pb-num-todo{% endif %}">{% if s1 %}<i class="fa-solid fa-check"></i>{% else %}1{% endif %}</span>
-      <span>Candidaturas</span>
-    </button>
-  </div>
-  <div class="pb-line {% if s1 %}pb-line-done{% endif %}"></div>
-
-  {# Step 2: Guião #}
-  {% if guiao_session and guiao_session.estado == 'aprovado' %}
-    <div class="pb-step"><button onclick="scrollTo('step-2')" class="pb-btn pb-btn-done"><span class="pb-num pb-num-done"><i class="fa-solid fa-check"></i></span><span>Guião</span></button></div>
-  {% elif guiao_session %}
-    <div class="pb-step"><button onclick="scrollTo('step-2')" class="pb-btn pb-btn-active"><span class="pb-num pb-num-active">2</span><span>Guião</span></button></div>
-  {% else %}
-    <div class="pb-step"><button onclick="scrollTo('step-2')" class="pb-btn pb-btn-todo"><span class="pb-num pb-num-todo">2</span><span>Guião</span></button></div>
-  {% endif %}
-  <div class="pb-line {% if guiao_session and guiao_session.estado == 'aprovado' %}pb-line-done{% endif %}"></div>
-
-  {# Step 3: Avaliações #}
-  {% if s2 %}
-    <div class="pb-step"><button onclick="scrollTo('step-3')" class="pb-btn pb-btn-active"><span class="pb-num pb-num-active">3</span><span>Avaliações</span></button></div>
-  {% else %}
-    <div class="pb-step"><button onclick="scrollTo('step-3')" class="pb-btn pb-btn-todo"><span class="pb-num pb-num-todo">3</span><span>Avaliações</span></button></div>
-  {% endif %}
-  <div class="pb-line {% if s3 %}pb-line-done{% endif %}"></div>
-
-  {# Step 4: Decisão #}
-  {% if s3 %}
-    <div class="pb-step"><button onclick="scrollTo('step-4')" class="pb-btn pb-btn-done"><span class="pb-num pb-num-done"><i class="fa-solid fa-check"></i></span><span>Decisão Final</span></button></div>
-  {% else %}
-    <div class="pb-step"><button onclick="scrollTo('step-4')" class="pb-btn pb-btn-todo"><span class="pb-num pb-num-todo">4</span><span>Decisão Final</span></button></div>
-  {% endif %}
-
-  {% endwith %}
-</div>
+{% if vaga.tor_file_path and vaga.tor_aprovado and n_scored and guiao_session and guiao_session.estado == 'aprovado' and cands_decisao %}
+  {% with passo_atual=7 %}{% endwith %}
+{% elif vaga.tor_file_path and vaga.tor_aprovado and n_scored and guiao_session and guiao_session.estado == 'aprovado' %}
+  {% with passo_atual=7 %}{% endwith %}
+{% elif vaga.tor_file_path and vaga.tor_aprovado and n_scored %}
+  {% with passo_atual=6 %}{% endwith %}
+{% elif vaga.tor_file_path and vaga.tor_aprovado and total_candidatos %}
+  {% with passo_atual=5 %}{% endwith %}
+{% elif vaga.tor_file_path and vaga.tor_aprovado %}
+  {% with passo_atual=4 %}{% endwith %}
+{% elif vaga.tor_file_path %}
+  {% with passo_atual=3 %}{% endwith %}
+{% else %}
+  {% with passo_atual=1 %}{% endwith %}
+{% endif %}
 
 <style>
-.pb-step { flex-shrink:0; }
-.pb-line { width:3rem; height:2px; background:#e2e8f0; flex-shrink:0; }
-.pb-line-done { background:#86efac; }
-.pb-btn { display:flex; align-items:center; gap:.45rem; padding:.45rem .85rem; border-radius:8px; border:1.5px solid #e2e8f0; background:#f8fafc; cursor:pointer; font-size:.78rem; font-weight:600; color:#94a3b8; white-space:nowrap; }
-.pb-btn-done { background:#f0fdf4; border-color:#86efac; color:#15803d; }
-.pb-btn-active { background:#eff6ff; border-color:#93c5fd; color:#1d4ed8; }
-.pb-btn-todo { background:#f8fafc; border-color:#e2e8f0; color:#94a3b8; }
-.pb-num { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.7rem; font-weight:800; flex-shrink:0; }
-.pb-num-done { background:#22c55e; color:white; }
-.pb-num-active { background:#1d4ed8; color:white; }
-.pb-num-todo { background:#cbd5e1; color:white; }
+/* ── Stepper cards ── */
+.step-wrap { margin-bottom: .65rem; }
+
+.step-header-btn {
+  width: 100%; display: flex; align-items: center; gap: .85rem;
+  padding: .9rem 1.25rem; border: none; cursor: pointer;
+  border-radius: 10px; text-align: left; transition: background .15s;
+}
+.step-header-btn:focus { outline: 2px solid #93c5fd; outline-offset: 2px; }
+
+/* done */
+.sh-done { background: #f0fdf4; border: 1.5px solid #86efac; }
+.sh-done:hover { background: #dcfce7; }
+
+/* active */
+.sh-active { background: #eff6ff; border: 1.5px solid #93c5fd; }
+
+/* locked */
+.sh-locked { background: #f8fafc; border: 1.5px solid #e2e8f0; cursor: default; }
+
+.step-num {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .78rem; font-weight: 800; color: white; flex-shrink: 0;
+}
+.sn-done   { background: #22c55e; }
+.sn-active { background: #1d4ed8; }
+.sn-locked { background: #cbd5e1; }
+
+.step-label { font-size: .9rem; font-weight: 700; flex: 1; }
+.sl-done   { color: #166534; }
+.sl-active { color: #1e3a8a; }
+.sl-locked { color: #94a3b8; }
+
+.step-badge {
+  font-size: .7rem; font-weight: 700; padding: .2rem .65rem;
+  border-radius: 999px; white-space: nowrap; flex-shrink: 0;
+}
+
+.step-body {
+  padding: 1.25rem 1.5rem 1.5rem;
+  background: white;
+  border: 1.5px solid #e2e8f0;
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  margin-top: -6px;
+}
+.step-body-active {
+  border-color: #93c5fd;
+  border-top: none;
+}
+
+.cand-row { display:flex;align-items:center;gap:.75rem;padding:.6rem .85rem;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px; }
+.cand-name { font-weight:600;font-size:.875rem;color:#1e293b;text-decoration:none; }
+.cand-name:hover { color:#1d4ed8; }
+.cand-meta { font-size:.73rem;color:#94a3b8;margin-top:.1rem; }
+.score-circle { width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;flex-shrink:0; }
+.sc-alto  { background:#dcfce7;color:#15803d; }
+.sc-medio { background:#fef9c3;color:#a16207; }
+.sc-baixo { background:#fee2e2;color:#dc2626; }
+.sc-none  { background:#f1f5f9;color:#94a3b8; }
+.btn-step { background:#1d4ed8;color:white;border:none;border-radius:8px;padding:.55rem 1.2rem;font-size:.85rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:.4rem;text-decoration:none; }
+.btn-step:hover { background:#1e40af; }
+.btn-step-amber { background:#f59e0b; }
+.btn-step-amber:hover { background:#d97706; }
+.btn-step-purple { background:#8b5cf6; }
+.btn-step-purple:hover { background:#7c3aed; }
+.caret { font-size:.75rem; color:#94a3b8; margin-left:auto; transition:transform .2s; }
+.caret-up { transform:rotate(180deg); }
 </style>
 
-{# ═══════════════════════════════════════════════════════════════════════════
-   PASSO 1 — CANDIDATURAS
-═══════════════════════════════════════════════════════════════════════════ #}
-<div id="step-1" style="margin-bottom:1.25rem;">
-<div class="step-card" style="border-left:4px solid #1d4ed8;">
-  <div class="step-header">
-    <div class="step-badge" style="background:#1d4ed8;">1</div>
-    <div style="flex:1;">
-      <p class="step-title">Candidaturas</p>
-      <p class="step-sub">Adicione candidatos, faça o parsing do CV e calcule o score de fit com a vaga. <strong>Acção: RH</strong></p>
-    </div>
-    <div style="display:flex;align-items:center;gap:.75rem;flex-shrink:0;">
-      {% if cands_triagem or cands_entrevista or cands_decisao %}
-      <span class="step-count" style="background:#dbeafe;color:#1d4ed8;">{{ total_candidatos }} candidato{{ total_candidatos|pluralize }}</span>
-      {% endif %}
-      <a href="/candidatos/carregar/?vaga={{ vaga.pk }}" class="btn-primary" style="font-size:.8rem;padding:6px 14px;">
-        <i class="fa-solid fa-file-arrow-up mr-1"></i> Adicionar CV
-      </a>
-    </div>
-  </div>
+<div class="step-wrap" id="wrap-1">
 
-  {% if cands_triagem %}
-  <div style="margin-top:1rem;display:flex;flex-direction:column;gap:.5rem;">
-    {% for c in cands_triagem %}
-    <div class="cand-row">
-      <div class="score-circle {% if c.score_fit >= 75 %}sc-alto{% elif c.score_fit >= 50 %}sc-medio{% elif c.score_fit %}sc-baixo{% else %}sc-none{% endif %}">
-        {% if c.score_fit %}{{ c.score_fit }}{% else %}—{% endif %}
-      </div>
-      <div style="flex:1;min-width:0;">
-        <a href="/candidatos/{{ c.pk }}/" class="cand-name">{{ c.nome }}</a>
-        <div class="cand-meta">
-          <span class="etapa-badge" style="{% if c.etapa == 'Em Triagem' %}background:#fef3c7;color:#92400e;{% else %}background:#f1f5f9;color:#64748b;{% endif %}">{{ c.etapa }}</span>
-          {% if c.experiencia_anos %}{{ c.experiencia_anos }} ano{{ c.experiencia_anos|pluralize }}{% endif %}
-          {% if c.competencias %} · {{ c.competencias|slice:":3"|join:", " }}{% endif %}
-        </div>
-      </div>
-      {% if c.etapa == "Em Triagem" %}
-      <form method="post" action="/vagas/{{ vaga.pk }}/shortlist/{{ c.pk }}/entrevista/">
-        {% csrf_token %}
-        <button type="submit" class="btn-action" style="background:#8b5cf6;" title="Mover para Entrevista">
-          <i class="fa-solid fa-arrow-right mr-1"></i> Entrevista
-        </button>
-      </form>
-      {% else %}
-      <form method="post" action="/candidatos/{{ c.pk }}/editar/" style="display:none;"></form>
-      {% endif %}
-      <a href="/candidatos/{{ c.pk }}/" class="btn-icon" title="Ver perfil"><i class="fa-solid fa-eye"></i></a>
-    </div>
-    {% endfor %}
+{% if vaga.tor_file_path %}
+    <button class="step-header-btn sh-done" onclick="toggle(1)">
+    <span class="step-num sn-done"><i class="fa-solid fa-check fa-xs"></i></span>
+    <span class="step-label sl-done">1. Termos de Referência</span>
+    <span class="step-badge" style="background:#dcfce7;color:#15803d;"><i class="fa-solid fa-file-pdf mr-1"></i> Documento carregado</span>
+    <i class="fa-solid fa-chevron-down caret" id="caret-1"></i>
+  </button>
+  <div class="step-body" id="body-1" style="display:none;">
+    <p style="font-size:.85rem;color:#374151;margin:0 0 .85rem;">Documento ToR carregado. Para substituir, edite a vaga.</p>
+    <a href="/vagas/{{ vaga.pk }}/editar/" class="btn-secondary" style="font-size:.8rem;padding:5px 12px;">
+      <i class="fa-solid fa-rotate mr-1"></i> Substituir ToR
+    </a>
   </div>
-  {% else %}
-  <div class="step-empty">
-    <i class="fa-solid fa-inbox"></i>
-    Ainda sem candidatos. Adicione o primeiro CV para começar.
-  </div>
-  {% endif %}
-</div>
-</div>
-
-{# ═══════════════════════════════════════════════════════════════════════════
-   PASSO 2 — GUIÃO DE ENTREVISTA
-═══════════════════════════════════════════════════════════════════════════ #}
-<div id="step-2" style="margin-bottom:1.25rem;">
-{% if guiao_session %}
-  {% if guiao_session.estado == 'aprovado' %}
-  <div class="step-card" style="border-left:4px solid #22c55e;">
-    <div class="step-header">
-      <div class="step-badge" style="background:#22c55e;"><i class="fa-solid fa-check"></i></div>
-      <div style="flex:1;">
-        <p class="step-title">Guião de Entrevista</p>
-        <p class="step-sub">Guião aprovado e disponível para download.</p>
-      </div>
-      <div style="display:flex;gap:.5rem;flex-shrink:0;">
-        <a href="/vagas/{{ vaga.pk }}/guiao/{{ guiao_session.pk }}/download/" class="btn-primary" style="font-size:.8rem;padding:6px 14px;background:#f59e0b;">
-          <i class="fa-solid fa-file-word mr-1"></i> Descarregar Word
-        </a>
-        <form method="post" action="/vagas/{{ vaga.pk }}/enviar-juri/">
-          {% csrf_token %}
-          <button type="submit" class="btn-secondary" style="font-size:.8rem;padding:6px 10px;">
-            <i class="fa-solid fa-rotate mr-1"></i> Novo guião
-          </button>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  {% elif guiao_session.estado == 'submetido' %}
-  <div class="step-card" style="border-left:4px solid #3b82f6;">
-    <div class="step-header">
-      <div class="step-badge" style="background:#3b82f6;">2</div>
-      <div style="flex:1;">
-        <p class="step-title">Guião de Entrevista</p>
-        <p class="step-sub">O Presidente do Júri submeteu o guião. <strong>Acção: RH — reveja e aprove.</strong></p>
-      </div>
-      <span class="step-count" style="background:#dbeafe;color:#1d4ed8;">Aguarda aprovação</span>
-      <a href="/vagas/{{ vaga.pk }}/guiao/{{ guiao_session.pk }}/aprovar/" class="btn-primary" style="font-size:.8rem;padding:6px 14px;">
-        <i class="fa-solid fa-magnifying-glass mr-1"></i> Rever e aprovar
-      </a>
-    </div>
-  </div>
-
-  {% elif guiao_session.estado == 'pendente' %}
-  <div class="step-card" style="border-left:4px solid #f59e0b;">
-    <div class="step-header">
-      <div class="step-badge" style="background:#f59e0b;">2</div>
-      <div style="flex:1;">
-        <p class="step-title">Guião de Entrevista</p>
-        <p class="step-sub">Link enviado ao Presidente do Júri para editar as perguntas. <strong>Acção: Presidente do Júri</strong></p>
-      </div>
-      <span class="step-count" style="background:#fef3c7;color:#92400e;">Aguarda júri</span>
-      <form method="post" action="/vagas/{{ vaga.pk }}/enviar-juri/">
-        {% csrf_token %}
-        <button type="submit" class="btn-secondary" style="font-size:.8rem;padding:6px 12px;">
-          <i class="fa-solid fa-rotate mr-1"></i> Novo link
-        </button>
-      </form>
-    </div>
-  </div>
-  {% endif %}
 
 {% else %}
-<div class="step-card" style="border-left:4px solid #cbd5e1;">
-  <div class="step-header">
-    <div class="step-badge" style="background:#cbd5e1;">2</div>
-    <div style="flex:1;">
-      <p class="step-title" style="color:#94a3b8;">Guião de Entrevista</p>
-      <p class="step-sub">A IA gera as perguntas. O Presidente do Júri edita e submete. RH aprova e descarrega em Word. <strong>Acção: RH inicia</strong></p>
+    <button class="step-header-btn sh-active" onclick="toggle(1)">
+    <span class="step-num sn-active">1</span>
+    <span class="step-label sl-active">1. Termos de Referência</span>
+    <span class="step-badge" style="background:#fee2e2;color:#dc2626;">Obrigatório</span>
+    <i class="fa-solid fa-chevron-down caret caret-up" id="caret-1"></i>
+  </button>
+  <div class="step-body step-body-active" id="body-1">
+    <p style="font-size:.875rem;color:#374151;margin:0 0 1rem;line-height:1.6;">
+      Carregue o Termo de Referência (PDF ou DOCX). A IA extrai automaticamente os requisitos — título, competências, formação e responsabilidades.
+    </p>
+    <a href="/vagas/{{ vaga.pk }}/editar/" class="btn-step">
+      <i class="fa-solid fa-upload"></i> Carregar ToR
+    </a>
+  </div>
+{% endif %}
+
+</div>
+
+<div class="step-wrap" id="wrap-2">
+
+{% if vaga.tor_analisado %}
+  <button class="step-header-btn sh-done" onclick="toggle(2)">
+    <span class="step-num sn-done"><i class="fa-solid fa-check fa-xs"></i></span>
+    <span class="step-label sl-done">2. Análise IA do Termo de Referência</span>
+    <span class="step-badge" style="background:#dbeafe;color:#1d4ed8;"><i class="fa-solid fa-robot mr-1"></i> Confirmada</span>
+    <i class="fa-solid fa-chevron-down caret" id="caret-2"></i>
+  </button>
+  <div class="step-body" id="body-2" style="display:none;">
+    {% if vaga.competencias_requeridas %}
+    <p style="font-size:.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem;">Competências extraídas</p>
+    <div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.85rem;">
+      {% for c in vaga.competencias_requeridas %}
+      <span style="background:#dbeafe;color:#1d4ed8;border-radius:5px;padding:.15rem .5rem;font-size:.75rem;font-weight:600;">{{ c }}</span>
+      {% endfor %}
     </div>
-    <button onclick="document.getElementById('modal-juri').classList.remove('hidden')"
-            class="btn-primary" style="background:#f59e0b;font-size:.8rem;padding:6px 14px;flex-shrink:0;">
-      <i class="fa-solid fa-paper-plane mr-1"></i> Enviar ao Presidente do Júri
+    {% endif %}
+    {% if vaga.anos_experiencia_min or vaga.nivel_formacao %}
+    <p style="font-size:.82rem;color:#374151;margin-bottom:.75rem;">
+      {% if vaga.anos_experiencia_min %}<i class="fa-solid fa-briefcase mr-1" style="color:#64748b;"></i> {{ vaga.anos_experiencia_min }} anos de experiência mínima{% endif %}
+      {% if vaga.nivel_formacao %}  ·  <i class="fa-solid fa-graduation-cap mr-1" style="color:#64748b;"></i> {{ vaga.nivel_formacao|title }}{% endif %}
+    </p>
+    {% endif %}
+    <a href="/vagas/{{ vaga.pk }}/editar/" class="btn-secondary" style="font-size:.78rem;padding:5px 10px;">
+      <i class="fa-solid fa-pen mr-1"></i> Editar requisitos
+    </a>
+  </div>
+
+{% elif vaga.tor_file_path %}
+  <button class="step-header-btn sh-active" onclick="toggle(2)">
+    <span class="step-num sn-active">2</span>
+    <span class="step-label sl-active">2. Análise IA do Termo de Referência</span>
+    <span class="step-badge" style="background:#fef3c7;color:#92400e;">Por analisar</span>
+    <i class="fa-solid fa-chevron-down caret caret-up" id="caret-2"></i>
+  </button>
+  <div class="step-body step-body-active" id="body-2">
+    <p style="font-size:.875rem;color:#374151;margin:0 0 1rem;line-height:1.6;">
+      Clique para a IA analisar o Termo de Referência carregado e extrair os requisitos da posição.
+    </p>
+    <button type="button" class="btn-step" onclick="showModal('modal-analise-ia')">
+      <i class="fa-solid fa-robot"></i> Analisar ToR com IA
     </button>
   </div>
-</div>
+
+{% else %}
+  <div class="step-header-btn sh-locked" style="cursor:default;">
+    <span class="step-num sn-locked">2</span>
+    <span class="step-label sl-locked">2. Análise IA do Termo de Referência</span>
+    <span class="step-badge" style="background:#f1f5f9;color:#94a3b8;"><i class="fa-solid fa-lock fa-xs mr-1"></i> Após Passo 1</span>
+  </div>
 {% endif %}
+
 </div>
 
-{# ═══════════════════════════════════════════════════════════════════════════
-   PASSO 3 — AVALIAÇÕES POR CANDIDATO
-═══════════════════════════════════════════════════════════════════════════ #}
-<div id="step-3" style="margin-bottom:1.25rem;">
-<div class="step-card" style="border-left:4px solid {% if cands_entrevista %}#8b5cf6{% else %}#cbd5e1{% endif %};">
-  <div class="step-header">
-    <div class="step-badge" style="background:{% if cands_entrevista %}#8b5cf6{% else %}#cbd5e1{% endif %};">3</div>
-    <div style="flex:1;">
-      <p class="step-title" style="{% if not cands_entrevista %}color:#94a3b8;{% endif %}">Avaliação de Candidatos</p>
-      <p class="step-sub">
-        Para cada candidato em entrevista: RH envia link ao Presidente do Júri → Júri preenche avaliação → RH confirma → candidato avança automaticamente.
-      </p>
-    </div>
-    {% if cands_entrevista %}
-    {% with done=0 %}
-    <span class="step-count" style="background:#ede9fe;color:#7c3aed;">{{ cands_entrevista|length }} em entrevista</span>
-    {% endwith %}
-    {% endif %}
+<div class="step-wrap" id="wrap-3">
+
+{% if vaga.tor_aprovado %}
+  <button class="step-header-btn sh-done" onclick="toggle(3)">
+    <span class="step-num sn-done"><i class="fa-solid fa-check fa-xs"></i></span>
+    <span class="step-label sl-done">3. Aprovação dos Termos de Referência</span>
+    <span class="step-badge" style="background:#dcfce7;color:#15803d;">Aprovado por RH</span>
+    <i class="fa-solid fa-chevron-down caret" id="caret-3"></i>
+  </button>
+  <div class="step-body" id="body-3" style="display:none;">
+    <p style="font-size:.85rem;color:#374151;margin:0 0 .85rem;">ToR aprovado pelo responsável de RH. Pode revogar se necessário.</p>
+    <form method="post" action="/vagas/{{ vaga.pk }}/aprovar-tor/" style="display:inline;">
+      {% csrf_token %}
+      <button type="submit" class="btn-secondary" style="font-size:.8rem;padding:5px 12px;"
+              onclick="return confirm('Revogar a aprovação do ToR?')">
+        <i class="fa-solid fa-rotate-left mr-1"></i> Revogar aprovação
+      </button>
+    </form>
   </div>
 
-  {% if cands_entrevista %}
-  <div style="margin-top:1rem;display:flex;flex-direction:column;gap:.75rem;">
-    {% for c in cands_entrevista %}
-    {% with s=c._avaliacao_session nota=c.nota_entrevista %}
-    <div style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;">
+{% elif vaga.tor_analisado %}
+  <button class="step-header-btn sh-active" onclick="toggle(3)">
+    <span class="step-num sn-active">3</span>
+    <span class="step-label sl-active">3. Aprovação dos Termos de Referência</span>
+    <span class="step-badge" style="background:#fef3c7;color:#92400e;">Aguarda aprovação RH</span>
+    <i class="fa-solid fa-chevron-down caret caret-up" id="caret-3"></i>
+  </button>
+  <div class="step-body step-body-active" id="body-3">
+    <p style="font-size:.875rem;color:#374151;margin:0 0 1rem;line-height:1.6;">
+      A análise IA foi confirmada. Aprove formalmente os Termos de Referência para permitir o upload de CVs.
+    </p>
+    <form method="post" action="/vagas/{{ vaga.pk }}/aprovar-tor/" style="display:inline;">
+      {% csrf_token %}
+      <button type="submit" class="btn-step btn-step-amber">
+        <i class="fa-solid fa-circle-check"></i> Aprovar Termos de Referência
+      </button>
+    </form>
+  </div>
 
-      {# Candidate row #}
-      <div style="display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;background:#faf5ff;">
-        <div class="score-circle {% if c.score_fit >= 75 %}sc-alto{% elif c.score_fit >= 50 %}sc-medio{% elif c.score_fit %}sc-baixo{% else %}sc-none{% endif %}">
+{% else %}
+  <div class="step-header-btn sh-locked" style="cursor:default;">
+    <span class="step-num sn-locked">3</span>
+    <span class="step-label sl-locked">3. Aprovação dos Termos de Referência</span>
+    <span class="step-badge" style="background:#f1f5f9;color:#94a3b8;"><i class="fa-solid fa-lock fa-xs mr-1"></i> Após Passo 2</span>
+  </div>
+{% endif %}
+
+</div>
+
+<div class="step-wrap" id="wrap-4">
+
+{% if total_candidatos and vaga.tor_aprovado %}
+  <button class="step-header-btn sh-done" onclick="toggle(4)">
+    <span class="step-num sn-done"><i class="fa-solid fa-check fa-xs"></i></span>
+    <span class="step-label sl-done">4. Upload de CVs</span>
+    <span class="step-badge" style="background:#dbeafe;color:#1d4ed8;">{{ total_candidatos }} candidato{{ total_candidatos|pluralize }}</span>
+    <i class="fa-solid fa-chevron-down caret" id="caret-4"></i>
+  </button>
+  <div class="step-body" id="body-4" style="display:none;">
+    <div style="display:flex;flex-direction:column;gap:.45rem;margin-bottom:.85rem;">
+      {% for c in cands_triagem %}
+      <div class="cand-row">
+        <div class="score-circle sc-none" style="font-size:.7rem;">CV</div>
+        <div style="flex:1;min-width:0;">
+          <a href="/candidatos/{{ c.pk }}/" class="cand-name">{{ c.nome }}</a>
+          <div class="cand-meta">{{ c.etapa }}</div>
+        </div>
+        <a href="/candidatos/{{ c.pk }}/" style="color:#94a3b8;font-size:.85rem;"><i class="fa-solid fa-eye"></i></a>
+      </div>
+      {% endfor %}
+    </div>
+    <a href="/candidatos/carregar/?vaga={{ vaga.pk }}" class="btn-secondary" style="font-size:.8rem;padding:5px 12px;">
+      <i class="fa-solid fa-file-arrow-up mr-1"></i> Adicionar mais CVs
+    </a>
+  </div>
+
+{% elif vaga.tor_aprovado %}
+    <button class="step-header-btn sh-active" onclick="toggle(4)">
+    <span class="step-num sn-active">4</span>
+    <span class="step-label sl-active">4. Upload de CVs</span>
+    <span class="step-badge" style="background:#fef3c7;color:#92400e;">Sem candidatos</span>
+    <i class="fa-solid fa-chevron-down caret caret-up" id="caret-4"></i>
+  </button>
+  <div class="step-body step-body-active" id="body-4">
+    <p style="font-size:.875rem;color:#374151;margin:0 0 1rem;line-height:1.6;">
+      Carregue os CVs dos candidatos. A IA extrai automaticamente o perfil de cada um (experiência, formação, competências).
+    </p>
+    <a href="/candidatos/carregar/?vaga={{ vaga.pk }}" class="btn-step">
+      <i class="fa-solid fa-file-arrow-up"></i> Carregar primeiro CV
+    </a>
+  </div>
+
+{% else %}
+  <div class="step-header-btn sh-locked" style="cursor:default;">
+    <span class="step-num sn-locked">4</span>
+    <span class="step-label sl-locked">4. Upload de CVs</span>
+    <span class="step-badge" style="background:#f1f5f9;color:#94a3b8;"><i class="fa-solid fa-lock fa-xs mr-1"></i> Após Passo 2</span>
+  </div>
+{% endif %}
+
+</div>
+
+<div class="step-wrap" id="wrap-5">
+
+{% if n_scored and total_candidatos %}
+    {% if n_scored == total_candidatos %}
+  <button class="step-header-btn sh-done" onclick="toggle(5)">
+    <span class="step-num sn-done"><i class="fa-solid fa-check fa-xs"></i></span>
+    <span class="step-label sl-done">5. Scoring dos CVs</span>
+    <span class="step-badge" style="background:#dcfce7;color:#15803d;">{{ n_scored }}/{{ total_candidatos }} avaliados</span>
+    <i class="fa-solid fa-chevron-down caret" id="caret-5"></i>
+  </button>
+  {% else %}
+  <button class="step-header-btn sh-active" onclick="toggle(5)">
+    <span class="step-num sn-active">5</span>
+    <span class="step-label sl-active">5. Scoring dos CVs</span>
+    <span class="step-badge" style="background:#ede9fe;color:#7c3aed;">{{ n_scored }}/{{ total_candidatos }} com score</span>
+    <i class="fa-solid fa-chevron-down caret caret-up" id="caret-5"></i>
+  </button>
+  {% endif %}
+  <div class="step-body {% if n_scored == total_candidatos %}{% else %}step-body-active{% endif %}" id="body-5"
+       style="{% if n_scored != total_candidatos %}display:block;{% else %}display:none;{% endif %}">
+    <div style="display:flex;flex-direction:column;gap:.45rem;margin-bottom:.85rem;">
+      {% for c in cands_triagem %}
+      <div class="cand-row">
+        <div class="score-circle {% if c.score_fit %}{% if c.score_fit >= 75 %}sc-alto{% elif c.score_fit >= 50 %}sc-medio{% else %}sc-baixo{% endif %}{% else %}sc-none{% endif %}">
           {% if c.score_fit %}{{ c.score_fit }}{% else %}—{% endif %}
         </div>
         <div style="flex:1;min-width:0;">
           <a href="/candidatos/{{ c.pk }}/" class="cand-name">{{ c.nome }}</a>
           <div class="cand-meta">
-            {% if c.experiencia_anos %}{{ c.experiencia_anos }} ano{{ c.experiencia_anos|pluralize }}{% endif %}
-            {% if c.competencias %} · {{ c.competencias|slice:":3"|join:", " }}{% endif %}
+            {% if c.score_fit %}Score: {{ c.score_fit }}%{% else %}Sem score{% endif %}
           </div>
         </div>
-
-        {# Status + action based on avaliacao_session state #}
-        {% if not s %}
-          {# No session yet: RH sends link #}
-          <span style="font-size:.75rem;color:#94a3b8;white-space:nowrap;">Sem avaliação</span>
-          <button onclick="openModalAvaliacao('{{ c.pk }}', '{{ c.nome }}')"
-                  class="btn-action" style="background:#8b5cf6;">
-            <i class="fa-solid fa-paper-plane mr-1"></i> Enviar ao júri
-          </button>
-
-        {% elif s.estado == "pendente" %}
-          {# Link sent, waiting for chair #}
-          <span style="background:#fef3c7;color:#92400e;border-radius:999px;padding:.2rem .6rem;font-size:.72rem;font-weight:700;white-space:nowrap;">
-            <i class="fa-solid fa-clock mr-1"></i> Aguarda júri
-          </span>
-          <form method="post" action="/candidatos/{{ c.pk }}/enviar-avaliacao/">
-            {% csrf_token %}
-            <button type="submit" class="btn-secondary" style="font-size:.75rem;padding:5px 10px;">
-              <i class="fa-solid fa-rotate"></i> Novo link
-            </button>
-          </form>
-
-        {% elif s.estado == "submetida" %}
-          {# Chair submitted: RH confirms #}
-          <span style="background:#dbeafe;color:#1d4ed8;border-radius:999px;padding:.2rem .6rem;font-size:.72rem;font-weight:700;white-space:nowrap;">
-            <i class="fa-solid fa-inbox mr-1"></i> Submetida
-          </span>
-          <button onclick="toggleEval('eval-{{ c.pk }}')" class="btn-action" style="background:#1d4ed8;">
-            <i class="fa-solid fa-eye mr-1"></i> Ver e confirmar
-          </button>
-
-        {% elif s.estado == "confirmada" %}
-          {# Confirmed #}
-          <span style="background:#dcfce7;color:#15803d;border-radius:999px;padding:.2rem .6rem;font-size:.72rem;font-weight:700;white-space:nowrap;">
-            <i class="fa-solid fa-circle-check mr-1"></i> Confirmada
-          </span>
-          <a href="/candidatos/{{ c.pk }}/" class="btn-secondary" style="font-size:.75rem;padding:5px 10px;">
-            Ver candidato →
-          </a>
-        {% endif %}
+        <a href="/candidatos/{{ c.pk }}/" style="color:#94a3b8;font-size:.85rem;"><i class="fa-solid fa-eye"></i></a>
       </div>
-
-      {# Expandable evaluation detail (only when submetida) #}
-      {% if s and s.estado == "submetida" %}
-      <div id="eval-{{ c.pk }}" style="display:none;padding:1rem;border-top:1px solid #ede9fe;background:white;">
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:.75rem;">
-          <div style="text-align:center;padding:.6rem;background:#f5f3ff;border-radius:8px;">
-            <div style="display:flex;justify-content:center;gap:2px;margin-bottom:.2rem;">
-              {% for i in "12345" %}
-              <i class="fa-{% if s.pontuacao and forloop.counter <= s.pontuacao %}solid{% else %}regular{% endif %} fa-star"
-                 style="color:{% if s.pontuacao and forloop.counter <= s.pontuacao %}#f59e0b{% else %}#e2e8f0{% endif %};font-size:.9rem;"></i>
-              {% endfor %}
-            </div>
-            <div style="font-size:.72rem;color:#64748b;">{{ s.pontuacao|default:"—" }}/5</div>
-          </div>
-          <div style="text-align:center;padding:.6rem;background:#f8fafc;border-radius:8px;">
-            {% if s.recomendacao == "recomendado" %}<div>✅</div><div style="font-size:.72rem;font-weight:700;color:#15803d;">Recomendado</div>
-            {% elif s.recomendacao == "a_considerar" %}<div>⚠️</div><div style="font-size:.72rem;font-weight:700;color:#d97706;">A considerar</div>
-            {% elif s.recomendacao == "nao_recomendado" %}<div>❌</div><div style="font-size:.72rem;font-weight:700;color:#dc2626;">Não recomendado</div>
-            {% endif %}
-          </div>
-          <div style="text-align:center;padding:.6rem;background:#f8fafc;border-radius:8px;">
-            <div style="font-size:.7rem;color:#94a3b8;margin-bottom:.15rem;">Data</div>
-            <div style="font-size:.82rem;font-weight:600;">{% if s.data_entrevista %}{{ s.data_entrevista|date:"d/m/Y" }}{% else %}—{% endif %}</div>
-          </div>
-        </div>
-        {% if s.pontos_fortes or s.pontos_fracos %}
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.75rem;">
-          {% if s.pontos_fortes %}
-          <div style="padding:.6rem .75rem;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;font-size:.8rem;">
-            <strong style="color:#15803d;display:block;margin-bottom:.2rem;"><i class="fa-solid fa-thumbs-up mr-1"></i> Pontos fortes</strong>
-            {{ s.pontos_fortes }}
-          </div>
-          {% endif %}
-          {% if s.pontos_fracos %}
-          <div style="padding:.6rem .75rem;background:#fff7ed;border:1px solid #fed7aa;border-radius:7px;font-size:.8rem;">
-            <strong style="color:#d97706;display:block;margin-bottom:.2rem;"><i class="fa-solid fa-thumbs-down mr-1"></i> Pontos fracos</strong>
-            {{ s.pontos_fracos }}
-          </div>
-          {% endif %}
-        </div>
-        {% endif %}
-        {% if s.notas %}
-        <div style="padding:.6rem .75rem;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;font-size:.8rem;margin-bottom:.75rem;">
-          <strong style="color:#64748b;display:block;margin-bottom:.2rem;"><i class="fa-solid fa-note-sticky mr-1"></i> Notas</strong>
-          {{ s.notas }}
-        </div>
-        {% endif %}
-
-        {# Consequence preview #}
-        <div style="padding:.6rem .85rem;border-radius:7px;font-size:.82rem;font-weight:600;margin-bottom:.75rem;
-          {% if s.recomendacao == 'recomendado' %}background:#f0fdf4;border:1px solid #86efac;color:#15803d;
-          {% elif s.recomendacao == 'nao_recomendado' %}background:#fef2f2;border:1px solid #fca5a5;color:#dc2626;
-          {% else %}background:#fffbeb;border:1px solid #fde68a;color:#92400e;{% endif %}">
-          <i class="fa-solid fa-circle-arrow-right mr-2"></i>
-          {% if s.recomendacao == 'recomendado' %}Confirmar move {{ c.nome }} para <strong>Proposta</strong> — carta de oferta disponível.
-          {% elif s.recomendacao == 'nao_recomendado' %}Confirmar move {{ c.nome }} para <strong>Rejeitado</strong> — carta de rejeição disponível.
-          {% else %}Confirmar mantém {{ c.nome }} em <strong>Entrevista</strong> para reavaliação.{% endif %}
-        </div>
-
-        <form method="post" action="/candidatos/{{ c.pk }}/avaliacao/{{ s.pk }}/confirmar/">
-          {% csrf_token %}
-          <button type="submit" class="btn-primary" style="background:#8b5cf6;">
-            <i class="fa-solid fa-circle-check mr-2"></i> Confirmar e avançar candidato
-          </button>
-          <button type="button" onclick="toggleEval('eval-{{ c.pk }}')" class="btn-secondary" style="margin-left:.5rem;">Fechar</button>
-        </form>
-      </div>
-      {% endif %}
-
+      {% endfor %}
     </div>
-    {% endwith %}
-    {% endfor %}
+    <a href="/scoring/?vaga={{ vaga.pk }}" class="btn-secondary" style="font-size:.8rem;padding:5px 12px;">
+      <i class="fa-solid fa-chart-bar mr-1"></i> Ver scoring completo
+    </a>
   </div>
 
+{% elif total_candidatos %}
+  <button class="step-header-btn sh-active" onclick="toggle(5)">
+    <span class="step-num sn-active">5</span>
+    <span class="step-label sl-active">5. Scoring dos CVs</span>
+    <span class="step-badge" style="background:#fef3c7;color:#92400e;">Aguarda scoring</span>
+    <i class="fa-solid fa-chevron-down caret caret-up" id="caret-5"></i>
+  </button>
+  <div class="step-body step-body-active" id="body-5">
+    <p style="font-size:.875rem;color:#374151;margin:0 0 1rem;line-height:1.6;">
+      A IA avalia todos os CVs face aos requisitos do ToR e atribui uma pontuação de fit (0–100%) a cada candidato.
+    </p>
+    <div style="display:flex;flex-direction:column;gap:.45rem;margin-bottom:1rem;">
+      {% for c in cands_triagem %}
+      <div class="cand-row">
+        <div class="score-circle sc-none" style="font-size:.7rem;">—</div>
+        <div style="flex:1;min-width:0;">
+          <a href="/candidatos/{{ c.pk }}/" class="cand-name">{{ c.nome }}</a>
+          <div class="cand-meta">Aguarda score</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <form method="post" action="/scoring/calcular/">
+      {% csrf_token %}
+      <input type="hidden" name="vaga_id" value="{{ vaga.pk }}">
+      <input type="hidden" name="next" value="/vagas/{{ vaga.pk }}/">
+      <button type="submit" class="btn-step btn-step-purple">
+        <i class="fa-solid fa-robot"></i> Calcular score de todos os candidatos
+      </button>
+    </form>
+  </div>
+
+{% else %}
+  <div class="step-header-btn sh-locked" style="cursor:default;">
+    <span class="step-num sn-locked">5</span>
+    <span class="step-label sl-locked">5. Scoring dos CVs</span>
+    <span class="step-badge" style="background:#f1f5f9;color:#94a3b8;"><i class="fa-solid fa-lock fa-xs mr-1"></i> Após Passo 4</span>
+  </div>
+{% endif %}
+
+</div>
+
+<div class="step-wrap" id="wrap-6">
+
+{% if guiao_session and guiao_session.estado == 'aprovado' %}
+  <button class="step-header-btn sh-done" onclick="toggle(6)">
+    <span class="step-num sn-done"><i class="fa-solid fa-check fa-xs"></i></span>
+    <span class="step-label sl-done">6. Guião de Entrevista</span>
+    <span class="step-badge" style="background:#dcfce7;color:#15803d;">Aprovado</span>
+    <i class="fa-solid fa-chevron-down caret" id="caret-6"></i>
+  </button>
+  <div class="step-body" id="body-6" style="display:none;">
+    <p style="font-size:.85rem;color:#374151;margin:0 0 .85rem;">Guião aprovado. Pode descarregá-lo ou gerar um novo.</p>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+      <a href="/vagas/{{ vaga.pk }}/guiao/{{ guiao_session.pk }}/download/" class="btn-step btn-step-amber">
+        <i class="fa-solid fa-file-word"></i> Descarregar Word
+      </a>
+      <button onclick="showModal('modal-juri')"
+              class="btn-secondary" style="font-size:.8rem;padding:6px 12px;">
+        <i class="fa-solid fa-rotate mr-1"></i> Novo guião
+      </button>
+    </div>
+  </div>
+
+{% elif guiao_session and guiao_session.estado == 'submetido' %}
+  <button class="step-header-btn sh-active" onclick="toggle(6)">
+    <span class="step-num sn-active">6</span>
+    <span class="step-label sl-active">6. Guião de Entrevista</span>
+    <span class="step-badge" style="background:#dbeafe;color:#1d4ed8;">Submetido — aguarda aprovação RH</span>
+    <i class="fa-solid fa-chevron-down caret caret-up" id="caret-6"></i>
+  </button>
+  <div class="step-body step-body-active" id="body-6">
+    <p style="font-size:.875rem;color:#374151;margin:0 0 1rem;line-height:1.6;">
+      O Presidente do Júri submeteu o guião. Reveja e aprove para avançar para as entrevistas.
+    </p>
+    <a href="/vagas/{{ vaga.pk }}/guiao/{{ guiao_session.pk }}/aprovar/" class="btn-step">
+      <i class="fa-solid fa-magnifying-glass"></i> Rever e aprovar guião
+    </a>
+  </div>
+
+{% elif guiao_session and guiao_session.estado == 'pendente' %}
+  <button class="step-header-btn sh-active" onclick="toggle(6)">
+    <span class="step-num sn-active">6</span>
+    <span class="step-label sl-active">6. Guião de Entrevista</span>
+    <span class="step-badge" style="background:#fef3c7;color:#92400e;">Link enviado — aguarda júri</span>
+    <i class="fa-solid fa-chevron-down caret caret-up" id="caret-6"></i>
+  </button>
+  <div class="step-body step-body-active" id="body-6">
+    <p style="font-size:.875rem;color:#374151;margin:0 0 1rem;line-height:1.6;">
+      Link enviado ao Presidente do Júri. Aguarda que ele edite e submeta as perguntas.
+    </p>
+    <button onclick="showModal('modal-juri')"
+            class="btn-secondary" style="font-size:.8rem;padding:6px 12px;">
+      <i class="fa-solid fa-rotate mr-1"></i> Gerar novo link
+    </button>
+  </div>
+
+{% elif n_scored %}
+  <button class="step-header-btn sh-active" onclick="toggle(6)">
+    <span class="step-num sn-active">6</span>
+    <span class="step-label sl-active">6. Guião de Entrevista</span>
+    <span class="step-badge" style="background:#fef3c7;color:#92400e;">Por iniciar</span>
+    <i class="fa-solid fa-chevron-down caret caret-up" id="caret-6"></i>
+  </button>
+  <div class="step-body step-body-active" id="body-6">
+    <p style="font-size:.875rem;color:#374151;margin:0 0 1rem;line-height:1.6;">
+      A IA gera um guião de perguntas com base no ToR. O Presidente do Júri edita e submete — RH aprova antes de usar.
+    </p>
+    <button onclick="showModal('modal-juri')" class="btn-step btn-step-amber">
+      <i class="fa-solid fa-paper-plane"></i> Enviar ao Presidente do Júri
+    </button>
+  </div>
+
+{% else %}
+  <div class="step-header-btn sh-locked" style="cursor:default;">
+    <span class="step-num sn-locked">6</span>
+    <span class="step-label sl-locked">6. Guião de Entrevista</span>
+    <span class="step-badge" style="background:#f1f5f9;color:#94a3b8;"><i class="fa-solid fa-lock fa-xs mr-1"></i> Após Passo 5</span>
+  </div>
+{% endif %}
+
+</div>
+
+<div class="step-wrap" id="wrap-7">
+
+{% if guiao_session and guiao_session.estado == 'aprovado' %}
+
+  {% if cands_decisao and not cands_entrevista_data %}
+  <button class="step-header-btn sh-done" onclick="toggle(7)">
+    <span class="step-num sn-done"><i class="fa-solid fa-check fa-xs"></i></span>
+    <span class="step-label sl-done">7. Avaliação e Decisão Final</span>
+    <span class="step-badge" style="background:#dcfce7;color:#15803d;">Processo concluído</span>
+    <i class="fa-solid fa-chevron-down caret" id="caret-7"></i>
+  </button>
   {% else %}
-  <div class="step-empty" style="color:#c4b5fd;">
-    <i class="fa-solid fa-user-group"></i>
-    Nenhum candidato em entrevista ainda. Avance candidatos no Passo 1.
-  </div>
+  <button class="step-header-btn sh-active" onclick="toggle(7)">
+    <span class="step-num sn-active">7</span>
+    <span class="step-label sl-active">7. Avaliação e Decisão Final</span>
+    {% if n_entrevista %}<span class="step-badge" style="background:#ede9fe;color:#7c3aed;">{{ n_entrevista }} em entrevista</span>{% endif %}
+    {% with n_subm=comite_sessions|length %}{% if comite_sessions %}
+    <span class="step-badge" style="background:#f0fdf4;color:#15803d;" id="badge-comite">
+      <i class="fa-solid fa-users" style="margin-right:.25rem;"></i>
+      {% for s in comite_sessions %}{% if s.estado == 'submetido' %}✓{% endif %}{% endfor %} {{ comite_sessions|length }} membros
+    </span>
+    {% endif %}{% endwith %}
+    <i class="fa-solid fa-chevron-down caret caret-up" id="caret-7"></i>
+  </button>
   {% endif %}
-</div>
-</div>
 
-{# ═══════════════════════════════════════════════════════════════════════════
-   PASSO 4 — DECISÃO FINAL
-═══════════════════════════════════════════════════════════════════════════ #}
-<div id="step-4" style="margin-bottom:1.25rem;">
-<div class="step-card" style="border-left:4px solid {% if cands_decisao %}#10b981{% else %}#cbd5e1{% endif %};">
-  <div class="step-header">
-    <div class="step-badge" style="background:{% if cands_decisao %}#10b981{% else %}#cbd5e1{% endif %};">
-      {% if cands_decisao %}<i class="fa-solid fa-check"></i>{% else %}4{% endif %}
-    </div>
-    <div style="flex:1;">
-      <p class="step-title" style="{% if not cands_decisao %}color:#94a3b8;{% endif %}">Decisão Final</p>
-      <p class="step-sub">Candidatos com decisão: Proposta, Contratados ou Rejeitados. Aceda às cartas directamente.</p>
-    </div>
-    {% if cands_decisao %}
-    <a href="/vagas/{{ vaga.pk }}/relatorio/" class="btn-primary" style="font-size:.8rem;padding:6px 14px;flex-shrink:0;">
-      <i class="fa-solid fa-chart-bar mr-1"></i> Relatório de seleção
+  <div class="step-body {% if cands_decisao and not cands_entrevista_data %}{% else %}step-body-active{% endif %}" id="body-7"
+       style="{% if not cands_decisao or cands_entrevista_data %}display:block;{% else %}display:none;{% endif %}">
+
+    {% if not cands_entrevista_data and not cands_decisao %}
+    <p style="font-size:.875rem;color:#374151;margin:0 0 1rem;line-height:1.6;">
+      Seleccione os candidatos com melhor score para avançar para entrevista.
+    </p>
+    <a href="/vagas/{{ vaga.pk }}/shortlist/" class="btn-step">
+      <i class="fa-solid fa-arrow-right"></i> Seleccionar candidatos para entrevista
     </a>
     {% endif %}
-  </div>
 
-  {% if cands_decisao %}
-  <div style="margin-top:1rem;display:flex;flex-direction:column;gap:.5rem;">
-    {% for c in cands_decisao %}
-    <div class="cand-row" style="border:1px solid {% if c.etapa == 'Contratado' %}#bbf7d0{% elif c.etapa == 'Rejeitado' %}#fca5a5{% else %}#c7d2fe{% endif %};
-      background:{% if c.etapa == 'Contratado' %}#f0fdf4{% elif c.etapa == 'Rejeitado' %}#fef2f2{% else %}#eef2ff{% endif %};">
-      <i class="fa-solid {% if c.etapa == 'Contratado' %}fa-circle-check{% elif c.etapa == 'Rejeitado' %}fa-circle-xmark{% else %}fa-envelope{% endif %}"
-         style="color:{% if c.etapa == 'Contratado' %}#15803d{% elif c.etapa == 'Rejeitado' %}#dc2626{% else %}#4f46e5{% endif %};font-size:1.1rem;width:20px;text-align:center;flex-shrink:0;"></i>
-      <a href="/candidatos/{{ c.pk }}/" class="cand-name" style="flex:1;">{{ c.nome }}</a>
-      <span style="font-size:.75rem;font-weight:700;padding:.2rem .65rem;border-radius:6px;
-        {% if c.etapa == 'Contratado' %}background:#dcfce7;color:#15803d;
-        {% elif c.etapa == 'Rejeitado' %}background:#fee2e2;color:#dc2626;
-        {% else %}background:#e0e7ff;color:#3730a3;{% endif %}">
-        {{ c.etapa }}
-      </span>
-      {# Quick letter link #}
-      {% if c.etapa == "Proposta" or c.etapa == "Contratado" %}
-      <a href="/candidatos/{{ c.pk }}/carta/?tipo=oferta" class="btn-secondary" style="font-size:.72rem;padding:4px 10px;">
-        <i class="fa-solid fa-envelope mr-1" style="color:#15803d;"></i> Carta oferta
-      </a>
-      {% elif c.etapa == "Rejeitado" %}
-      <a href="/candidatos/{{ c.pk }}/carta/?tipo=pos_entrevista_rejeicao" class="btn-secondary" style="font-size:.72rem;padding:4px 10px;">
-        <i class="fa-solid fa-envelope mr-1" style="color:#dc2626;"></i> Carta rejeição
-      </a>
-      {% endif %}
-      <a href="/candidatos/{{ c.pk }}/" class="btn-icon"><i class="fa-solid fa-eye"></i></a>
+    {% if cands_entrevista_data %}
+    <p style="font-size:.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.75rem;">Candidatos em entrevista</p>
+    <div style="display:flex;flex-direction:column;gap:.45rem;margin-bottom:1.1rem;">
+      {% for item in cands_entrevista_data %}
+      {% with c=item.candidato s=item.avaliacao_session nota=item.nota %}
+      <div class="cand-row" style="flex-wrap:wrap;gap:.5rem;">
+        <div class="score-circle {% if c.score_fit %}{% if c.score_fit >= 75 %}sc-alto{% elif c.score_fit >= 50 %}sc-medio{% else %}sc-baixo{% endif %}{% else %}sc-none{% endif %}">
+          {% if c.score_fit %}{{ c.score_fit }}{% else %}—{% endif %}
+        </div>
+        <div style="flex:1;min-width:0;">
+          <a href="/candidatos/{{ c.pk }}/" class="cand-name">{{ c.nome }}</a>
+          <div class="cand-meta">
+            {% if nota %}
+              Comité:
+              {% if nota.recomendacao == 'recomendado' %}<span style="color:#15803d;font-weight:700;">✅ Recomendado</span>
+              {% elif nota.recomendacao == 'a_considerar' %}<span style="color:#d97706;font-weight:700;">⚠️ A considerar</span>
+              {% elif nota.recomendacao == 'nao_recomendado' %}<span style="color:#dc2626;font-weight:700;">❌ Não recomendado</span>
+              {% endif %}
+              {% if nota.pontuacao %} · {{ nota.pontuacao }}/5 estrelas{% endif %}
+            {% elif not s %}Sem avaliação enviada
+            {% elif s.estado == 'pendente' %}Aguarda júri
+            {% elif s.estado == 'submetida' %}Avaliação submetida pelo júri
+            {% elif s.estado == 'confirmada' %}Avaliação confirmada por RH
+            {% endif %}
+          </div>
+        </div>
+        {% if nota %}
+        <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
+          <form method="post" action="/vagas/{{ vaga.pk }}/candidato/{{ c.pk }}/decisao/">
+            {% csrf_token %}<input type="hidden" name="decisao" value="contratar">
+            <button type="submit" style="font-size:.72rem;font-weight:700;padding:.25rem .7rem;border-radius:7px;border:1.5px solid #bbf7d0;background:#f0fdf4;color:#15803d;cursor:pointer;">
+              ✅ Contratar
+            </button>
+          </form>
+          <form method="post" action="/vagas/{{ vaga.pk }}/candidato/{{ c.pk }}/decisao/">
+            {% csrf_token %}<input type="hidden" name="decisao" value="considerar">
+            <button type="submit" style="font-size:.72rem;font-weight:700;padding:.25rem .7rem;border-radius:7px;border:1.5px solid #fde68a;background:#fffbeb;color:#92400e;cursor:pointer;">
+              ⚠️ Manter
+            </button>
+          </form>
+          <form method="post" action="/vagas/{{ vaga.pk }}/candidato/{{ c.pk }}/decisao/">
+            {% csrf_token %}<input type="hidden" name="decisao" value="rejeitar">
+            <button type="submit" style="font-size:.72rem;font-weight:700;padding:.25rem .7rem;border-radius:7px;border:1.5px solid #fca5a5;background:#fef2f2;color:#dc2626;cursor:pointer;">
+              ❌ Rejeitar
+            </button>
+          </form>
+        </div>
+        {% elif s and s.estado == 'pendente' %}
+          <span style="font-size:.72rem;font-weight:700;padding:.2rem .6rem;border-radius:999px;background:#fef3c7;color:#92400e;"><i class="fa-solid fa-clock mr-1"></i>Aguarda júri</span>
+        {% elif s and s.estado == 'submetida' %}
+          <span style="font-size:.72rem;font-weight:700;padding:.2rem .6rem;border-radius:999px;background:#dbeafe;color:#1d4ed8;"><i class="fa-solid fa-check mr-1"></i>Submetida</span>
+        {% elif s and s.estado == 'confirmada' %}
+          <span style="font-size:.72rem;font-weight:700;padding:.2rem .6rem;border-radius:999px;background:#dcfce7;color:#15803d;"><i class="fa-solid fa-circle-check mr-1"></i>Confirmada</span>
+        {% else %}
+          <span style="font-size:.72rem;font-weight:700;padding:.2rem .6rem;border-radius:999px;background:#f1f5f9;color:#94a3b8;">Aguarda</span>
+        {% endif %}
+      </div>
+      {% endwith %}
+      {% endfor %}
     </div>
-    {% endfor %}
+
+    {% if vaga.avaliacao_group_token %}
+    <div style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:10px;padding:.85rem 1rem;margin-bottom:1rem;font-size:.83rem;color:#5b21b6;display:flex;align-items:center;gap:.6rem;">
+      <i class="fa-solid fa-link"></i>
+      <span>Link de avaliação gerado. Partilhe com o Presidente do Júri.</span>
+      <button type="button" onclick="copyLink()" class="btn-secondary" style="font-size:.75rem;padding:4px 10px;margin-left:auto;">
+        <i class="fa-solid fa-copy mr-1"></i> Copiar link
+      </button>
+    </div>
+    <input type="hidden" id="grupo-link" value="{{ request.scheme }}://{{ request.get_host }}/vagas/avaliacao-grupo/{{ vaga.avaliacao_group_token }}/">
+    {% endif %}
+
+
+    <div style="margin-top:1.25rem;border-top:1.5px solid #e2e8f0;padding-top:1.25rem;">
+      <p style="font-size:.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.85rem;display:flex;align-items:center;gap:.4rem;">
+        <i class="fa-solid fa-users" style="color:#7c3aed;"></i> Comité de Avaliação
+      </p>
+
+      {% if comite_sessions %}
+      <div style="display:flex;flex-direction:column;gap:.45rem;margin-bottom:1rem;">
+        {% for s in comite_sessions %}
+        <div class="cand-row" style="background:{% if s.estado == 'submetido' %}#f5f3ff{% else %}#f8fafc{% endif %};border-color:{% if s.estado == 'submetido' %}#ddd6fe{% else %}#e2e8f0{% endif %};">
+          <div style="width:32px;height:32px;border-radius:50%;background:{% if s.estado == 'submetido' %}#ede9fe{% else %}#f1f5f9{% endif %};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="fa-solid fa-user" style="color:{% if s.estado == 'submetido' %}#7c3aed{% else %}#94a3b8{% endif %};font-size:.8rem;"></i>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:600;font-size:.875rem;color:#1e293b;">{{ s.avaliador_nome }}</div>
+            {% if s.avaliador_email %}<div class="cand-meta">{{ s.avaliador_email }}</div>{% endif %}
+          </div>
+          {% if s.estado == 'submetido' %}
+            <span style="font-size:.72rem;font-weight:700;padding:.2rem .6rem;border-radius:999px;background:#ede9fe;color:#7c3aed;"><i class="fa-solid fa-check mr-1"></i>Submetido</span>
+          {% else %}
+            <span style="font-size:.72rem;font-weight:700;padding:.2rem .6rem;border-radius:999px;background:#fef3c7;color:#92400e;"><i class="fa-solid fa-clock mr-1"></i>Aguarda</span>
+          {% endif %}
+          <button type="button" onclick="copyComiteLink('{{ request.scheme }}://{{ request.get_host }}/vagas/comite/{{ s.token }}/', this)"
+                  class="btn-secondary" style="font-size:.72rem;padding:4px 9px;flex-shrink:0;">
+            <i class="fa-solid fa-link"></i> Copiar link
+          </button>
+          {% if s.estado == 'submetido' %}
+          <form method="post" action="/vagas/{{ vaga.pk }}/comite/{{ s.id }}/repor/"
+                onsubmit="return confirm('Repor a avaliação de {{ s.avaliador_nome }}? O membro terá de preencher novamente de acordo com o guião actual.')">
+            {% csrf_token %}
+            <button type="submit" class="btn-secondary" style="font-size:.72rem;padding:4px 9px;flex-shrink:0;color:#d97706;border-color:#fde68a;" title="Repor avaliação (permite reeditar com o guião actualizado)">
+              <i class="fa-solid fa-rotate-left"></i>
+            </button>
+          </form>
+          {% endif %}
+          <form method="post" action="/vagas/{{ vaga.pk }}/comite/{{ s.id }}/remover/"
+                onsubmit="return confirm('Remover {{ s.avaliador_nome }} do comité?')">
+            {% csrf_token %}
+            <button type="submit" class="btn-secondary" style="font-size:.72rem;padding:4px 9px;flex-shrink:0;color:#dc2626;border-color:#fca5a5;" title="Remover do comité">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </form>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div style="display:flex;gap:.65rem;flex-wrap:wrap;align-items:center;">
+        <button onclick="showModal('modal-adicionar-avaliador')" class="btn-secondary" style="font-size:.83rem;padding:7px 14px;">
+          <i class="fa-solid fa-user-plus mr-1"></i> Adicionar membro ao comité
+        </button>
+        {% if comite_sessions %}
+        <a href="/vagas/{{ vaga.pk }}/comite/resultados/" class="btn-secondary" style="font-size:.83rem;padding:7px 14px;text-decoration:none;">
+          <i class="fa-solid fa-chart-bar mr-1"></i> Ver avaliações do comité
+        </a>
+        <form method="post" action="/vagas/{{ vaga.pk }}/comite/confirmar/">
+          {% csrf_token %}
+          <button type="submit" class="btn-step btn-step-purple" style="font-size:.83rem;padding:7px 16px;">
+            <i class="fa-solid fa-circle-check mr-1"></i> Confirmar decisões do comité
+          </button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if cands_decisao %}
+    <p style="font-size:.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin:.1rem 0 .6rem;">Decisões finais</p>
+    <div style="display:flex;flex-direction:column;gap:.45rem;margin-bottom:1rem;">
+      {% for c in cands_decisao %}
+      <div class="cand-row" style="border-color:{% if c.etapa == 'Contratado' %}#bbf7d0{% elif c.etapa == 'Rejeitado' %}#fca5a5{% else %}#c7d2fe{% endif %};background:{% if c.etapa == 'Contratado' %}#f0fdf4{% elif c.etapa == 'Rejeitado' %}#fef2f2{% else %}#eef2ff{% endif %};">
+        <i class="fa-solid {% if c.etapa == 'Contratado' %}fa-circle-check{% elif c.etapa == 'Rejeitado' %}fa-circle-xmark{% else %}fa-envelope{% endif %}"
+           style="color:{% if c.etapa == 'Contratado' %}#15803d{% elif c.etapa == 'Rejeitado' %}#dc2626{% else %}#4f46e5{% endif %};font-size:1rem;width:18px;flex-shrink:0;"></i>
+        <a href="/candidatos/{{ c.pk }}/" class="cand-name" style="flex:1;">{{ c.nome }}</a>
+        <span style="font-size:.73rem;font-weight:700;padding:.15rem .55rem;border-radius:6px;
+          {% if c.etapa == 'Contratado' %}background:#dcfce7;color:#15803d;
+          {% elif c.etapa == 'Rejeitado' %}background:#fee2e2;color:#dc2626;
+          {% else %}background:#e0e7ff;color:#3730a3;{% endif %}">{{ c.etapa }}</span>
+        {% if c.etapa == 'Proposta' or c.etapa == 'Contratado' %}
+        <a href="/candidatos/{{ c.pk }}/carta/?tipo=oferta" class="btn-secondary" style="font-size:.72rem;padding:4px 10px;">
+          <i class="fa-solid fa-envelope mr-1" style="color:#15803d;"></i> Carta oferta
+        </a>
+        {% elif c.etapa == 'Rejeitado' %}
+        <a href="/candidatos/{{ c.pk }}/carta/?tipo=pos_entrevista_rejeicao" class="btn-secondary" style="font-size:.72rem;padding:4px 10px;">
+          <i class="fa-solid fa-envelope mr-1" style="color:#dc2626;"></i> Carta rejeição
+        </a>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    <a href="/vagas/{{ vaga.pk }}/relatorio/" class="btn-step" style="background:#0f766e;">
+      <i class="fa-solid fa-chart-bar"></i> Relatório final de seleção
+    </a>
+    {% endif %}
+
   </div>
-  {% else %}
-  <div class="step-empty">
-    <i class="fa-solid fa-hourglass-half"></i>
-    Aguarda confirmação das avaliações no Passo 3.
+
+{% else %}
+  <div class="step-header-btn sh-locked" style="cursor:default;">
+    <span class="step-num sn-locked">7</span>
+    <span class="step-label sl-locked">7. Avaliação e Decisão Final</span>
+    <span class="step-badge" style="background:#f1f5f9;color:#94a3b8;"><i class="fa-solid fa-lock fa-xs mr-1"></i> Após Passo 6</span>
   </div>
-  {% endif %}
-</div>
+{% endif %}
+
 </div>
 
-{# ── Modals ────────────────────────────────────────────────────────────── #}
+<div id="modal-analise-ia" class="hidden" style="position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45);">
+  <div style="background:white;border-radius:16px;padding:2rem;max-width:560px;width:100%;margin:1rem;box-shadow:0 20px 60px rgba(0,0,0,.2);max-height:90vh;overflow-y:auto;">
+    <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem;">
+      <div style="width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="fa-solid fa-robot" style="color:#1d4ed8;font-size:1.1rem;"></i>
+      </div>
+      <div>
+        <h3 style="font-weight:800;color:#1e293b;margin:0;font-size:1.05rem;">Análise IA — Termos de Referência</h3>
+        <p style="font-size:.8rem;color:#64748b;margin:0;">Requisitos extraídos automaticamente do documento</p>
+      </div>
+    </div>
 
-{# Modal: send guide to chair #}
-<div id="modal-juri" class="hidden fixed inset-0 z-50 flex items-center justify-center" style="background:rgba(0,0,0,0.45);">
-  <div style="background:white;border-radius:14px;padding:1.75rem;max-width:420px;width:100%;margin:1rem;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+    {% if vaga.titulo %}
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:.9rem 1.1rem;margin-bottom:1rem;">
+      <p style="font-size:.7rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0 0 .3rem;">Posição</p>
+      <p style="font-size:.95rem;font-weight:700;color:#1e293b;margin:0;">{{ vaga.titulo }}</p>
+      {% if vaga.organizacao %}<p style="font-size:.82rem;color:#64748b;margin:.15rem 0 0;">{{ vaga.organizacao }}{% if vaga.local %} · {{ vaga.local }}{% endif %}</p>{% endif %}
+    </div>
+    {% endif %}
+
+    {% if vaga.competencias_requeridas %}
+    <div style="margin-bottom:1rem;">
+      <p style="font-size:.7rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0 0 .5rem;"><i class="fa-solid fa-brain mr-1" style="color:#1d4ed8;"></i> Competências extraídas</p>
+      <div style="display:flex;flex-wrap:wrap;gap:.3rem;">
+        {% for c in vaga.competencias_requeridas %}
+        <span style="background:#dbeafe;color:#1d4ed8;border-radius:6px;padding:.2rem .6rem;font-size:.78rem;font-weight:600;">{{ c }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1rem;">
+      {% if vaga.nivel_formacao %}
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.7rem .9rem;">
+        <p style="font-size:.68rem;font-weight:700;color:#94a3b8;text-transform:uppercase;margin:0 0 .2rem;"><i class="fa-solid fa-graduation-cap mr-1"></i> Formação mínima</p>
+        <p style="font-size:.88rem;font-weight:600;color:#1e293b;margin:0;">{{ vaga.nivel_formacao|title }}</p>
+      </div>
+      {% endif %}
+      {% if vaga.anos_experiencia_min %}
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.7rem .9rem;">
+        <p style="font-size:.68rem;font-weight:700;color:#94a3b8;text-transform:uppercase;margin:0 0 .2rem;"><i class="fa-solid fa-briefcase mr-1"></i> Experiência mínima</p>
+        <p style="font-size:.88rem;font-weight:600;color:#1e293b;margin:0;">{{ vaga.anos_experiencia_min }} anos</p>
+      </div>
+      {% endif %}
+      {% if vaga.tipo_contrato %}
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.7rem .9rem;">
+        <p style="font-size:.68rem;font-weight:700;color:#94a3b8;text-transform:uppercase;margin:0 0 .2rem;"><i class="fa-solid fa-file-contract mr-1"></i> Tipo de contrato</p>
+        <p style="font-size:.88rem;font-weight:600;color:#1e293b;margin:0;">{{ vaga.tipo_contrato }}</p>
+      </div>
+      {% endif %}
+      {% if vaga.departamento %}
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.7rem .9rem;">
+        <p style="font-size:.68rem;font-weight:700;color:#94a3b8;text-transform:uppercase;margin:0 0 .2rem;"><i class="fa-solid fa-building mr-1"></i> Departamento</p>
+        <p style="font-size:.88rem;font-weight:600;color:#1e293b;margin:0;">{{ vaga.departamento }}</p>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if vaga.responsabilidades %}
+    <div style="margin-bottom:1rem;">
+      <p style="font-size:.7rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0 0 .5rem;"><i class="fa-solid fa-list-check mr-1" style="color:#1d4ed8;"></i> Responsabilidades principais</p>
+      <ul style="margin:0;padding-left:1.2rem;display:flex;flex-direction:column;gap:.3rem;">
+        {% for r in vaga.responsabilidades %}
+        <li style="font-size:.83rem;color:#374151;">{{ r }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:.7rem 1rem;margin-bottom:1.25rem;font-size:.82rem;color:#1d4ed8;">
+      <i class="fa-solid fa-circle-info mr-1"></i> Verifique os dados acima antes de confirmar. Pode editá-los em <strong>Editar requisitos</strong> se necessário.
+    </div>
+
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+      <form method="post" action="/vagas/{{ vaga.pk }}/confirmar-analise/" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn-step">
+          <i class="fa-solid fa-circle-check"></i> Confirmar análise
+        </button>
+      </form>
+      <a href="/vagas/{{ vaga.pk }}/editar/" class="btn-secondary" style="font-size:.85rem;padding:8px 14px;">
+        <i class="fa-solid fa-pen mr-1"></i> Editar requisitos
+      </a>
+      <button type="button" onclick="closeModal('modal-analise-ia')" class="btn-secondary" style="font-size:.85rem;padding:8px 14px;">
+        Cancelar
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-link-avaliacao" class="hidden" style="position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45);">
+  <div style="background:white;border-radius:16px;padding:2rem;max-width:500px;width:100%;margin:1rem;box-shadow:0 20px 60px rgba(0,0,0,.2);">
+    <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem;">
+      <div style="width:40px;height:40px;border-radius:50%;background:#ede9fe;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="fa-solid fa-link" style="color:#8b5cf6;font-size:1.1rem;"></i>
+      </div>
+      <div>
+        <h3 style="font-weight:800;color:#1e293b;margin:0;font-size:1.05rem;">Link de avaliação gerado</h3>
+        <p style="font-size:.8rem;color:#64748b;margin:0;">Partilhe com o Presidente do Júri</p>
+      </div>
+    </div>
+    <p style="font-size:.85rem;color:#374151;margin:0 0 .85rem;line-height:1.6;">
+      O júri acede a este link, preenche a avaliação de todos os candidatos em entrevista e submete. Após a submissão, o RH confirma as decisões aqui.
+    </p>
+    <div style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:10px;padding:.85rem 1rem;margin-bottom:1.1rem;display:flex;align-items:center;gap:.75rem;">
+      <code style="font-size:.78rem;color:#5b21b6;flex:1;word-break:break-all;" id="link-avaliacao-text">{{ request.scheme }}://{{ request.get_host }}/vagas/avaliacao-grupo/{{ vaga.avaliacao_group_token }}/</code>
+    </div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+      <button type="button" onclick="copyLinkModal()" class="btn-step btn-step-purple" id="btn-copy-modal">
+        <i class="fa-solid fa-copy mr-1"></i> Copiar link
+      </button>
+      <button type="button" onclick="closeModal('modal-link-avaliacao')" class="btn-secondary">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-adicionar-avaliador" class="hidden" style="position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45);">
+  <div style="background:white;border-radius:14px;padding:1.75rem;max-width:420px;width:100%;margin:1rem;box-shadow:0 20px 60px rgba(0,0,0,.2);">
+    <h3 style="font-weight:800;color:#1e293b;margin:0 0 .25rem;">Adicionar membro ao comité</h3>
+    <p style="font-size:.82rem;color:#64748b;margin:0 0 1.25rem;">O membro receberá um link único para submeter a sua avaliação individual de cada candidato.</p>
+    <form method="post" action="/vagas/{{ vaga.pk }}/comite/adicionar/">
+      {% csrf_token %}
+      <div style="margin-bottom:.85rem;">
+        <label style="font-size:.82rem;font-weight:600;color:#475569;display:block;margin-bottom:.35rem;">Nome do avaliador <span style="color:#dc2626;">*</span></label>
+        <input type="text" name="nome" required placeholder="Ex: Dra. Ana Correia"
+               style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:.875rem;font-family:inherit;">
+      </div>
+      <div style="margin-bottom:1.25rem;">
+        <label style="font-size:.82rem;font-weight:600;color:#475569;display:block;margin-bottom:.35rem;">Email <span style="color:#dc2626;">*</span></label>
+        <input type="email" name="email" required placeholder="avaliador@organizacao.org"
+               style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:.875rem;font-family:inherit;">
+      </div>
+      <div style="display:flex;gap:.5rem;">
+        <button type="submit" class="btn-step btn-step-purple"><i class="fa-solid fa-user-plus mr-1"></i> Adicionar</button>
+        <button type="button" onclick="closeModal('modal-adicionar-avaliador')" class="btn-secondary">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="modal-avaliacao-grupo" class="hidden" style="position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45);">
+  <div style="background:white;border-radius:14px;padding:1.75rem;max-width:420px;width:100%;margin:1rem;box-shadow:0 20px 60px rgba(0,0,0,.2);">
+    <h3 style="font-weight:800;color:#1e293b;margin:0 0 .25rem;">Enviar avaliação ao Presidente do Júri</h3>
+    <p style="font-size:.85rem;color:#64748b;margin:0 0 1.25rem;">Um único link com todos os candidatos em entrevista. O júri preenche e submete. O RH confirma as decisões.</p>
+    <form method="post" action="/vagas/{{ vaga.pk }}/enviar-avaliacao-grupo/">
+      {% csrf_token %}
+      <label style="font-size:.82rem;font-weight:600;color:#475569;display:block;margin-bottom:.4rem;">Email do presidente (opcional)</label>
+      <input type="email" name="chair_email" class="form-input" placeholder="presidente@organizacao.org" style="margin-bottom:.75rem;">
+      <div style="display:flex;gap:.5rem;">
+        <button type="submit" class="btn-step btn-step-purple"><i class="fa-solid fa-link mr-1"></i> Gerar link único</button>
+        <button type="button" onclick="closeModal('modal-avaliacao-grupo')" class="btn-secondary">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="modal-juri" class="hidden" style="position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45);">
+  <div style="background:white;border-radius:14px;padding:1.75rem;max-width:420px;width:100%;margin:1rem;box-shadow:0 20px 60px rgba(0,0,0,.2);">
     <h3 style="font-weight:800;color:#1e293b;margin:0 0 .25rem;">Enviar guião ao Presidente do Júri</h3>
-    <p style="font-size:.85rem;color:#64748b;margin:0 0 1.25rem;">A IA gera as perguntas com base na vaga. O presidente edita e submete. RH aprova antes do download.</p>
+    <p style="font-size:.85rem;color:#64748b;margin:0 0 1.25rem;">A IA gera as perguntas com base no ToR. O presidente edita e submete. RH aprova antes do download.</p>
     <form method="post" action="/vagas/{{ vaga.pk }}/enviar-juri/">
       {% csrf_token %}
       <label style="font-size:.82rem;font-weight:600;color:#475569;display:block;margin-bottom:.4rem;">Email do presidente (opcional)</label>
-      <input type="email" name="chair_email" class="form-input w-full" placeholder="presidente@organizacao.org" style="margin-bottom:.75rem;">
-      <p style="font-size:.75rem;color:#94a3b8;margin:0 0 1rem;">Pode copiar e enviar o link manualmente na página seguinte.</p>
+      <input type="email" name="chair_email" class="form-input" placeholder="presidente@organizacao.org" style="margin-bottom:.75rem;">
       <div style="display:flex;gap:.5rem;">
-        <button type="submit" class="btn-primary" style="background:#f59e0b;"><i class="fa-solid fa-link mr-1"></i> Gerar link</button>
-        <button type="button" onclick="document.getElementById('modal-juri').classList.add('hidden')" class="btn-secondary">Cancelar</button>
+        <button type="submit" class="btn-step btn-step-amber"><i class="fa-solid fa-link mr-1"></i> Gerar link</button>
+        <button type="button" onclick="closeModal('modal-juri')" class="btn-secondary">Cancelar</button>
       </div>
     </form>
   </div>
 </div>
 
-{# Modal: send evaluation to chair (dynamic per candidate) #}
-<div id="modal-avaliacao" class="hidden fixed inset-0 z-50 flex items-center justify-center" style="background:rgba(0,0,0,0.45);">
-  <div style="background:white;border-radius:14px;padding:1.75rem;max-width:420px;width:100%;margin:1rem;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+<div id="modal-av" class="hidden" style="position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45);">
+  <div style="background:white;border-radius:14px;padding:1.75rem;max-width:420px;width:100%;margin:1rem;box-shadow:0 20px 60px rgba(0,0,0,.2);">
     <h3 style="font-weight:800;color:#1e293b;margin:0 0 .25rem;">Enviar avaliação ao Presidente do Júri</h3>
-    <p style="font-size:.85rem;color:#64748b;margin:0 0 .25rem;">Candidato: <strong id="modal-cand-nome"></strong></p>
-    <p style="font-size:.85rem;color:#64748b;margin:0 0 1.25rem;">O presidente preenche a avaliação e submete. RH confirma e o candidato avança automaticamente.</p>
-    <form id="form-avaliacao" method="post" action="">
+    <p style="font-size:.85rem;color:#64748b;margin:0 0 .25rem;">Candidato: <strong id="modal-av-nome"></strong></p>
+    <p style="font-size:.85rem;color:#64748b;margin:0 0 1.25rem;">O presidente preenche e submete. RH confirma e o candidato avança automaticamente.</p>
+    <form id="form-av" method="post" action="">
       {% csrf_token %}
       <label style="font-size:.82rem;font-weight:600;color:#475569;display:block;margin-bottom:.4rem;">Email do presidente (opcional)</label>
-      <input type="email" name="chair_email" class="form-input w-full" placeholder="presidente@organizacao.org" style="margin-bottom:.75rem;">
-      <p style="font-size:.75rem;color:#94a3b8;margin:0 0 1rem;">Pode copiar e enviar o link manualmente.</p>
+      <input type="email" name="chair_email" class="form-input" placeholder="presidente@organizacao.org" style="margin-bottom:.75rem;">
       <div style="display:flex;gap:.5rem;">
-        <button type="submit" class="btn-primary" style="background:#8b5cf6;"><i class="fa-solid fa-link mr-1"></i> Gerar link</button>
-        <button type="button" onclick="document.getElementById('modal-avaliacao').classList.add('hidden')" class="btn-secondary">Cancelar</button>
+        <button type="submit" class="btn-step btn-step-purple"><i class="fa-solid fa-link mr-1"></i> Gerar link</button>
+        <button type="button" onclick="closeModal('modal-av')" class="btn-secondary">Cancelar</button>
       </div>
     </form>
   </div>
 </div>
 
-<style>
-.step-card { background:white; border-radius:12px; border:1px solid #e2e8f0; padding:1.25rem 1.5rem; }
-.step-header { display:flex; align-items:flex-start; gap:.85rem; }
-.step-badge { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.8rem; font-weight:800; color:white; flex-shrink:0; margin-top:.1rem; }
-.step-title { font-size:.95rem; font-weight:700; color:#1e293b; margin:0 0 .2rem; }
-.step-sub { font-size:.8rem; color:#64748b; margin:0; line-height:1.5; }
-.step-count { font-size:.72rem; font-weight:700; padding:.2rem .65rem; border-radius:999px; white-space:nowrap; }
-.step-empty { text-align:center; padding:1.5rem; color:#94a3b8; font-size:.85rem; margin-top:.75rem; display:flex; align-items:center; justify-content:center; gap:.5rem; }
-.cand-row { display:flex; align-items:center; gap:.75rem; padding:.65rem .85rem; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; }
-.cand-name { font-weight:600; font-size:.875rem; color:#1e293b; text-decoration:none; }
-.cand-name:hover { color:#1d4ed8; }
-.cand-meta { font-size:.73rem; color:#94a3b8; margin-top:.1rem; }
-.etapa-badge { font-size:.68rem; font-weight:700; padding:.1rem .45rem; border-radius:4px; margin-right:.35rem; }
-.score-circle { width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.82rem; flex-shrink:0; }
-.sc-alto { background:#dcfce7; color:#15803d; }
-.sc-medio { background:#fef9c3; color:#a16207; }
-.sc-baixo { background:#fee2e2; color:#dc2626; }
-.sc-none { background:#f1f5f9; color:#94a3b8; }
-.btn-action { background:#8b5cf6; color:white; border:none; border-radius:7px; padding:.35rem .85rem; font-size:.78rem; font-weight:600; cursor:pointer; white-space:nowrap; }
-.btn-icon { color:#94a3b8; font-size:.9rem; text-decoration:none; flex-shrink:0; }
-.btn-icon:hover { color:#1d4ed8; }
-</style>
-
 <script>
-function openModalAvaliacao(pk, nome) {
-  document.getElementById('modal-cand-nome').textContent = nome;
-  document.getElementById('form-avaliacao').action = '/candidatos/' + pk + '/enviar-avaliacao/';
-  document.getElementById('modal-avaliacao').classList.remove('hidden');
+function toggle(n) {
+  const body  = document.getElementById('body-' + n);
+  const caret = document.getElementById('caret-' + n);
+  if (!body) return;
+  const open = body.style.display !== 'none';
+  body.style.display  = open ? 'none' : 'block';
+  if (caret) caret.classList.toggle('caret-up', !open);
 }
+
 function toggleEval(id) {
   const el = document.getElementById(id);
-  el.style.display = el.style.display === 'none' ? '' : 'none';
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
-function scrollTo(id) {
-  const el = document.getElementById(id);
-  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+function openModalAv(pk, nome) {
+  document.getElementById('modal-av-nome').textContent = nome;
+  document.getElementById('form-av').action = '/candidatos/' + pk + '/enviar-avaliacao/';
+  showModal('modal-av');
+}
+
+function copyLinkModal() {
+  const el = document.getElementById('link-avaliacao-text');
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent.trim()).then(function() {
+    const btn = document.getElementById('btn-copy-modal');
+    if (btn) { btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Copiado!'; setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-copy mr-1"></i> Copiar link'; }, 2000); }
+  });
+}
+
+function copyLink() {
+  const el = document.getElementById('link-avaliacao-text');
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent.trim()).then(function() {
+    const btn = document.querySelector('[onclick="copyLink()"]');
+    if (btn) { btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Copiado!'; setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-copy mr-1"></i> Copiar link'; }, 2000); }
+  });
+}
+
+function copyComiteLink(url, btn) {
+  navigator.clipboard.writeText(url).then(function() {
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Copiado!';
+    setTimeout(() => { btn.innerHTML = orig; }, 2000);
+  });
+}
+
+// Auto-refresh Step 7 while committee members are pending
+{% if comite_sessions %}
+{% for s in comite_sessions %}{% if s.estado != 'submetido' %}{% if forloop.first %}
+(function() {
+  var refreshTimer = setInterval(function() {
+    var body7 = document.getElementById('body-7');
+    if (body7 && body7.style.display !== 'none') {
+      clearInterval(refreshTimer);
+      window.location.reload();
+    }
+  }, 30000);
+})();
+{% endif %}{% endif %}{% endfor %}
+{% endif %}
+
+// Auto-open link modal after generating
+if (new URLSearchParams(window.location.search).get('show_av_link') === '1') {
+  document.addEventListener('DOMContentLoaded', function() {
+    showModal('modal-link-avaliacao');
+    history.replaceState({}, '', window.location.pathname);
+  });
+}
+
+function showModal(id) {
+  const m = document.getElementById(id);
+  m.classList.remove('hidden');
+  m.style.display = 'flex';
+}
+function closeModal(id) {
+  const m = document.getElementById(id);
+  m.classList.add('hidden');
+  m.style.display = 'none';
 }
 </script>
 

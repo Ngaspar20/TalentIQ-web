@@ -55,6 +55,9 @@ class Vaga(models.Model):
     descricao = models.TextField(blank=True)
     estado = models.CharField(max_length=50, choices=ESTADO_CHOICES, default=ESTADO_ABERTA)
     tor_file_path = models.CharField(max_length=500, blank=True)
+    tor_analisado = models.BooleanField(default=False)
+    tor_aprovado = models.BooleanField(default=False)
+    avaliacao_group_token = models.UUIDField(null=True, blank=True)
     origem = models.CharField(max_length=100, blank=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
@@ -103,3 +106,45 @@ class InterviewGuideSession(models.Model):
 
     def texto_final(self):
         return self.texto_editado or self.texto_gerado
+
+
+class ComiteSession(models.Model):
+    ESTADO_PENDENTE = "pendente"
+    ESTADO_SUBMETIDO = "submetido"
+    ESTADO_CHOICES = [
+        (ESTADO_PENDENTE, "Pendente"),
+        (ESTADO_SUBMETIDO, "Submetido"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    vaga = models.ForeignKey(Vaga, on_delete=models.CASCADE, related_name="comite_sessions")
+    avaliador_nome = models.CharField(max_length=200)
+    avaliador_email = models.EmailField(blank=True)
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default=ESTADO_PENDENTE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+
+    def __str__(self):
+        return f"{self.avaliador_nome} — {self.vaga.titulo}"
+
+
+class ComiteAvaliacao(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    session = models.ForeignKey(ComiteSession, on_delete=models.CASCADE, related_name="avaliacoes")
+    candidato = models.ForeignKey("candidatos.Candidato", on_delete=models.CASCADE, related_name="comite_avaliacoes")
+    pontuacao = models.PositiveSmallIntegerField(null=True, blank=True)
+    recomendacao = models.CharField(max_length=20, blank=True)
+    pontos_fortes = models.TextField(blank=True)
+    pontos_fracos = models.TextField(blank=True)
+    notas = models.TextField(blank=True)
+    data_entrevista = models.DateField(null=True, blank=True)
+    respostas_perguntas = models.JSONField(default=list)
+
+    class Meta:
+        unique_together = [("session", "candidato")]
+
+    def __str__(self):
+        return f"{self.session.avaliador_nome} → {self.candidato.nome}"

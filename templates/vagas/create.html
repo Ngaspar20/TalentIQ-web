@@ -79,16 +79,15 @@
     <form method="post" action="/vagas/criar/" id="vaga-form">
         {% csrf_token %}
 
+        <!-- Hidden field: populated by JS when file is selected -->
+        <input type="hidden" name="tor_filename" id="tor_filename_hidden" value="">
+
         <div id="form-fields">
-            <!-- Empty state: shown before upload or before AI fills it -->
+            <!-- Empty state: shown before upload -->
             <div id="form-empty-state" class="py-10 text-center text-slate-400">
                 <i class="fa-solid fa-arrow-up fa-2x mb-3" style="color:#cbd5e1;"></i>
                 <p class="font-medium">Carregue o ToR acima para preencher automaticamente</p>
-                <p class="text-sm mt-1">ou clique em <strong>Preencher Manualmente</strong> após carregar o ficheiro</p>
-                <button type="button" class="btn-secondary mt-4 text-sm"
-                        onclick="document.getElementById('form-empty-state').classList.add('hidden'); document.getElementById('form-fields').insertAdjacentHTML('beforeend', manualFormHTML());">
-                    <i class="fa-solid fa-pen-to-square"></i> Começar sem ToR
-                </button>
+                <p class="text-sm mt-1 text-slate-400">O Termo de Referência é obrigatório para criar uma vaga.</p>
             </div>
         </div>
 
@@ -105,13 +104,14 @@
 </div>
 
 <script>
-    // Show filename banner after file selected
+    // Show filename banner after file selected + store filename for form submission
     document.getElementById('tor-file').addEventListener('change', function() {
         if (this.files.length > 0) {
             document.getElementById('tor-filename').textContent = 'Ficheiro: ' + this.files[0].name;
             document.getElementById('tor-success').classList.remove('hidden');
             document.getElementById('upload-area').style.borderColor = '#10b981';
             document.getElementById('upload-area').style.backgroundColor = '#f0fdf4';
+            document.getElementById('tor_filename_hidden').value = this.files[0].name;
         }
     });
 
