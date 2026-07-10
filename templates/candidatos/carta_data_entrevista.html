@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}{{ tipo_label }} — {{ candidato.nome }}{% endblock %}
+{% block breadcrumb %}
+<a href="/candidatos/" class="hover:text-slate-700">Candidatos</a>
+<span class="mx-2">›</span>
+<a href="/candidatos/{{ candidato.pk }}/" class="hover:text-slate-700">{{ candidato.nome }}</a>
+<span class="mx-2">›</span> {{ tipo_label }}
+{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h1 class="flex items-center gap-3">
+        <i class="fa-solid fa-calendar-check" style="color:#8b5cf6;"></i> {{ tipo_label }}
+    </h1>
+    <p>{{ candidato.nome }} — {% if candidato.vaga %}{{ candidato.vaga.titulo }}{% else %}Sem vaga associada{% endif %}</p>
+</div>
+
+<div class="section-card" style="max-width: 520px;">
+    <p class="text-sm font-semibold text-slate-700 mb-4">Indique a data e hora da entrevista para incluir na carta:</p>
+
+    <form method="post" action="/candidatos/{{ candidato.pk }}/carta/?tipo={{ tipo }}&gerar=1">
+        {% csrf_token %}
+        <div class="mb-4">
+            <label>Data da entrevista</label>
+            <input type="date" name="data_entrevista" class="form-input" required>
+        </div>
+        <div class="mb-4">
+            <label>Hora da entrevista</label>
+            <input type="time" name="hora_entrevista" class="form-input">
+        </div>
+        <div class="mb-6">
+            <label>Local / formato</label>
+            <input type="text" name="local_entrevista" class="form-input"
+                   placeholder="Ex: Sala de reuniões, Piso 2 / Google Meet">
+        </div>
+        <div class="flex items-center gap-3">
+            <button type="submit" class="btn-primary">
+                <i class="fa-solid fa-sparkles mr-2"></i> Gerar carta
+            </button>
+            <a href="/candidatos/{{ candidato.pk }}/" class="btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

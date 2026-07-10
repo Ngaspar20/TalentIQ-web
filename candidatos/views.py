@@ -123,32 +123,36 @@ def candidato_delete(request, pk):
 
 
 CARTA_TIPOS = {
-    "triagem_exclusao": "Screening Exclusion Letter",
-    "pre_selecao": "Pre-Selection Letter",
-    "pos_entrevista_rejeicao": "Post-Interview Rejection Letter",
-    "oferta": "Offer Letter",
+    "triagem_exclusao": "Carta de Exclusão de Triagem",
+    "pre_selecao": "Carta de Pré-Selecção",
+    "pos_entrevista_rejeicao": "Carta de Rejeição Pós-Entrevista",
+    "oferta": "Carta de Oferta",
 }
 
 
-def _gerar_texto_carta(tipo, nome, vaga, org):
+def _gerar_texto_carta(tipo, nome, vaga, org, data_entrevista=""):
     from core.llm import get_llm_response
 
+    info_entrevista = f" A entrevista está agendada para {data_entrevista}." if data_entrevista else " A nossa equipa de RH entrará em contacto brevemente com os detalhes da entrevista."
+
     prompts = {
-        "triagem_exclusao": f"Write a professional, warm screening exclusion letter for {nome} who applied for the position of {vaga} at {org}. They were not selected for interview. Be respectful, appreciative, and concise (3 paragraphs). Write only the letter body starting with 'Dear {nome},'.",
-        "pre_selecao": f"Write a professional pre-selection letter inviting {nome} for an interview for the position of {vaga} at {org}. Congratulate them, mention HR will follow up with interview details. Be warm and concise (2-3 paragraphs). Write only the letter body starting with 'Dear {nome},'.",
-        "pos_entrevista_rejeicao": f"Write a professional post-interview rejection letter for {nome} who was interviewed for {vaga} at {org}. Thank them for attending, acknowledge their effort, inform them another candidate was selected. Be warm and respectful (3 paragraphs). Write only the letter body starting with 'Dear {nome},'.",
-        "oferta": f"Write a professional offer letter for {nome} for the position of {vaga} at {org}. Congratulate them on being selected, mention HR will follow with full details. Be warm and formal (2-3 paragraphs). Write only the letter body starting with 'Dear {nome},'.",
+        "triagem_exclusao": f"Escreve uma carta profissional e respeitosa de exclusão de triagem em português europeu para {nome}, que se candidatou ao cargo de {vaga} na {org}. O candidato não foi seleccionado para a fase de entrevista. Sê respeitoso, agradecido e conciso (3 parágrafos). Escreve apenas o corpo da carta a começar com 'Exmo./Exma. Sr./Sra. {nome},'.",
+        "pre_selecao": f"Escreve uma carta profissional de pré-selecção em português europeu para {nome}, convidando-o/a para entrevista para o cargo de {vaga} na {org}.{info_entrevista} Felicita o candidato pela selecção. Sê caloroso e conciso (2-3 parágrafos). Escreve apenas o corpo da carta a começar com 'Exmo./Exma. Sr./Sra. {nome},'.",
+        "pos_entrevista_rejeicao": f"Escreve uma carta profissional de rejeição pós-entrevista em português europeu para {nome}, que foi entrevistado/a para o cargo de {vaga} na {org}. Agradece a participação, reconhece o esforço, informa que outro candidato foi seleccionado. Sê caloroso e respeitoso (3 parágrafos). Escreve apenas o corpo da carta a começar com 'Exmo./Exma. Sr./Sra. {nome},'.",
+        "oferta": f"Escreve uma carta profissional de oferta de emprego em português europeu para {nome} para o cargo de {vaga} na {org}. Felicita o candidato pela selecção, menciona que os detalhes completos serão enviados em breve. Sê caloroso e formal (2-3 parágrafos). Escreve apenas o corpo da carta a começar com 'Exmo./Exma. Sr./Sra. {nome},'.",
     }
-    system = "You are an HR professional writing formal employment letters. Be professional, warm and concise."
+    system = "És um profissional de recursos humanos a escrever cartas formais de emprego em português europeu. Sê profissional, caloroso e conciso."
     texto = get_llm_response(prompts[tipo], system)
     if texto:
         return texto
 
+    info_fb = f"A entrevista está agendada para {data_entrevista}." if data_entrevista else "A nossa equipa de RH entrará em contacto brevemente para confirmar os detalhes da entrevista."
+
     fallbacks = {
-        "triagem_exclusao": f"Dear {nome},\n\nThank you for your application for the position of {vaga} at {org}. We appreciate the time and effort you invested in your application.\n\nAfter careful review of all applications received, we regret to inform you that you have not been selected to proceed to the interview stage. This was a difficult decision given the high number of qualified candidates who applied.\n\nWe wish you every success in your job search and hope you will consider applying for future opportunities with us.\n\nYours sincerely,\n\nHuman Resources\n{org}",
-        "pre_selecao": f"Dear {nome},\n\nWe are pleased to inform you that following the review of applications for the position of {vaga} at {org}, you have been selected to proceed to the interview stage.\n\nOur HR team will contact you shortly with the interview details including date, time and format. We look forward to learning more about your experience and qualifications.\n\nThank you for your interest in joining {org}.\n\nYours sincerely,\n\nHuman Resources\n{org}",
-        "pos_entrevista_rejeicao": f"Dear {nome},\n\nThank you for attending the interview for the position of {vaga} at {org}. We greatly appreciate the time and effort you invested in the selection process.\n\nAfter careful deliberation, we have decided to proceed with another candidate whose profile more closely matched the specific requirements of the role. This was a difficult decision given the strong candidates we had the pleasure of interviewing.\n\nWe encourage you to apply for future opportunities with {org} and wish you every success in your career.\n\nYours sincerely,\n\nHuman Resources\n{org}",
-        "oferta": f"Dear {nome},\n\nOn behalf of {org}, it is our great pleasure to offer you the position of {vaga}. Following a thorough selection process, the selection committee agreed that your profile and experience make you the ideal candidate for this role.\n\nOur HR team will be in touch shortly with the full details of the offer including terms, conditions and start date.\n\nWe look forward to welcoming you to the team.\n\nYours sincerely,\n\nHuman Resources\n{org}",
+        "triagem_exclusao": f"Exmo./Exma. Sr./Sra. {nome},\n\nVimos por este meio agradecer a sua candidatura ao cargo de {vaga} na {org}. Agradecemos o tempo e esforço investidos no processo de candidatura.\n\nApós análise cuidada de todas as candidaturas recebidas, informamos com pesar que não foi possível seleccioná-lo/a para a fase de entrevista. Esta foi uma decisão difícil, dado o elevado número de candidatos qualificados que se candidataram.\n\nDesejamos-lhe muito sucesso na sua procura de emprego e esperamos que considere candidatar-se a futuras oportunidades na nossa organização.\n\nCom os melhores cumprimentos,\n\nRecursos Humanos\n{org}",
+        "pre_selecao": f"Exmo./Exma. Sr./Sra. {nome},\n\nTem o prazer de informar que, após análise das candidaturas recebidas para o cargo de {vaga} na {org}, foi seleccionado/a para prosseguir para a fase de entrevista.\n\n{info_fb}\n\nAgradecemos o seu interesse em fazer parte da {org} e aguardamos com expectativa conhecê-lo/a pessoalmente.\n\nCom os melhores cumprimentos,\n\nRecursos Humanos\n{org}",
+        "pos_entrevista_rejeicao": f"Exmo./Exma. Sr./Sra. {nome},\n\nVimos por este meio agradecer a sua participação na entrevista para o cargo de {vaga} na {org}. Agradecemos o tempo e esforço que dedicou ao processo de selecção.\n\nApós deliberação cuidada, decidimos avançar com outro candidato cujo perfil correspondeu mais especificamente aos requisitos do cargo. Esta foi uma decisão difícil, dado o elevado nível dos candidatos entrevistados.\n\nEncorajamo-lo/a a candidatar-se a futuras oportunidades na {org} e desejamos-lhe muito sucesso na sua carreira.\n\nCom os melhores cumprimentos,\n\nRecursos Humanos\n{org}",
+        "oferta": f"Exmo./Exma. Sr./Sra. {nome},\n\nEm nome da {org}, é com grande satisfação que lhe comunicamos a sua selecção para o cargo de {vaga}. Após um processo de selecção criterioso, o júri de selecção concluiu unanimemente que o seu perfil e experiência fazem de si o/a candidato/a ideal para esta função.\n\nA nossa equipa de Recursos Humanos entrará em contacto brevemente com todos os detalhes da proposta, incluindo termos, condições e data de início.\n\nAguardamos com entusiasmo a sua integração na nossa equipa.\n\nCom os melhores cumprimentos,\n\nRecursos Humanos\n{org}",
     }
     return fallbacks[tipo]
 
@@ -159,11 +163,24 @@ def gerar_carta(request, pk):
     if tipo not in CARTA_TIPOS:
         return redirect("candidato_detail", pk=pk)
 
-    nome = candidato.nome
-    vaga = candidato.vaga.titulo if candidato.vaga else "the advertised position"
-    org = candidato.organisation.name if hasattr(candidato, 'organisation') and candidato.organisation else "our organisation"
+    # Pre-selection letter needs interview date — show form first on GET
+    if tipo == "pre_selecao" and request.method == "GET" and not request.GET.get("gerar"):
+        return render(request, "candidatos/carta_data_entrevista.html", {
+            "candidato": candidato,
+            "tipo": tipo,
+            "tipo_label": CARTA_TIPOS[tipo],
+        })
 
-    texto = _gerar_texto_carta(tipo, nome, vaga, org)
+    nome = candidato.nome
+    vaga = candidato.vaga.titulo if candidato.vaga else "o cargo anunciado"
+    org = candidato.organisation.name if hasattr(candidato, 'organisation') and candidato.organisation else "a nossa organização"
+    data_raw = request.POST.get("data_entrevista", "") or request.GET.get("data_entrevista", "")
+    hora = request.POST.get("hora_entrevista", "")
+    local = request.POST.get("local_entrevista", "")
+    parts = [p for p in [data_raw, hora, local] if p]
+    data_entrevista = ", ".join(parts)
+
+    texto = _gerar_texto_carta(tipo, nome, vaga, org, data_entrevista)
     request.session[f"carta_{tipo}_{pk}"] = texto
 
     return render(request, "candidatos/carta_preview.html", {
