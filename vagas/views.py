@@ -59,9 +59,43 @@ def vaga_create(request):
 
 def vaga_detail(request, pk):
     vaga = get_object_or_404(org_vagas(request), pk=pk)
-    from .models import InterviewGuideSession
+    from candidatos.models import Candidato, AvaliacaoSession
     guiao_session = vaga.guiao_sessions.order_by("-created_at").first()
-    return render(request, "vagas/detail.html", {"vaga": vaga, "guiao_session": guiao_session})
+
+    todos = list(
+        Candidato.objects
+        .filter(vaga=vaga)
+        .select_related("nota_entrevista")
+        .order_by("-score_fit", "nome")
+    )
+
+    cands_triagem   = [c for c in todos if c.etapa in ("Candidatura Recebida", "Em Triagem")]
+    cands_entrevista = [c for c in todos if c.etapa == "Entrevista"]
+    cands_decisao   = [c for c in todos if c.etapa in ("Proposta", "Contratado", "Rejeitado")]
+
+    # Attach latest avaliacao_session to each candidate in entrevista
+    if cands_entrevista:
+        ids = [c.pk for c in cands_entrevista]
+        sessions = (
+            AvaliacaoSession.objects
+            .filter(candidato_id__in=ids)
+            .order_by("candidato_id", "-created_at")
+        )
+        session_map = {}
+        for s in sessions:
+            if s.candidato_id not in session_map:
+                session_map[s.candidato_id] = s
+        for c in cands_entrevista:
+            c._avaliacao_session = session_map.get(c.pk)
+
+    return render(request, "vagas/detail.html", {
+        "vaga": vaga,
+        "guiao_session": guiao_session,
+        "cands_triagem": cands_triagem,
+        "cands_entrevista": cands_entrevista,
+        "cands_decisao": cands_decisao,
+        "total_candidatos": len(todos),
+    })
 
 
 def vaga_edit(request, pk):
@@ -674,6 +708,232 @@ def _build_word_doc(vaga, categorias):
     )
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+
+def shortlist(request, pk):
+    vaga = get_object_or_404(org_vagas(request), pk=pk)
+    from candidatos.models import Candidato
+    candidatos_triagem = (
+        Candidato.objects
+        .filter(vaga=vaga, etapa="Em Triagem")
+        .order_by("-score_fit", "nome")
+    )
+    candidatos_entrevista = (
+        Candidato.objects
+        .filter(vaga=vaga, etapa="Entrevista")
+        .order_by("-score_fit", "nome")
+    )
+    return render(request, "vagas/shortlist.html", {
+        "vaga": vaga,
+        "candidatos_triagem": candidatos_triagem,
+        "candidatos_entrevista": candidatos_entrevista,
+    })
+
+
+@require_POST
+def mover_para_entrevista(request, pk, candidato_pk):
+    from candidatos.models import Candidato
+    vaga = get_object_or_404(org_vagas(request), pk=pk)
+    candidato = get_object_or_404(Candidato, pk=candidato_pk, vaga=vaga, organisation=request.user.organisation)
+    if candidato.etapa == "Em Triagem":
+        Candidato.objects.filter(pk=candidato.pk).update(etapa="Entrevista")
+        messages.success(request, f"{candidato.nome} movido para Entrevista.")
+    return redirect("shortlist", pk=pk)
+
+
+def relatorio_selecao(request, pk):
+    vaga = get_object_or_404(org_vagas(request), pk=pk)
+    from candidatos.models import Candidato, NotaEntrevista
+
+    candidatos_avaliados = (
+        Candidato.objects
+        .filter(vaga=vaga)
+        .exclude(etapa__in=["Candidatura Recebida", "Em Triagem"])
+        .select_related("nota_entrevista")
+        .order_by("-nota_entrevista__pontuacao", "-score_fit", "nome")
+    )
+
+    # Build data for LLM + template
+    dados_candidatos = []
+    for c in candidatos_avaliados:
+        nota = getattr(c, "nota_entrevista", None)
+        dados_candidatos.append({
+            "nome": c.nome,
+            "etapa": c.etapa,
+            "score_fit": c.score_fit,
+            "pontuacao_entrevista": nota.pontuacao if nota else None,
+            "recomendacao": nota.recomendacao if nota else "",
+            "pontos_fortes": nota.pontos_fortes if nota else "",
+            "pontos_fracos": nota.pontos_fracos if nota else "",
+            "notas": nota.notas if nota else "",
+            "experiencia_anos": c.experiencia_anos,
+            "competencias": c.competencias,
+        })
+
+    narrativa = _gerar_narrativa_relatorio(vaga, dados_candidatos)
+
+    return render(request, "vagas/relatorio_selecao.html", {
+        "vaga": vaga,
+        "candidatos": dados_candidatos,
+        "narrativa": narrativa,
+    })
+
+
+def relatorio_selecao_download(request, pk):
+    vaga = get_object_or_404(org_vagas(request), pk=pk)
+    from candidatos.models import Candidato
+    import io
+    from docx import Document
+    from docx.shared import Pt, Inches, RGBColor
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+
+    candidatos_avaliados = (
+        Candidato.objects
+        .filter(vaga=vaga)
+        .exclude(etapa__in=["Candidatura Recebida", "Em Triagem"])
+        .select_related("nota_entrevista")
+        .order_by("-nota_entrevista__pontuacao", "-score_fit", "nome")
+    )
+
+    dados_candidatos = []
+    for c in candidatos_avaliados:
+        nota = getattr(c, "nota_entrevista", None)
+        dados_candidatos.append({
+            "nome": c.nome,
+            "etapa": c.etapa,
+            "score_fit": c.score_fit,
+            "pontuacao_entrevista": nota.pontuacao if nota else None,
+            "recomendacao": nota.recomendacao if nota else "",
+            "pontos_fortes": nota.pontos_fortes if nota else "",
+            "pontos_fracos": nota.pontos_fracos if nota else "",
+            "notas": nota.notas if nota else "",
+            "experiencia_anos": c.experiencia_anos,
+            "competencias": c.competencias,
+        })
+
+    narrativa = _gerar_narrativa_relatorio(vaga, dados_candidatos)
+
+    doc = Document()
+
+    # Title
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run(f"Relatório de Seleção — {vaga.titulo}")
+    run.bold = True
+    run.font.size = Pt(16)
+    run.font.color.rgb = RGBColor(0x1E, 0x3A, 0x5F)
+
+    from datetime import date
+    p2 = doc.add_paragraph()
+    p2.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    r2 = p2.add_run(f"Elaborado em {date.today().strftime('%d/%m/%Y')}")
+    r2.font.size = Pt(10)
+    r2.font.color.rgb = RGBColor(0x64, 0x74, 0x8B)
+
+    doc.add_paragraph()
+
+    # Narrativa IA
+    if narrativa:
+        h = doc.add_paragraph()
+        rh = h.add_run("Análise e Recomendação")
+        rh.bold = True
+        rh.font.size = Pt(12)
+        rh.font.color.rgb = RGBColor(0x1E, 0x3A, 0x5F)
+        for line in narrativa.split("\n"):
+            if line.strip():
+                doc.add_paragraph(line.strip())
+        doc.add_paragraph()
+
+    # Candidate summaries
+    h2 = doc.add_paragraph()
+    rh2 = h2.add_run("Resumo por Candidato")
+    rh2.bold = True
+    rh2.font.size = Pt(12)
+    rh2.font.color.rgb = RGBColor(0x1E, 0x3A, 0x5F)
+
+    REC_LABELS = {
+        "recomendado": "Recomendado",
+        "a_considerar": "A considerar",
+        "nao_recomendado": "Não recomendado",
+        "": "Sem avaliação",
+    }
+    STARS = {1: "★☆☆☆☆", 2: "★★☆☆☆", 3: "★★★☆☆", 4: "★★★★☆", 5: "★★★★★"}
+
+    for idx, c in enumerate(dados_candidatos, 1):
+        p_name = doc.add_paragraph()
+        r_name = p_name.add_run(f"{idx}. {c['nome']}")
+        r_name.bold = True
+        r_name.font.size = Pt(11)
+
+        meta_parts = []
+        if c["pontuacao_entrevista"]:
+            meta_parts.append(f"Entrevista: {STARS.get(c['pontuacao_entrevista'], '')} ({c['pontuacao_entrevista']}/5)")
+        if c["score_fit"] is not None:
+            meta_parts.append(f"Fit: {c['score_fit']}%")
+        meta_parts.append(f"Etapa: {c['etapa']}")
+        meta_parts.append(f"Recomendação: {REC_LABELS.get(c['recomendacao'], c['recomendacao'])}")
+        doc.add_paragraph(" · ".join(meta_parts)).runs[0].font.size = Pt(9)
+
+        if c["pontos_fortes"]:
+            pf = doc.add_paragraph()
+            pf.add_run("Pontos fortes: ").bold = True
+            pf.add_run(c["pontos_fortes"])
+        if c["pontos_fracos"]:
+            pp = doc.add_paragraph()
+            pp.add_run("Pontos fracos: ").bold = True
+            pp.add_run(c["pontos_fracos"])
+        if c["notas"]:
+            pn = doc.add_paragraph()
+            pn.add_run("Notas: ").bold = True
+            pn.add_run(c["notas"])
+
+        doc.add_paragraph()
+
+    buffer = io.BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    safe_titulo = vaga.titulo.replace(" ", "_")
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
+    response["Content-Disposition"] = f'attachment; filename="relatorio_selecao_{safe_titulo}.docx"'
+    return response
+
+
+def _gerar_narrativa_relatorio(vaga, dados_candidatos):
+    """Call LLM to generate a selection narrative. Returns text or None."""
+    from core.llm import get_llm_response
+
+    if not dados_candidatos:
+        return None
+
+    candidatos_text = ""
+    REC_PT = {"recomendado": "Recomendado", "a_considerar": "A considerar", "nao_recomendado": "Não recomendado"}
+    for c in dados_candidatos:
+        rec = REC_PT.get(c["recomendacao"], "Sem avaliação de júri")
+        pts = f"Pontuação entrevista: {c['pontuacao_entrevista']}/5. " if c["pontuacao_entrevista"] else ""
+        fit = f"Fit com vaga: {c['score_fit']}%. " if c["score_fit"] is not None else ""
+        fortes = f"Pontos fortes: {c['pontos_fortes']}. " if c["pontos_fortes"] else ""
+        fracos = f"Pontos fracos: {c['pontos_fracos']}. " if c["pontos_fracos"] else ""
+        candidatos_text += f"\n- {c['nome']} ({rec}): {pts}{fit}{fortes}{fracos}"
+
+    req_comp = ", ".join(vaga.competencias_requeridas[:8]) if vaga.competencias_requeridas else "não especificadas"
+
+    prompt = f"""Vaga: {vaga.titulo}
+Requisitos: {vaga.nivel_formacao or ''}, {vaga.anos_experiencia_min or 0} anos experiência mínima
+Competências requeridas: {req_comp}
+
+Candidatos avaliados em entrevista:{candidatos_text}
+
+Escreve um relatório de seleção profissional e conciso em Português europeu com:
+1. Sumário executivo (2–3 frases sobre o processo)
+2. Comparação dos candidatos (pontos diferenciadores)
+3. Recomendação final clara (quem deve ser contratado e porquê)
+
+Tom profissional, directo, sem repetir dados já listados. Máximo 300 palavras."""
+
+    return get_llm_response(prompt, system="És um especialista em recrutamento e seleção de recursos humanos.")
 
 
 def download_perguntas(request, pk):

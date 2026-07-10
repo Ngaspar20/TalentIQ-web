@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Shortlist — {{ vaga.titulo }}{% endblock %}
+
+{% block breadcrumb %}
+<a href="/vagas/" style="color:inherit; text-decoration:none;">Vagas</a>
+<span style="margin:0 0.4rem; color:#94a3b8;">/</span>
+<a href="/vagas/{{ vaga.pk }}/" style="color:inherit; text-decoration:none;">{{ vaga.titulo }}</a>
+<span style="margin:0 0.4rem; color:#94a3b8;">/</span>
+Shortlist
+{% endblock %}
+
+{% block content %}
+<div class="page-header flex items-center justify-between">
+    <div>
+        <h1>Lista Curta — {{ vaga.titulo }}</h1>
+        <p>Candidatos em triagem ordenados por adequação. Seleccione quem avança para entrevista.</p>
+    </div>
+    <a href="/vagas/{{ vaga.pk }}/" class="btn-secondary">← Vaga</a>
+</div>
+
+{% if messages %}
+<div style="margin-bottom:1rem;">
+    {% for msg in messages %}
+    <div style="background:#f0fdf4; border:1px solid #86efac; border-radius:8px; padding:0.75rem 1rem; color:#15803d; font-size:0.875rem; margin-bottom:0.5rem;">
+        <i class="fa-solid fa-circle-check mr-2"></i>{{ msg }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+
+    <!-- Em Triagem -->
+    <div>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+            <h2 style="font-size:1rem; font-weight:700; color:#1e293b; margin:0;">
+                Em Triagem
+                <span style="background:#e2e8f0; color:#64748b; border-radius:999px; font-size:0.75rem; font-weight:600; padding:0.15rem 0.6rem; margin-left:0.4rem;">{{ candidatos_triagem|length }}</span>
+            </h2>
+            <span style="font-size:0.75rem; color:#94a3b8;">Ordenados por fit</span>
+        </div>
+
+        {% if candidatos_triagem %}
+        <div style="display:flex; flex-direction:column; gap:0.75rem;">
+            {% for c in candidatos_triagem %}
+            <div style="background:white; border:1px solid #e2e8f0; border-radius:10px; padding:1rem; display:flex; align-items:center; gap:1rem;">
+                <!-- Score badge -->
+                <div style="flex-shrink:0; width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.95rem;
+                    {% if c.score_fit >= 75 %}background:#dcfce7; color:#15803d;
+                    {% elif c.score_fit >= 50 %}background:#fef9c3; color:#a16207;
+                    {% elif c.score_fit %}background:#fee2e2; color:#dc2626;
+                    {% else %}background:#f1f5f9; color:#94a3b8;{% endif %}">
+                    {% if c.score_fit %}{{ c.score_fit }}{% else %}—{% endif %}
+                </div>
+
+                <div style="flex:1; min-width:0;">
+                    <a href="/candidatos/{{ c.pk }}/" style="font-weight:600; font-size:0.9rem; color:#1e293b; text-decoration:none; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ c.nome }}</a>
+                    <div style="font-size:0.78rem; color:#64748b; margin-top:0.2rem;">
+                        {{ c.experiencia_anos }} ano{{ c.experiencia_anos|pluralize }}
+                        {% if c.competencias %}· {{ c.competencias|slice:":3"|join:", " }}{% endif %}
+                    </div>
+                </div>
+
+                <form method="post" action="/vagas/{{ vaga.pk }}/shortlist/{{ c.pk }}/entrevista/" style="flex-shrink:0;">
+                    {% csrf_token %}
+                    <button type="submit" title="Mover para Entrevista"
+                        style="background:#8b5cf6; color:white; border:none; border-radius:8px; padding:0.4rem 0.85rem; font-size:0.8rem; font-weight:600; cursor:pointer; white-space:nowrap;">
+                        <i class="fa-solid fa-arrow-right mr-1"></i> Entrevista
+                    </button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="background:#f8fafc; border:1px dashed #cbd5e1; border-radius:10px; padding:2rem; text-align:center; color:#94a3b8; font-size:0.875rem;">
+            <i class="fa-solid fa-inbox" style="font-size:1.5rem; display:block; margin-bottom:0.5rem;"></i>
+            Nenhum candidato em triagem
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Em Entrevista -->
+    <div>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+            <h2 style="font-size:1rem; font-weight:700; color:#1e293b; margin:0;">
+                Em Entrevista
+                <span style="background:#ede9fe; color:#7c3aed; border-radius:999px; font-size:0.75rem; font-weight:600; padding:0.15rem 0.6rem; margin-left:0.4rem;">{{ candidatos_entrevista|length }}</span>
+            </h2>
+        </div>
+
+        {% if candidatos_entrevista %}
+        <div style="display:flex; flex-direction:column; gap:0.75rem;">
+            {% for c in candidatos_entrevista %}
+            <div style="background:white; border:1px solid #ddd6fe; border-radius:10px; padding:1rem; display:flex; align-items:center; gap:1rem;">
+                <div style="flex-shrink:0; width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.95rem;
+                    {% if c.score_fit >= 75 %}background:#dcfce7; color:#15803d;
+                    {% elif c.score_fit >= 50 %}background:#fef9c3; color:#a16207;
+                    {% elif c.score_fit %}background:#fee2e2; color:#dc2626;
+                    {% else %}background:#f1f5f9; color:#94a3b8;{% endif %}">
+                    {% if c.score_fit %}{{ c.score_fit }}{% else %}—{% endif %}
+                </div>
+
+                <div style="flex:1; min-width:0;">
+                    <a href="/candidatos/{{ c.pk }}/" style="font-weight:600; font-size:0.9rem; color:#1e293b; text-decoration:none; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ c.nome }}</a>
+                    <div style="font-size:0.78rem; color:#64748b; margin-top:0.2rem;">
+                        {{ c.experiencia_anos }} ano{{ c.experiencia_anos|pluralize }}
+                        {% if c.competencias %}· {{ c.competencias|slice:":3"|join:", " }}{% endif %}
+                    </div>
+                </div>
+
+                <span style="background:#ede9fe; color:#7c3aed; border-radius:6px; padding:0.25rem 0.6rem; font-size:0.75rem; font-weight:600; flex-shrink:0;">
+                    <i class="fa-solid fa-circle-check mr-1"></i> Selecionado
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="background:#f8fafc; border:1px dashed #ddd6fe; border-radius:10px; padding:2rem; text-align:center; color:#a5b4fc; font-size:0.875rem;">
+            <i class="fa-solid fa-user-group" style="font-size:1.5rem; display:block; margin-bottom:0.5rem;"></i>
+            Nenhum candidato em entrevista ainda
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

@@ -307,38 +307,48 @@ def avaliacao_juri_view(request, token):
     })
 
 
+@require_POST
 def avaliacao_confirmar(request, pk, session_id):
+    from .models import AvaliacaoSession, NotaEntrevista
+    from django.db import transaction
+
     candidato = get_object_or_404(org_candidatos(request), pk=pk)
-    from .models import AvaliacaoSession
     session = get_object_or_404(AvaliacaoSession, pk=session_id, candidato=candidato)
-    if request.method != "POST":
-        return redirect("candidato_detail", pk=pk)
 
-    session.estado = AvaliacaoSession.ESTADO_CONFIRMADA
-    session.save()
+    with transaction.atomic():
+        # Mark session confirmed
+        AvaliacaoSession.objects.filter(pk=session.pk).update(
+            estado=AvaliacaoSession.ESTADO_CONFIRMADA
+        )
 
-    # Copy evaluation to NotaEntrevista for persistent display
-    from .models import NotaEntrevista
-    nota, _ = NotaEntrevista.objects.get_or_create(candidato=candidato)
-    nota.data_entrevista = session.data_entrevista
-    nota.pontuacao = session.pontuacao
-    nota.recomendacao = session.recomendacao
-    nota.pontos_fortes = session.pontos_fortes
-    nota.pontos_fracos = session.pontos_fracos
-    nota.notas = session.notas
-    nota.save()
+        # Upsert NotaEntrevista
+        NotaEntrevista.objects.update_or_create(
+            candidato=candidato,
+            defaults={
+                "data_entrevista": session.data_entrevista,
+                "pontuacao": session.pontuacao,
+                "recomendacao": session.recomendacao,
+                "pontos_fortes": session.pontos_fortes,
+                "pontos_fracos": session.pontos_fracos,
+                "notas": session.notas,
+            }
+        )
 
-    # Auto-transition candidate stage
-    rec = session.recomendacao
-    if rec == "recomendado":
-        candidato.etapa = "Proposta"
-        messages.success(request, f"{candidato.nome} avançou para Proposta. Carta de oferta disponível.")
-    elif rec == "nao_recomendado":
-        candidato.etapa = "Rejeitado"
-        messages.warning(request, f"{candidato.nome} marcado como Rejeitado. Carta de rejeição disponível.")
-    else:
-        messages.info(request, f"Avaliação confirmada. {candidato.nome} mantém-se em avaliação.")
-    candidato.save()
+        # Auto-transition stage
+        rec = session.recomendacao
+        if rec == "recomendado":
+            nova_etapa = "Proposta"
+            msg = f"{candidato.nome} avançou para Proposta — carta de oferta disponível."
+        elif rec == "nao_recomendado":
+            nova_etapa = "Rejeitado"
+            msg = f"{candidato.nome} marcado como Rejeitado — carta de rejeição disponível."
+        else:
+            nova_etapa = candidato.etapa
+            msg = f"Avaliação de {candidato.nome} confirmada."
+
+        from candidatos.models import Candidato as CandidatoModel
+        CandidatoModel.objects.filter(pk=candidato.pk).update(etapa=nova_etapa)
+        messages.success(request, msg)
 
     return redirect("candidato_detail", pk=pk)
 

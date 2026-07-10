@@ -1,223 +1,438 @@
 {% extends "base.html" %}
-
 {% block title %}{{ candidato.nome }}{% endblock %}
-
 {% block breadcrumb %}
-<a href="/candidatos/" class="hover:text-slate-700">Candidatos</a> <span class="mx-2">›</span> {{ candidato.nome }}
+<a href="/candidatos/" style="color:inherit;text-decoration:none;">Candidatos</a> <span style="margin:0 .4rem;color:#94a3b8;">›</span> {{ candidato.nome }}
 {% endblock %}
-
 {% block content %}
+
 <div class="page-header flex items-center justify-between">
     <div>
         <h1 class="flex items-center gap-3">
             <i class="fa-solid fa-user" style="color:#8b5cf6;"></i> {{ candidato.nome }}
         </h1>
-        <p>{% if candidato.vaga %}{{ candidato.vaga.titulo }}{% else %}Sem vaga associada{% endif %}</p>
+        <p>
+            {% if candidato.vaga %}<a href="/vagas/{{ candidato.vaga.pk }}/" style="color:#1d4ed8;text-decoration:none;">{{ candidato.vaga.titulo }}</a>{% else %}Sem vaga associada{% endif %}
+            <span style="margin:0 .5rem;color:#e2e8f0;">·</span>
+            <span style="font-weight:600;
+                {% if candidato.etapa == 'Contratado' %}color:#15803d;
+                {% elif candidato.etapa == 'Rejeitado' %}color:#dc2626;
+                {% elif candidato.etapa == 'Proposta' %}color:#1d4ed8;
+                {% elif candidato.etapa == 'Entrevista' %}color:#7c3aed;
+                {% else %}color:#64748b;{% endif %}">
+                {{ candidato.etapa }}
+            </span>
+        </p>
     </div>
     <div class="flex gap-2">
-        <a href="/candidatos/{{ candidato.pk }}/editar/" class="btn-secondary">
-            <i class="fa-solid fa-pen"></i> Editar
-        </a>
-        <a href="/candidatos/" class="btn-secondary">
-            <i class="fa-solid fa-arrow-left"></i> Voltar
-        </a>
+        <a href="/candidatos/{{ candidato.pk }}/editar/" class="btn-secondary"><i class="fa-solid fa-pen"></i> Editar</a>
+        <a href="/candidatos/" class="btn-secondary"><i class="fa-solid fa-arrow-left"></i> Voltar</a>
     </div>
 </div>
 
-<div class="grid grid-cols-3 gap-4 mb-4">
-    <!-- Score card -->
-    <div class="section-card text-center" style="border-top:4px solid {% if candidato.score_fit >= 75 %}#10b981{% elif candidato.score_fit %}#f59e0b{% else %}#e2e8f0{% endif %}; margin-bottom:0;">
-        {% if candidato.score_fit is not None %}
-        <div style="font-size:2.5rem; font-weight:800; color:{% if candidato.score_fit >= 75 %}#15803d{% elif candidato.score_fit >= 50 %}#92400e{% else %}#dc2626{% endif %};">
-            {{ candidato.score_fit }}
-        </div>
-        <div class="text-xs text-slate-400 mb-2">Score Fit / 100</div>
-        {% with det=candidato.perfil_completo %}
-        {% if det.nivel_alinhamento %}
-        <span class="score-badge {% if det.cor == 'green' %}alto{% elif det.cor == 'orange' %}medio{% else %}baixo{% endif %}">
-            {{ det.nivel_alinhamento }}
-        </span>
-        {% endif %}
-        {% endwith %}
-        {% else %}
-        <div style="font-size:2rem; color:#cbd5e1; font-weight:700;">—</div>
-        <div class="text-xs text-slate-400">Sem score</div>
-        {% if candidato.vaga %}
-        <a href="/scoring/?vaga={{ candidato.vaga.pk }}" class="btn-secondary mt-3 text-xs">Calcular Score</a>
-        {% endif %}
-        {% endif %}
+<!-- Score + quick info bar -->
+<div style="display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap;">
+    {% if candidato.score_fit is not None %}
+    <div style="display:flex;align-items:center;gap:0.5rem;background:white;border:1px solid #e2e8f0;border-radius:8px;padding:0.5rem 1rem;">
+        <span style="font-size:1.3rem;font-weight:800;color:{% if candidato.score_fit >= 75 %}#15803d{% elif candidato.score_fit >= 50 %}#92400e{% else %}#dc2626{% endif %};">{{ candidato.score_fit }}</span>
+        <span style="font-size:0.75rem;color:#94a3b8;">/ 100 Fit</span>
     </div>
-
-    <!-- Contact -->
-    <div class="section-card" style="margin-bottom:0;">
-        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Contacto</p>
-        {% if candidato.email %}
-        <div class="flex items-center gap-2 mb-2 text-sm">
-            <i class="fa-solid fa-envelope" style="color:#8b5cf6; width:16px;"></i>
-            <span>{{ candidato.email }}</span>
-        </div>
-        {% endif %}
-        {% if candidato.telefone %}
-        <div class="flex items-center gap-2 mb-2 text-sm">
-            <i class="fa-solid fa-phone" style="color:#8b5cf6; width:16px;"></i>
-            <span>{{ candidato.telefone }}</span>
-        </div>
-        {% endif %}
-        <div class="flex items-center gap-2 mb-2 text-sm">
-            <i class="fa-solid fa-briefcase" style="color:#8b5cf6; width:16px;"></i>
-            <span>{{ candidato.experiencia_anos }} anos de experiência</span>
-        </div>
+    {% endif %}
+    {% if candidato.email %}
+    <div style="display:flex;align-items:center;gap:0.4rem;background:white;border:1px solid #e2e8f0;border-radius:8px;padding:0.5rem 1rem;font-size:0.85rem;color:#475569;">
+        <i class="fa-solid fa-envelope" style="color:#8b5cf6;"></i> {{ candidato.email }}
     </div>
-
-    <!-- Pipeline stage + letters -->
-    <div class="section-card" style="margin-bottom:0;">
-        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Etapa do Pipeline</p>
-        <span style="font-size:1rem; font-weight:700; color:#1e3a8a;">{{ candidato.etapa }}</span>
-        <a href="/pipeline/" class="block mt-3 text-xs text-blue-600 hover:underline">
-            <i class="fa-solid fa-filter mr-1"></i>Ver no Pipeline
-        </a>
-
-        {% if candidato.etapa == "Entrevista" %}
-        <div class="mt-3 pt-3" style="border-top: 0.5px solid #e2e8f0;">
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Letters</p>
-            <a href="/candidatos/{{ candidato.pk }}/carta/?tipo=pre_selecao"
-               class="btn-secondary w-full justify-center mb-2" style="font-size:0.75rem; padding:6px 10px;">
-                <i class="fa-solid fa-envelope mr-1" style="color:#8b5cf6;"></i> Pre-Selection Letter
-            </a>
-        </div>
-        {% endif %}
-
-        {% if candidato.etapa == "Contratado" %}
-        <div class="mt-3 pt-3" style="border-top: 0.5px solid #e2e8f0;">
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Letters</p>
-            <a href="/candidatos/{{ candidato.pk }}/carta/?tipo=oferta"
-               class="btn-secondary w-full justify-center" style="font-size:0.75rem; padding:6px 10px;">
-                <i class="fa-solid fa-envelope mr-1" style="color:#10b981;"></i> Offer Letter
-            </a>
-        </div>
-        {% endif %}
-
-        {% if candidato.etapa == "Rejeitado" %}
-        <div class="mt-3 pt-3" style="border-top: 0.5px solid #e2e8f0;">
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Letters</p>
-            <a href="/candidatos/{{ candidato.pk }}/carta/?tipo=triagem_exclusao"
-               class="btn-secondary w-full justify-center mb-2" style="font-size:0.75rem; padding:6px 10px;">
-                <i class="fa-solid fa-envelope mr-1" style="color:#ef4444;"></i> Screening Exclusion
-            </a>
-            <a href="/candidatos/{{ candidato.pk }}/carta/?tipo=pos_entrevista_rejeicao"
-               class="btn-secondary w-full justify-center" style="font-size:0.75rem; padding:6px 10px;">
-                <i class="fa-solid fa-envelope mr-1" style="color:#f59e0b;"></i> Post-Interview Rejection
-            </a>
-        </div>
-        {% endif %}
+    {% endif %}
+    {% if candidato.telefone %}
+    <div style="display:flex;align-items:center;gap:0.4rem;background:white;border:1px solid #e2e8f0;border-radius:8px;padding:0.5rem 1rem;font-size:0.85rem;color:#475569;">
+        <i class="fa-solid fa-phone" style="color:#8b5cf6;"></i> {{ candidato.telefone }}
+    </div>
+    {% endif %}
+    <div style="display:flex;align-items:center;gap:0.4rem;background:white;border:1px solid #e2e8f0;border-radius:8px;padding:0.5rem 1rem;font-size:0.85rem;color:#475569;">
+        <i class="fa-solid fa-briefcase" style="color:#8b5cf6;"></i> {{ candidato.experiencia_anos }} anos experiência
     </div>
 </div>
 
-{% if candidato.etapa == "Entrevista" %}
-<div class="section-card mb-4" style="border-left: 4px solid #8b5cf6;">
-    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
-        <i class="fa-solid fa-paper-plane mr-1" style="color:#8b5cf6;"></i> Avaliação do Júri
-    </p>
-    {% if avaliacao_session %}
-        {% if avaliacao_session.estado == "pendente" %}
-        <div class="flex items-center justify-between">
-            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold" style="background:#fef3c7; color:#92400e;">
-                <i class="fa-solid fa-clock"></i> Aguarda submissão do júri
-            </span>
-            <form method="post" action="/candidatos/{{ candidato.pk }}/enviar-avaliacao/" class="inline">
-                {% csrf_token %}
-                <button type="submit" class="btn-secondary text-xs" style="padding:5px 12px;">
-                    <i class="fa-solid fa-rotate mr-1"></i> Gerar novo link
-                </button>
-            </form>
+<!-- Tabs -->
+<div style="border-bottom:2px solid #e2e8f0;margin-bottom:1.5rem;display:flex;gap:0;">
+    <button onclick="switchTab('perfil')" id="tab-btn-perfil"
+        style="padding:0.65rem 1.25rem;font-size:0.85rem;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;color:#64748b;display:flex;align-items:center;gap:0.4rem;">
+        <i class="fa-solid fa-user"></i> Perfil
+    </button>
+    <button onclick="switchTab('avaliacao')" id="tab-btn-avaliacao"
+        style="padding:0.65rem 1.25rem;font-size:0.85rem;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;color:#64748b;display:flex;align-items:center;gap:0.4rem;">
+        <i class="fa-solid fa-star"></i> Avaliação
+        {% if nota or avaliacao_session %}<span style="width:8px;height:8px;background:#8b5cf6;border-radius:50%;display:inline-block;"></span>{% endif %}
+    </button>
+    <button onclick="switchTab('documentos')" id="tab-btn-documentos"
+        style="padding:0.65rem 1.25rem;font-size:0.85rem;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;color:#64748b;display:flex;align-items:center;gap:0.4rem;">
+        <i class="fa-solid fa-envelope"></i> Documentos
+    </button>
+</div>
+
+<!-- ════════════════ TAB: Perfil ════════════════ -->
+<div id="tab-perfil" class="tab-panel">
+    <div class="grid grid-cols-2 gap-4">
+        <div>
+            {% if candidato.resumo %}
+            <div class="section-card">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3"><i class="fa-solid fa-align-left mr-1"></i> Resumo Profissional</p>
+                <p class="text-sm text-slate-700 leading-relaxed">{{ candidato.resumo }}</p>
+            </div>
+            {% endif %}
+            {% if candidato.competencias %}
+            <div class="section-card">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3"><i class="fa-solid fa-brain mr-1"></i> Competências</p>
+                <div class="flex flex-wrap gap-1">
+                    {% for comp in candidato.competencias %}<span class="skill-tag">{{ comp }}</span>{% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            {% if candidato.idiomas %}
+            <div class="section-card">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3"><i class="fa-solid fa-language mr-1"></i> Idiomas</p>
+                <div class="flex flex-wrap gap-1">
+                    {% for idioma in candidato.idiomas %}<span class="skill-tag" style="background:#f0fdf4;color:#15803d;">{{ idioma }}</span>{% endfor %}
+                </div>
+            </div>
+            {% endif %}
         </div>
-        {% elif avaliacao_session.estado == "submetida" %}
-        <div class="mb-3">
-            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold mb-3" style="background:#dbeafe; color:#1d4ed8;">
-                <i class="fa-solid fa-inbox"></i> Avaliação submetida pelo júri — aguarda confirmação
+        <div>
+            {% if candidato.formacao %}
+            <div class="section-card">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3"><i class="fa-solid fa-graduation-cap mr-1"></i> Formação Académica</p>
+                <ul class="space-y-1">
+                    {% for f in candidato.formacao %}
+                    <li class="text-sm text-slate-700 flex items-start gap-2">
+                        <i class="fa-solid fa-circle-dot mt-1" style="color:#8b5cf6;font-size:0.6rem;"></i> {{ f }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            {% with det=candidato.perfil_completo %}
+            {% if det.explicacao %}
+            <div class="section-card">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3"><i class="fa-solid fa-chart-bar mr-1"></i> Análise de Fit</p>
+                {% if det.pontuacao_detalhada %}
+                <div class="grid grid-cols-3 gap-2 mb-3">
+                    <div class="text-center p-2 bg-blue-50 rounded-lg">
+                        <div class="font-bold text-blue-700">{{ det.pontuacao_detalhada.competencias }}/50</div>
+                        <div class="text-xs text-slate-500">Competências</div>
+                    </div>
+                    <div class="text-center p-2 bg-purple-50 rounded-lg">
+                        <div class="font-bold text-purple-700">{{ det.pontuacao_detalhada.experiencia }}/30</div>
+                        <div class="text-xs text-slate-500">Experiência</div>
+                    </div>
+                    <div class="text-center p-2 bg-cyan-50 rounded-lg">
+                        <div class="font-bold text-cyan-700">{{ det.pontuacao_detalhada.formacao }}/20</div>
+                        <div class="text-xs text-slate-500">Formação</div>
+                    </div>
+                </div>
+                {% endif %}
+                <ul class="space-y-1">
+                    {% for linha in det.explicacao %}
+                    <li class="text-xs text-slate-600 bg-slate-50 rounded px-2 py-1">{{ linha }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            {% endwith %}
+            {% if candidato.notas %}
+            <div class="section-card">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3"><i class="fa-solid fa-note-sticky mr-1"></i> Notas Internas</p>
+                <p class="text-sm text-slate-700">{{ candidato.notas }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════ TAB: Avaliação ════════════════ -->
+<div id="tab-avaliacao" class="tab-panel" style="display:none;">
+
+    {% if candidato.etapa == "Entrevista" %}
+    <!-- Workflow: send evaluation link -->
+    <div class="section-card mb-4" style="border-left:4px solid #8b5cf6;">
+        <p style="font-size:0.75rem;font-weight:700;color:#6d28d9;text-transform:uppercase;letter-spacing:.05em;margin-bottom:0.75rem;">
+            <i class="fa-solid fa-paper-plane mr-1"></i> Avaliação do Presidente do Júri
+        </p>
+
+        {% if avaliacao_session %}
+            {% if avaliacao_session.estado == "pendente" %}
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+                <span style="background:#fef3c7;color:#92400e;border-radius:999px;padding:0.3rem 0.8rem;font-size:0.78rem;font-weight:600;">
+                    <i class="fa-solid fa-clock mr-1"></i> Aguarda submissão do júri
+                </span>
+                <form method="post" action="/candidatos/{{ candidato.pk }}/enviar-avaliacao/">
+                    {% csrf_token %}<button type="submit" class="btn-secondary" style="font-size:0.8rem;padding:6px 12px;"><i class="fa-solid fa-rotate mr-1"></i> Gerar novo link</button>
+                </form>
+            </div>
+
+            {% elif avaliacao_session.estado == "submetida" %}
+            <!-- Show submitted evaluation summary -->
+            <span style="background:#dbeafe;color:#1d4ed8;border-radius:999px;padding:0.3rem 0.8rem;font-size:0.78rem;font-weight:600;display:inline-flex;align-items:center;gap:0.4rem;margin-bottom:1rem;">
+                <i class="fa-solid fa-inbox"></i> Avaliação submetida — aguarda confirmação de RH
             </span>
-            <div class="grid grid-cols-3 gap-3 mt-3 mb-3">
-                <div class="text-center p-3 rounded-lg" style="background:#f5f3ff;">
-                    <div class="flex justify-center gap-1 mb-1">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;margin-bottom:1rem;">
+                <div style="text-align:center;padding:0.75rem;background:#f5f3ff;border-radius:8px;">
+                    <div style="display:flex;justify-content:center;gap:2px;margin-bottom:0.25rem;">
                         {% for i in "12345" %}
-                        <i class="fa-star text-base {% if avaliacao_session.pontuacao and avaliacao_session.pontuacao >= forloop.counter %}fa-solid{% else %}fa-regular{% endif %}"
-                           style="color:{% if avaliacao_session.pontuacao and avaliacao_session.pontuacao >= forloop.counter %}#f59e0b{% else %}#e2e8f0{% endif %};"></i>
+                        <i class="fa-{% if avaliacao_session.pontuacao and avaliacao_session.pontuacao >= forloop.counter %}solid{% else %}regular{% endif %} fa-star"
+                           style="color:{% if avaliacao_session.pontuacao and avaliacao_session.pontuacao >= forloop.counter %}#f59e0b{% else %}#e2e8f0{% endif %};font-size:1rem;"></i>
                         {% endfor %}
                     </div>
-                    <div class="text-xs text-slate-500">{{ avaliacao_session.pontuacao|default:"—" }}/5</div>
+                    <div style="font-size:0.75rem;color:#64748b;">{{ avaliacao_session.pontuacao|default:"—" }}/5</div>
                 </div>
-                <div class="text-center p-3 rounded-lg" style="background:#f8fafc;">
-                    {% if avaliacao_session.recomendacao == "recomendado" %}<div class="text-base mb-1">✅</div><div class="text-xs font-semibold text-green-700">Recomendado</div>
-                    {% elif avaliacao_session.recomendacao == "a_considerar" %}<div class="text-base mb-1">⚠️</div><div class="text-xs font-semibold text-amber-700">A considerar</div>
-                    {% elif avaliacao_session.recomendacao == "nao_recomendado" %}<div class="text-base mb-1">❌</div><div class="text-xs font-semibold text-red-700">Não recomendado</div>
+                <div style="text-align:center;padding:0.75rem;background:#f8fafc;border-radius:8px;">
+                    {% if avaliacao_session.recomendacao == "recomendado" %}<div style="font-size:1.1rem;">✅</div><div style="font-size:0.75rem;font-weight:600;color:#15803d;">Recomendado</div>
+                    {% elif avaliacao_session.recomendacao == "a_considerar" %}<div style="font-size:1.1rem;">⚠️</div><div style="font-size:0.75rem;font-weight:600;color:#d97706;">A considerar</div>
+                    {% elif avaliacao_session.recomendacao == "nao_recomendado" %}<div style="font-size:1.1rem;">❌</div><div style="font-size:0.75rem;font-weight:600;color:#dc2626;">Não recomendado</div>
                     {% endif %}
                 </div>
-                <div class="text-center p-3 rounded-lg" style="background:#f8fafc;">
-                    <div class="text-xs text-slate-400 mb-1">Data</div>
-                    <div class="text-sm font-semibold text-slate-700">{% if avaliacao_session.data_entrevista %}{{ avaliacao_session.data_entrevista|date:"d/m/Y" }}{% else %}—{% endif %}</div>
+                <div style="text-align:center;padding:0.75rem;background:#f8fafc;border-radius:8px;">
+                    <div style="font-size:0.72rem;color:#94a3b8;margin-bottom:0.2rem;">Data</div>
+                    <div style="font-size:0.85rem;font-weight:600;color:#1e293b;">{% if avaliacao_session.data_entrevista %}{{ avaliacao_session.data_entrevista|date:"d/m/Y" }}{% else %}—{% endif %}</div>
                 </div>
             </div>
             {% if avaliacao_session.pontos_fortes or avaliacao_session.pontos_fracos %}
-            <div class="grid grid-cols-2 gap-3 mb-3">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1rem;">
                 {% if avaliacao_session.pontos_fortes %}
-                <div class="p-3 rounded-lg" style="background:#f0fdf4; border:1px solid #bbf7d0;">
-                    <p class="text-xs font-bold text-green-700 mb-1"><i class="fa-solid fa-thumbs-up mr-1"></i> Pontos fortes</p>
-                    <p class="text-sm text-slate-700">{{ avaliacao_session.pontos_fortes }}</p>
+                <div style="padding:0.75rem;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;">
+                    <p style="font-size:0.72rem;font-weight:700;color:#15803d;margin:0 0 0.3rem;"><i class="fa-solid fa-thumbs-up mr-1"></i> Pontos fortes</p>
+                    <p style="font-size:0.82rem;color:#1e293b;margin:0;">{{ avaliacao_session.pontos_fortes }}</p>
                 </div>
                 {% endif %}
                 {% if avaliacao_session.pontos_fracos %}
-                <div class="p-3 rounded-lg" style="background:#fff7ed; border:1px solid #fed7aa;">
-                    <p class="text-xs font-bold text-orange-700 mb-1"><i class="fa-solid fa-thumbs-down mr-1"></i> Pontos fracos</p>
-                    <p class="text-sm text-slate-700">{{ avaliacao_session.pontos_fracos }}</p>
+                <div style="padding:0.75rem;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;">
+                    <p style="font-size:0.72rem;font-weight:700;color:#d97706;margin:0 0 0.3rem;"><i class="fa-solid fa-thumbs-down mr-1"></i> Pontos fracos</p>
+                    <p style="font-size:0.82rem;color:#1e293b;margin:0;">{{ avaliacao_session.pontos_fracos }}</p>
                 </div>
                 {% endif %}
             </div>
             {% endif %}
             {% if avaliacao_session.notas %}
-            <div class="p-3 rounded-lg mb-3" style="background:#f8fafc; border:1px solid #e2e8f0;">
-                <p class="text-xs font-bold text-slate-400 mb-1"><i class="fa-solid fa-note-sticky mr-1"></i> Notas</p>
-                <p class="text-sm text-slate-700">{{ avaliacao_session.notas }}</p>
+            <div style="padding:0.75rem;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:1rem;">
+                <p style="font-size:0.72rem;font-weight:700;color:#64748b;margin:0 0 0.3rem;"><i class="fa-solid fa-note-sticky mr-1"></i> Notas</p>
+                <p style="font-size:0.82rem;color:#1e293b;margin:0;">{{ avaliacao_session.notas }}</p>
             </div>
             {% endif %}
-
+            <!-- Consequence preview -->
             {% if avaliacao_session.recomendacao == "recomendado" %}
-            <div class="p-3 rounded-lg mb-3" style="background:#f0fdf4; border:1px solid #86efac;">
-                <p class="text-sm font-semibold text-green-800"><i class="fa-solid fa-circle-arrow-right mr-2"></i>Confirmar irá mover o candidato para <strong>Proposta</strong> e disponibilizar a carta de oferta.</p>
+            <div style="padding:0.75rem 1rem;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;margin-bottom:1rem;font-size:0.85rem;font-weight:600;color:#15803d;">
+                <i class="fa-solid fa-circle-arrow-right mr-2"></i>Confirmar irá mover para <strong>Proposta</strong> e disponibilizar a carta de oferta.
             </div>
             {% elif avaliacao_session.recomendacao == "nao_recomendado" %}
-            <div class="p-3 rounded-lg mb-3" style="background:#fef2f2; border:1px solid #fca5a5;">
-                <p class="text-sm font-semibold text-red-800"><i class="fa-solid fa-circle-arrow-right mr-2"></i>Confirmar irá mover o candidato para <strong>Rejeitado</strong> e disponibilizar a carta de rejeição.</p>
+            <div style="padding:0.75rem 1rem;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;margin-bottom:1rem;font-size:0.85rem;font-weight:600;color:#dc2626;">
+                <i class="fa-solid fa-circle-arrow-right mr-2"></i>Confirmar irá mover para <strong>Rejeitado</strong> e disponibilizar a carta de rejeição.
             </div>
             {% else %}
-            <div class="p-3 rounded-lg mb-3" style="background:#fffbeb; border:1px solid #fde68a;">
-                <p class="text-sm font-semibold text-amber-800"><i class="fa-solid fa-circle-arrow-right mr-2"></i>Confirmar irá manter o candidato em <strong>Entrevista</strong> para reavaliação.</p>
+            <div style="padding:0.75rem 1rem;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;margin-bottom:1rem;font-size:0.85rem;font-weight:600;color:#92400e;">
+                <i class="fa-solid fa-circle-arrow-right mr-2"></i>Confirmar irá manter em <strong>Entrevista</strong> para reavaliação.
             </div>
             {% endif %}
-
-            <form method="post" action="/candidatos/{{ candidato.pk }}/avaliacao/{{ avaliacao_session.pk }}/confirmar/" class="inline">
+            <form method="post" action="/candidatos/{{ candidato.pk }}/avaliacao/{{ avaliacao_session.pk }}/confirmar/">
                 {% csrf_token %}
                 <button type="submit" class="btn-primary" style="background:#8b5cf6;">
                     <i class="fa-solid fa-circle-check mr-2"></i> Confirmar e avançar candidato
                 </button>
             </form>
+            {% endif %}
+
+        {% else %}
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+            <p style="font-size:0.85rem;color:#94a3b8;margin:0;">Nenhuma avaliação enviada ainda.</p>
+            <button onclick="document.getElementById('modal-avaliacao').classList.remove('hidden')"
+                    class="btn-primary" style="background:#8b5cf6;font-size:0.8rem;padding:6px 14px;">
+                <i class="fa-solid fa-paper-plane mr-1"></i> Enviar avaliação ao júri
+            </button>
         </div>
         {% endif %}
-    {% else %}
-    <div class="flex items-center justify-between">
-        <p class="text-sm text-slate-400">Nenhuma avaliação enviada ainda.</p>
-        <button onclick="document.getElementById('modal-avaliacao').classList.remove('hidden')"
-                class="btn-primary" style="background:#8b5cf6; padding:6px 14px; font-size:0.8rem;">
-            <i class="fa-solid fa-paper-plane mr-1"></i> Enviar avaliação ao júri
-        </button>
+    </div>
+    {% endif %}
+
+    <!-- Nota de entrevista (summary / edit form) -->
+    {% if nota or candidato.etapa == "Proposta" or candidato.etapa == "Contratado" or candidato.etapa == "Rejeitado" %}
+    <div class="section-card" style="border-left:4px solid #8b5cf6;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+            <p style="font-size:0.75rem;font-weight:700;color:#6d28d9;text-transform:uppercase;letter-spacing:.05em;margin:0;">
+                <i class="fa-solid fa-star mr-1"></i> Registo da Entrevista
+            </p>
+            {% if nota %}
+            <button onclick="toggleForm()" id="btn-editar" class="btn-secondary" style="font-size:0.75rem;padding:4px 10px;">
+                <i class="fa-solid fa-pen mr-1"></i> Editar
+            </button>
+            {% endif %}
+        </div>
+
+        {% if nota %}
+        <div id="nota-resumo">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;">
+                <div style="text-align:center;padding:0.75rem;background:#f5f3ff;border-radius:8px;">
+                    <div style="display:flex;justify-content:center;gap:2px;margin-bottom:0.25rem;">
+                        {% for i in "12345" %}
+                        <i class="fa-{% if nota.pontuacao and nota.pontuacao >= forloop.counter %}solid{% else %}regular{% endif %} fa-star"
+                           style="color:{% if nota.pontuacao and nota.pontuacao >= forloop.counter %}#f59e0b{% else %}#e2e8f0{% endif %};font-size:1rem;"></i>
+                        {% endfor %}
+                    </div>
+                    <div style="font-size:0.75rem;color:#64748b;">{{ nota.pontuacao|default:"—" }}/5</div>
+                </div>
+                <div style="text-align:center;padding:0.75rem;background:#f8fafc;border-radius:8px;">
+                    {% if nota.recomendacao == "recomendado" %}<div style="font-size:1.1rem;">✅</div><div style="font-size:0.75rem;font-weight:600;color:#15803d;">Recomendado</div>
+                    {% elif nota.recomendacao == "a_considerar" %}<div style="font-size:1.1rem;">⚠️</div><div style="font-size:0.75rem;font-weight:600;color:#d97706;">A considerar</div>
+                    {% elif nota.recomendacao == "nao_recomendado" %}<div style="font-size:1.1rem;">❌</div><div style="font-size:0.75rem;font-weight:600;color:#dc2626;">Não recomendado</div>
+                    {% else %}<div style="font-size:0.75rem;color:#94a3b8;">Sem recomendação</div>{% endif %}
+                </div>
+                <div style="text-align:center;padding:0.75rem;background:#f8fafc;border-radius:8px;">
+                    <div style="font-size:0.72rem;color:#94a3b8;margin-bottom:0.2rem;">Data</div>
+                    <div style="font-size:0.85rem;font-weight:600;color:#1e293b;">{% if nota.data_entrevista %}{{ nota.data_entrevista|date:"d/m/Y" }}{% else %}—{% endif %}</div>
+                </div>
+            </div>
+            {% if nota.pontos_fortes or nota.pontos_fracos %}
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;">
+                {% if nota.pontos_fortes %}
+                <div style="padding:0.75rem;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;">
+                    <p style="font-size:0.72rem;font-weight:700;color:#15803d;margin:0 0 0.3rem;"><i class="fa-solid fa-thumbs-up mr-1"></i> Pontos fortes</p>
+                    <p style="font-size:0.82rem;color:#1e293b;margin:0;">{{ nota.pontos_fortes }}</p>
+                </div>
+                {% endif %}
+                {% if nota.pontos_fracos %}
+                <div style="padding:0.75rem;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;">
+                    <p style="font-size:0.72rem;font-weight:700;color:#d97706;margin:0 0 0.3rem;"><i class="fa-solid fa-thumbs-down mr-1"></i> Pontos fracos</p>
+                    <p style="font-size:0.82rem;color:#1e293b;margin:0;">{{ nota.pontos_fracos }}</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            {% if nota.notas %}
+            <div style="padding:0.75rem;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">
+                <p style="font-size:0.72rem;font-weight:700;color:#64748b;margin:0 0 0.3rem;"><i class="fa-solid fa-note-sticky mr-1"></i> Notas gerais</p>
+                <p style="font-size:0.82rem;color:#1e293b;margin:0;">{{ nota.notas }}</p>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <div id="nota-form" {% if nota %}style="display:none;"{% endif %}>
+            <form method="post" action="/candidatos/{{ candidato.pk }}/nota-entrevista/">
+                {% csrf_token %}
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;">
+                    <div>
+                        <label style="font-size:0.75rem;color:#64748b;display:block;margin-bottom:0.3rem;">Data da entrevista</label>
+                        <input type="date" name="data_entrevista" value="{{ nota.data_entrevista|date:'Y-m-d' }}" class="form-input w-full text-sm">
+                    </div>
+                    <div>
+                        <label style="font-size:0.75rem;color:#64748b;display:block;margin-bottom:0.3rem;">Pontuação (1–5)</label>
+                        <div style="display:flex;gap:4px;margin-top:4px;" id="star-rating">
+                            {% for i in "12345" %}
+                            <i class="fa-star text-xl {% if nota.pontuacao and nota.pontuacao >= forloop.counter %}fa-solid{% else %}fa-regular{% endif %}"
+                               style="color:{% if nota.pontuacao and nota.pontuacao >= forloop.counter %}#f59e0b{% else %}#cbd5e1{% endif %};cursor:pointer;"
+                               onclick="setStar({{ forloop.counter }})"></i>
+                            {% endfor %}
+                        </div>
+                        <input type="hidden" name="pontuacao" id="pontuacao-val" value="{{ nota.pontuacao|default:'' }}">
+                    </div>
+                    <div>
+                        <label style="font-size:0.75rem;color:#64748b;display:block;margin-bottom:0.3rem;">Recomendação</label>
+                        <select name="recomendacao" class="form-input w-full text-sm">
+                            <option value="">— Seleccionar —</option>
+                            <option value="recomendado" {% if nota.recomendacao == "recomendado" %}selected{% endif %}>✅ Recomendado</option>
+                            <option value="a_considerar" {% if nota.recomendacao == "a_considerar" %}selected{% endif %}>⚠️ A considerar</option>
+                            <option value="nao_recomendado" {% if nota.recomendacao == "nao_recomendado" %}selected{% endif %}>❌ Não recomendado</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;">
+                    <div>
+                        <label style="font-size:0.75rem;color:#64748b;display:block;margin-bottom:0.3rem;">Pontos fortes</label>
+                        <textarea name="pontos_fortes" rows="3" class="form-input w-full text-sm" placeholder="O que se destacou positivamente...">{{ nota.pontos_fortes }}</textarea>
+                    </div>
+                    <div>
+                        <label style="font-size:0.75rem;color:#64748b;display:block;margin-bottom:0.3rem;">Pontos fracos</label>
+                        <textarea name="pontos_fracos" rows="3" class="form-input w-full text-sm" placeholder="Lacunas, dúvidas ou reservas...">{{ nota.pontos_fracos }}</textarea>
+                    </div>
+                </div>
+                <div style="margin-bottom:0.75rem;">
+                    <label style="font-size:0.75rem;color:#64748b;display:block;margin-bottom:0.3rem;">Notas gerais</label>
+                    <textarea name="notas" rows="2" class="form-input w-full text-sm" placeholder="Observações adicionais...">{{ nota.notas }}</textarea>
+                </div>
+                <div style="display:flex;gap:0.5rem;">
+                    <button type="submit" class="btn-primary" style="background:#8b5cf6;"><i class="fa-solid fa-floppy-disk mr-2"></i> Guardar</button>
+                    {% if nota %}<button type="button" onclick="toggleForm()" class="btn-secondary">Cancelar</button>{% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+    {% elif candidato.etapa != "Entrevista" %}
+    <div style="text-align:center;padding:3rem;color:#94a3b8;font-size:0.875rem;">
+        <i class="fa-solid fa-star" style="font-size:2rem;display:block;margin-bottom:0.5rem;color:#e2e8f0;"></i>
+        A avaliação fica disponível quando o candidato avançar para a fase de <strong>Entrevista</strong>.
     </div>
     {% endif %}
 </div>
 
-<!-- Modal: send evaluation link -->
+<!-- ════════════════ TAB: Documentos ════════════════ -->
+<div id="tab-documentos" class="tab-panel" style="display:none;">
+    <div class="section-card">
+        <p style="font-size:0.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:1rem;"><i class="fa-solid fa-envelope mr-1"></i> Cartas e Comunicações</p>
+
+        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+            {% if candidato.etapa == "Entrevista" or candidato.etapa == "Em Triagem" or candidato.etapa == "Candidatura Recebida" %}
+            <a href="/candidatos/{{ candidato.pk }}/carta/?tipo=pre_selecao"
+               style="display:flex;align-items:center;gap:0.75rem;padding:0.85rem 1rem;border:1px solid #e0e7ff;border-radius:8px;background:#f5f3ff;text-decoration:none;color:#1e293b;">
+                <i class="fa-solid fa-envelope" style="color:#8b5cf6;font-size:1.1rem;width:24px;text-align:center;"></i>
+                <div>
+                    <p style="font-weight:600;font-size:0.875rem;margin:0;">Carta de Pré-Selecção</p>
+                    <p style="font-size:0.75rem;color:#64748b;margin:0;">Convite para entrevista</p>
+                </div>
+                <i class="fa-solid fa-arrow-right" style="margin-left:auto;color:#8b5cf6;"></i>
+            </a>
+            {% endif %}
+
+            {% if candidato.etapa == "Proposta" or candidato.etapa == "Contratado" %}
+            <a href="/candidatos/{{ candidato.pk }}/carta/?tipo=oferta"
+               style="display:flex;align-items:center;gap:0.75rem;padding:0.85rem 1rem;border:1px solid #bbf7d0;border-radius:8px;background:#f0fdf4;text-decoration:none;color:#1e293b;">
+                <i class="fa-solid fa-envelope" style="color:#15803d;font-size:1.1rem;width:24px;text-align:center;"></i>
+                <div>
+                    <p style="font-weight:600;font-size:0.875rem;margin:0;">Carta de Oferta</p>
+                    <p style="font-size:0.75rem;color:#64748b;margin:0;">Proposta de emprego</p>
+                </div>
+                <i class="fa-solid fa-arrow-right" style="margin-left:auto;color:#15803d;"></i>
+            </a>
+            {% endif %}
+
+            {% if candidato.etapa == "Rejeitado" %}
+            <a href="/candidatos/{{ candidato.pk }}/carta/?tipo=triagem_exclusao"
+               style="display:flex;align-items:center;gap:0.75rem;padding:0.85rem 1rem;border:1px solid #fca5a5;border-radius:8px;background:#fef2f2;text-decoration:none;color:#1e293b;">
+                <i class="fa-solid fa-envelope" style="color:#dc2626;font-size:1.1rem;width:24px;text-align:center;"></i>
+                <div>
+                    <p style="font-weight:600;font-size:0.875rem;margin:0;">Carta de Exclusão — Triagem</p>
+                    <p style="font-size:0.75rem;color:#64748b;margin:0;">Candidato não seleccionado em triagem</p>
+                </div>
+                <i class="fa-solid fa-arrow-right" style="margin-left:auto;color:#dc2626;"></i>
+            </a>
+            <a href="/candidatos/{{ candidato.pk }}/carta/?tipo=pos_entrevista_rejeicao"
+               style="display:flex;align-items:center;gap:0.75rem;padding:0.85rem 1rem;border:1px solid #fed7aa;border-radius:8px;background:#fff7ed;text-decoration:none;color:#1e293b;">
+                <i class="fa-solid fa-envelope" style="color:#d97706;font-size:1.1rem;width:24px;text-align:center;"></i>
+                <div>
+                    <p style="font-weight:600;font-size:0.875rem;margin:0;">Carta de Rejeição — Pós-Entrevista</p>
+                    <p style="font-size:0.75rem;color:#64748b;margin:0;">Candidato entrevistado mas não seleccionado</p>
+                </div>
+                <i class="fa-solid fa-arrow-right" style="margin-left:auto;color:#d97706;"></i>
+            </a>
+            {% endif %}
+
+            {% if candidato.etapa == "Candidatura Recebida" or candidato.etapa == "Em Triagem" or candidato.etapa == "Entrevista" %}
+            <p style="font-size:0.78rem;color:#94a3b8;margin:0.5rem 0 0;"><i class="fa-solid fa-circle-info mr-1"></i> Outras cartas ficam disponíveis conforme o candidato avança no processo.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal: send evaluation -->
 <div id="modal-avaliacao" class="hidden fixed inset-0 z-50 flex items-center justify-center" style="background:rgba(0,0,0,0.4);">
-    <div class="bg-white rounded-xl shadow-xl p-6" style="max-width:420px; width:100%; margin:1rem;">
+    <div class="bg-white rounded-xl shadow-xl p-6" style="max-width:420px;width:100%;margin:1rem;">
         <h3 class="font-bold text-slate-800 mb-1">Enviar avaliação ao Presidente do Júri</h3>
-        <p class="text-sm text-slate-500 mb-4">O presidente do júri preenche a avaliação da entrevista e submete para a sua confirmação.</p>
+        <p class="text-sm text-slate-500 mb-4">O presidente preenche a avaliação e submete. RH confirma e o candidato avança automaticamente.</p>
         <form method="post" action="/candidatos/{{ candidato.pk }}/enviar-avaliacao/">
             {% csrf_token %}
             <div class="mb-4">
@@ -226,260 +441,35 @@
                 <p class="text-xs text-slate-400 mt-1">Pode copiar e enviar o link manualmente.</p>
             </div>
             <div class="flex gap-2">
-                <button type="submit" class="btn-primary" style="background:#8b5cf6;">
-                    <i class="fa-solid fa-link mr-1"></i> Gerar link
-                </button>
+                <button type="submit" class="btn-primary" style="background:#8b5cf6;"><i class="fa-solid fa-link mr-1"></i> Gerar link</button>
                 <button type="button" onclick="document.getElementById('modal-avaliacao').classList.add('hidden')" class="btn-secondary">Cancelar</button>
             </div>
         </form>
     </div>
 </div>
-{% endif %}
-
-{% if candidato.etapa == "Proposta" or candidato.etapa == "Contratado" or nota %}
-<div class="section-card mb-4" style="border-left: 4px solid #8b5cf6;">
-    <div class="flex items-center justify-between mb-3">
-        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">
-            <i class="fa-solid fa-star mr-1" style="color:#8b5cf6;"></i> Avaliação de Entrevista
-        </p>
-        {% if nota %}
-        <button onclick="toggleForm()" id="btn-editar" class="btn-secondary text-xs" style="padding:4px 10px;">
-            <i class="fa-solid fa-pen mr-1"></i> Editar
-        </button>
-        {% endif %}
-    </div>
-
-    {% if nota %}
-    <!-- SUMMARY VIEW -->
-    <div id="nota-resumo">
-        <div class="grid grid-cols-3 gap-3 mb-3">
-            <div class="text-center p-3 rounded-lg" style="background:#f5f3ff;">
-                <div class="flex justify-center gap-1 mb-1">
-                    {% for i in "12345" %}
-                    <i class="fa-star text-lg {% if nota.pontuacao and nota.pontuacao >= forloop.counter %}fa-solid{% else %}fa-regular{% endif %}"
-                       style="color:{% if nota.pontuacao and nota.pontuacao >= forloop.counter %}#f59e0b{% else %}#e2e8f0{% endif %};"></i>
-                    {% endfor %}
-                </div>
-                <div class="text-xs text-slate-500">{{ nota.pontuacao|default:"—" }}/5</div>
-            </div>
-            <div class="text-center p-3 rounded-lg" style="background:#f8fafc;">
-                {% if nota.recomendacao == "recomendado" %}
-                <div class="text-lg mb-1">✅</div>
-                <div class="text-xs font-semibold text-green-700">Recomendado</div>
-                {% elif nota.recomendacao == "a_considerar" %}
-                <div class="text-lg mb-1">⚠️</div>
-                <div class="text-xs font-semibold text-amber-700">A considerar</div>
-                {% elif nota.recomendacao == "nao_recomendado" %}
-                <div class="text-lg mb-1">❌</div>
-                <div class="text-xs font-semibold text-red-700">Não recomendado</div>
-                {% else %}
-                <div class="text-xs text-slate-400">Sem recomendação</div>
-                {% endif %}
-            </div>
-            <div class="text-center p-3 rounded-lg" style="background:#f8fafc;">
-                <div class="text-xs text-slate-400 mb-1">Data</div>
-                <div class="text-sm font-semibold text-slate-700">
-                    {% if nota.data_entrevista %}{{ nota.data_entrevista|date:"d/m/Y" }}{% else %}—{% endif %}
-                </div>
-            </div>
-        </div>
-        {% if nota.pontos_fortes or nota.pontos_fracos %}
-        <div class="grid grid-cols-2 gap-3 mb-3">
-            {% if nota.pontos_fortes %}
-            <div class="p-3 rounded-lg" style="background:#f0fdf4; border:1px solid #bbf7d0;">
-                <p class="text-xs font-bold text-green-700 mb-1"><i class="fa-solid fa-thumbs-up mr-1"></i> Pontos fortes</p>
-                <p class="text-sm text-slate-700">{{ nota.pontos_fortes }}</p>
-            </div>
-            {% endif %}
-            {% if nota.pontos_fracos %}
-            <div class="p-3 rounded-lg" style="background:#fff7ed; border:1px solid #fed7aa;">
-                <p class="text-xs font-bold text-orange-700 mb-1"><i class="fa-solid fa-thumbs-down mr-1"></i> Pontos fracos</p>
-                <p class="text-sm text-slate-700">{{ nota.pontos_fracos }}</p>
-            </div>
-            {% endif %}
-        </div>
-        {% endif %}
-        {% if nota.notas %}
-        <div class="p-3 rounded-lg" style="background:#f8fafc; border:1px solid #e2e8f0;">
-            <p class="text-xs font-bold text-slate-400 mb-1"><i class="fa-solid fa-note-sticky mr-1"></i> Notas gerais</p>
-            <p class="text-sm text-slate-700">{{ nota.notas }}</p>
-        </div>
-        {% endif %}
-    </div>
-    {% endif %}
-
-    <!-- EDIT FORM (hidden if nota exists, shown if no nota yet) -->
-    <div id="nota-form" {% if nota %}style="display:none;"{% endif %}>
-        <form method="post" action="/candidatos/{{ candidato.pk }}/nota-entrevista/">
-            {% csrf_token %}
-            <div class="grid grid-cols-3 gap-3 mb-3">
-                <div>
-                    <label class="text-xs text-slate-500 mb-1 block">Data da entrevista</label>
-                    <input type="date" name="data_entrevista"
-                           value="{{ nota.data_entrevista|date:'Y-m-d' }}"
-                           class="form-input w-full text-sm">
-                </div>
-                <div>
-                    <label class="text-xs text-slate-500 mb-1 block">Pontuação global (1–5)</label>
-                    <div class="flex gap-1 mt-1" id="star-rating">
-                        {% for i in "12345" %}
-                        <i class="fa-star text-xl {% if nota.pontuacao and nota.pontuacao >= forloop.counter %}fa-solid{% else %}fa-regular{% endif %}"
-                           style="color:{% if nota.pontuacao and nota.pontuacao >= forloop.counter %}#f59e0b{% else %}#cbd5e1{% endif %}; cursor:pointer;"
-                           onclick="setStar({{ forloop.counter }})"></i>
-                        {% endfor %}
-                    </div>
-                    <input type="hidden" name="pontuacao" id="pontuacao-val" value="{{ nota.pontuacao|default:'' }}">
-                </div>
-                <div>
-                    <label class="text-xs text-slate-500 mb-1 block">Recomendação</label>
-                    <select name="recomendacao" class="form-input w-full text-sm">
-                        <option value="">— Seleccionar —</option>
-                        <option value="recomendado" {% if nota.recomendacao == "recomendado" %}selected{% endif %}>✅ Recomendado</option>
-                        <option value="a_considerar" {% if nota.recomendacao == "a_considerar" %}selected{% endif %}>⚠️ A considerar</option>
-                        <option value="nao_recomendado" {% if nota.recomendacao == "nao_recomendado" %}selected{% endif %}>❌ Não recomendado</option>
-                    </select>
-                </div>
-            </div>
-            <div class="grid grid-cols-2 gap-3 mb-3">
-                <div>
-                    <label class="text-xs text-slate-500 mb-1 block">Pontos fortes</label>
-                    <textarea name="pontos_fortes" rows="3" class="form-input w-full text-sm"
-                              placeholder="O que se destacou positivamente...">{{ nota.pontos_fortes }}</textarea>
-                </div>
-                <div>
-                    <label class="text-xs text-slate-500 mb-1 block">Pontos fracos / preocupações</label>
-                    <textarea name="pontos_fracos" rows="3" class="form-input w-full text-sm"
-                              placeholder="Lacunas, dúvidas ou reservas...">{{ nota.pontos_fracos }}</textarea>
-                </div>
-            </div>
-            <div class="mb-3">
-                <label class="text-xs text-slate-500 mb-1 block">Notas gerais</label>
-                <textarea name="notas" rows="3" class="form-input w-full text-sm"
-                          placeholder="Observações adicionais sobre a entrevista...">{{ nota.notas }}</textarea>
-            </div>
-            <div class="flex gap-2">
-                <button type="submit" class="btn-primary" style="background:#8b5cf6;">
-                    <i class="fa-solid fa-floppy-disk mr-2"></i> Guardar avaliação
-                </button>
-                {% if nota %}
-                <button type="button" onclick="toggleForm()" class="btn-secondary">Cancelar</button>
-                {% endif %}
-            </div>
-        </form>
-    </div>
-</div>
-{% endif %}
-
-<div class="grid grid-cols-2 gap-4">
-    <!-- Left column -->
-    <div>
-        {% if candidato.resumo %}
-        <div class="section-card">
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
-                <i class="fa-solid fa-align-left mr-1"></i> Resumo Profissional
-            </p>
-            <p class="text-sm text-slate-700 leading-relaxed">{{ candidato.resumo }}</p>
-        </div>
-        {% endif %}
-
-        {% if candidato.competencias %}
-        <div class="section-card">
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
-                <i class="fa-solid fa-brain mr-1"></i> Competências
-            </p>
-            <div class="flex flex-wrap gap-1">
-                {% for comp in candidato.competencias %}
-                <span class="skill-tag">{{ comp }}</span>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-
-        {% if candidato.idiomas %}
-        <div class="section-card">
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
-                <i class="fa-solid fa-language mr-1"></i> Idiomas
-            </p>
-            <div class="flex flex-wrap gap-1">
-                {% for idioma in candidato.idiomas %}
-                <span class="skill-tag" style="background:#f0fdf4; color:#15803d;">{{ idioma }}</span>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- Right column -->
-    <div>
-        {% if candidato.formacao %}
-        <div class="section-card">
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
-                <i class="fa-solid fa-graduation-cap mr-1"></i> Formação Académica
-            </p>
-            <ul class="space-y-1">
-                {% for f in candidato.formacao %}
-                <li class="text-sm text-slate-700 flex items-start gap-2">
-                    <i class="fa-solid fa-circle-dot mt-1" style="color:#8b5cf6; font-size:0.6rem;"></i>
-                    {{ f }}
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-        {% endif %}
-
-        {% with det=candidato.perfil_completo %}
-        {% if det.explicacao %}
-        <div class="section-card">
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
-                <i class="fa-solid fa-chart-bar mr-1"></i> Análise de Fit
-            </p>
-            {% if det.pontuacao_detalhada %}
-            <div class="grid grid-cols-3 gap-2 mb-3">
-                <div class="text-center p-2 bg-blue-50 rounded-lg">
-                    <div class="font-bold text-blue-700">{{ det.pontuacao_detalhada.competencias }}/50</div>
-                    <div class="text-xs text-slate-500">Competências</div>
-                </div>
-                <div class="text-center p-2 bg-purple-50 rounded-lg">
-                    <div class="font-bold text-purple-700">{{ det.pontuacao_detalhada.experiencia }}/30</div>
-                    <div class="text-xs text-slate-500">Experiência</div>
-                </div>
-                <div class="text-center p-2 bg-cyan-50 rounded-lg">
-                    <div class="font-bold text-cyan-700">{{ det.pontuacao_detalhada.formacao }}/20</div>
-                    <div class="text-xs text-slate-500">Formação</div>
-                </div>
-            </div>
-            {% endif %}
-            <ul class="space-y-1">
-                {% for linha in det.explicacao %}
-                <li class="text-xs text-slate-600 bg-slate-50 rounded px-2 py-1">{{ linha }}</li>
-                {% endfor %}
-            </ul>
-        </div>
-        {% endif %}
-        {% endwith %}
-
-        {% if candidato.notas %}
-        <div class="section-card">
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
-                <i class="fa-solid fa-note-sticky mr-1"></i> Notas Internas
-            </p>
-            <p class="text-sm text-slate-700">{{ candidato.notas }}</p>
-        </div>
-        {% endif %}
-    </div>
-</div>
 
 <script>
+const TABS = ['perfil', 'avaliacao', 'documentos'];
+
+function switchTab(id) {
+    TABS.forEach(t => {
+        document.getElementById('tab-' + t).style.display = t === id ? '' : 'none';
+        const btn = document.getElementById('tab-btn-' + t);
+        if (t === id) { btn.style.borderBottomColor = '#8b5cf6'; btn.style.color = '#8b5cf6'; }
+        else { btn.style.borderBottomColor = 'transparent'; btn.style.color = '#64748b'; }
+    });
+    history.replaceState(null, '', '#tab-' + id);
+}
+
+const hash = location.hash.replace('#tab-', '');
+if (TABS.includes(hash)) switchTab(hash);
+else switchTab('perfil');
+
 function setStar(n) {
     document.getElementById('pontuacao-val').value = n;
-    document.querySelectorAll('#star-rating i').forEach((star, i) => {
-        if (i < n) {
-            star.className = 'fa-solid fa-star text-xl';
-            star.style.color = '#f59e0b';
-        } else {
-            star.className = 'fa-regular fa-star text-xl';
-            star.style.color = '#cbd5e1';
-        }
+    document.querySelectorAll('#star-rating i').forEach((s, i) => {
+        s.className = i < n ? 'fa-solid fa-star text-xl' : 'fa-regular fa-star text-xl';
+        s.style.color = i < n ? '#f59e0b' : '#cbd5e1';
     });
 }
 function toggleForm() {
@@ -489,9 +479,7 @@ function toggleForm() {
     const hidden = form.style.display === 'none';
     form.style.display = hidden ? 'block' : 'none';
     resumo.style.display = hidden ? 'none' : 'block';
-    btn.innerHTML = hidden
-        ? '<i class="fa-solid fa-x mr-1"></i> Fechar'
-        : '<i class="fa-solid fa-pen mr-1"></i> Editar';
+    btn.innerHTML = hidden ? '<i class="fa-solid fa-x mr-1"></i> Fechar' : '<i class="fa-solid fa-pen mr-1"></i> Editar';
 }
 </script>
 {% endblock %}

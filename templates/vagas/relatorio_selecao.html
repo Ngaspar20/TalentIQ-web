@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Relatório de Seleção — {{ vaga.titulo }}{% endblock %}
+
+{% block breadcrumb %}
+<a href="/vagas/" style="color:inherit; text-decoration:none;">Vagas</a>
+<span style="margin:0 0.4rem; color:#94a3b8;">/</span>
+<a href="/vagas/{{ vaga.pk }}/" style="color:inherit; text-decoration:none;">{{ vaga.titulo }}</a>
+<span style="margin:0 0.4rem; color:#94a3b8;">/</span>
+Relatório de Seleção
+{% endblock %}
+
+{% block content %}
+<div class="page-header flex items-center justify-between">
+    <div>
+        <h1>Relatório de Seleção</h1>
+        <p>{{ vaga.titulo }}{% if vaga.organizacao %} · {{ vaga.organizacao }}{% endif %}</p>
+    </div>
+    <div class="flex gap-2">
+        <a href="/vagas/{{ vaga.pk }}/relatorio/download/" class="btn-primary">
+            <i class="fa-solid fa-file-word mr-2"></i> Descarregar Word
+        </a>
+        <a href="/vagas/{{ vaga.pk }}/" class="btn-secondary">← Vaga</a>
+    </div>
+</div>
+
+{% if not candidatos %}
+<div style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:3rem; text-align:center; color:#94a3b8;">
+    <i class="fa-solid fa-chart-bar" style="font-size:2.5rem; display:block; margin-bottom:1rem;"></i>
+    <p style="font-size:1rem; font-weight:600; color:#64748b; margin-bottom:0.5rem;">Sem candidatos avaliados</p>
+    <p style="font-size:0.875rem;">O relatório fica disponível depois de pelo menos um candidato completar a fase de entrevista.</p>
+</div>
+{% else %}
+
+{% if narrativa %}
+<!-- AI Narrative -->
+<div class="section-card" style="border-left:4px solid #1e3a5f; margin-bottom:1.5rem;">
+    <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:1rem;">
+        <i class="fa-solid fa-sparkles" style="color:#1e3a5f; font-size:1.1rem;"></i>
+        <p style="font-size:0.75rem; font-weight:700; color:#1e3a5f; text-transform:uppercase; letter-spacing:0.05em; margin:0;">Análise e Recomendação — IA</p>
+    </div>
+    <div style="font-size:0.9rem; color:#1e293b; line-height:1.7; white-space:pre-line;">{{ narrativa }}</div>
+</div>
+{% else %}
+<div style="background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:0.75rem 1rem; margin-bottom:1.5rem; font-size:0.85rem; color:#92400e;">
+    <i class="fa-solid fa-triangle-exclamation mr-2"></i>
+    Narrativa de IA não disponível (motor no modo determinístico). O resumo por candidato está disponível abaixo.
+</div>
+{% endif %}
+
+<!-- Candidate table -->
+<div class="section-card">
+    <p style="font-size:0.75rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:1rem;">
+        <i class="fa-solid fa-users mr-1"></i> Candidatos Avaliados ({{ candidatos|length }})
+    </p>
+
+    <div style="display:flex; flex-direction:column; gap:1rem;">
+        {% for c in candidatos %}
+        {% with rec=c.recomendacao %}
+        <div style="border:1px solid
+            {% if rec == 'recomendado' %}#86efac{% elif rec == 'nao_recomendado' %}#fca5a5{% else %}#e2e8f0{% endif %};
+            border-radius:10px; overflow:hidden;">
+
+            <!-- Header row -->
+            <div style="display:flex; align-items:center; gap:1rem; padding:0.85rem 1rem;
+                background:{% if rec == 'recomendado' %}#f0fdf4{% elif rec == 'nao_recomendado' %}#fef2f2{% else %}#f8fafc{% endif %};">
+
+                <!-- Rank -->
+                <div style="flex-shrink:0; width:28px; height:28px; border-radius:50%; background:#1e3a5f; color:white; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:700;">
+                    {{ forloop.counter }}
+                </div>
+
+                <!-- Name + stage -->
+                <div style="flex:1; min-width:0;">
+                    <a href="/candidatos/{{ c.pk }}/" style="font-weight:700; font-size:0.95rem; color:#1e293b; text-decoration:none;">{{ c.nome }}</a>
+                    <span style="margin-left:0.5rem; font-size:0.75rem; color:#64748b;">{{ c.etapa }}</span>
+                </div>
+
+                <!-- Interview score stars -->
+                {% if c.pontuacao_entrevista %}
+                <div style="flex-shrink:0; display:flex; gap:2px;">
+                    {% for i in "12345" %}
+                    <i class="fa-{% if forloop.counter <= c.pontuacao_entrevista %}solid{% else %}regular{% endif %} fa-star"
+                       style="color:{% if forloop.counter <= c.pontuacao_entrevista %}#f59e0b{% else %}#cbd5e1{% endif %}; font-size:0.85rem;"></i>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Fit score -->
+                {% if c.score_fit is not None %}
+                <div style="flex-shrink:0; padding:0.25rem 0.6rem; border-radius:6px; font-size:0.75rem; font-weight:700;
+                    {% if c.score_fit >= 75 %}background:#dcfce7; color:#15803d;
+                    {% elif c.score_fit >= 50 %}background:#fef9c3; color:#a16207;
+                    {% else %}background:#fee2e2; color:#dc2626;{% endif %}">
+                    Fit {{ c.score_fit }}%
+                </div>
+                {% endif %}
+
+                <!-- Recommendation badge -->
+                <div style="flex-shrink:0; padding:0.25rem 0.7rem; border-radius:6px; font-size:0.75rem; font-weight:600;
+                    {% if rec == 'recomendado' %}background:#dcfce7; color:#15803d;
+                    {% elif rec == 'nao_recomendado' %}background:#fee2e2; color:#dc2626;
+                    {% elif rec == 'a_considerar' %}background:#fef9c3; color:#a16207;
+                    {% else %}background:#f1f5f9; color:#64748b;{% endif %}">
+                    {% if rec == 'recomendado' %}✅ Recomendado
+                    {% elif rec == 'nao_recomendado' %}❌ Não recomendado
+                    {% elif rec == 'a_considerar' %}⚠️ A considerar
+                    {% else %}— Sem avaliação{% endif %}
+                </div>
+            </div>
+
+            <!-- Detail rows -->
+            {% if c.pontos_fortes or c.pontos_fracos or c.notas %}
+            <div style="padding:0.75rem 1rem; display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; border-top:1px solid #f1f5f9;">
+                {% if c.pontos_fortes %}
+                <div>
+                    <p style="font-size:0.72rem; font-weight:700; color:#15803d; text-transform:uppercase; letter-spacing:0.04em; margin:0 0 0.3rem;">Pontos fortes</p>
+                    <p style="font-size:0.82rem; color:#1e293b; margin:0; line-height:1.5;">{{ c.pontos_fortes }}</p>
+                </div>
+                {% endif %}
+                {% if c.pontos_fracos %}
+                <div>
+                    <p style="font-size:0.72rem; font-weight:700; color:#d97706; text-transform:uppercase; letter-spacing:0.04em; margin:0 0 0.3rem;">Pontos fracos</p>
+                    <p style="font-size:0.82rem; color:#1e293b; margin:0; line-height:1.5;">{{ c.pontos_fracos }}</p>
+                </div>
+                {% endif %}
+                {% if c.notas %}
+                <div style="grid-column:1/-1;">
+                    <p style="font-size:0.72rem; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.04em; margin:0 0 0.3rem;">Notas</p>
+                    <p style="font-size:0.82rem; color:#1e293b; margin:0; line-height:1.5;">{{ c.notas }}</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+        </div>
+        {% endwith %}
+        {% endfor %}
+    </div>
+</div>
+
+{% endif %}
+{% endblock %}
