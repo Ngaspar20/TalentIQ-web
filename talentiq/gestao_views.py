@@ -64,6 +64,15 @@ def minha_senha(request):
     return render(request, "gestao/minha_senha.html", {"error": error, "skip_current": skip_current})
 
 
+def utilizador_apagar(request, pk):
+    user = get_object_or_404(User, pk=pk)
+    if request.method == "POST" and user != request.user:
+        email = user.email
+        user.delete()
+        messages.success(request, f"Utilizador {email} apagado definitivamente.")
+    return redirect("/gestao/utilizadores/")
+
+
 def utilizador_reset_password(request, pk):
     user = get_object_or_404(User, pk=pk)
     if request.method == "POST":

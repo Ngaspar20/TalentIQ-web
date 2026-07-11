@@ -67,6 +67,14 @@
                   class="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded border border-slate-300 text-slate-600 hover:bg-slate-50 font-medium">
                   <i class="fa-solid fa-key fa-fw"></i> Repor Senha
                 </button>
+
+                <button type="button" onclick="confirmDelete('{{ u.pk }}', '{{ u.email }}')"
+                  class="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded border border-red-200 text-red-500 hover:bg-red-50 font-medium">
+                  <i class="fa-solid fa-trash fa-fw"></i> Apagar
+                </button>
+                <form id="delete-form-{{ u.pk }}" method="post" action="/gestao/utilizadores/{{ u.pk }}/apagar/" class="hidden">
+                  {% csrf_token %}
+                </form>
               {% endif %}
 
             </div>
@@ -103,6 +111,11 @@
 </div>
 
 <script>
+function confirmDelete(pk, email) {
+  if (confirm('Tens a certeza que queres apagar o utilizador "' + email + '"?\n\nEsta acção é irreversível.')) {
+    document.getElementById('delete-form-' + pk).submit();
+  }
+}
 function toggleReset(pk) {
   const el = document.getElementById('reset-' + pk);
   el.classList.toggle('hidden');
