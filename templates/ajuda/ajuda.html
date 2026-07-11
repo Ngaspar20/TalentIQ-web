@@ -11,140 +11,211 @@
 
 <!-- Quick nav -->
 <div class="flex gap-2 mb-6 flex-wrap">
-    <a href="#inicio" class="btn-secondary" style="font-size:0.82rem; padding:6px 14px;"><i class="fa-solid fa-play mr-1" style="color:#8b5cf6;"></i> Início Rápido</a>
+    <a href="#visao" class="btn-secondary" style="font-size:0.82rem; padding:6px 14px;"><i class="fa-solid fa-map mr-1" style="color:#8b5cf6;"></i> Visão Geral</a>
     <a href="#vagas" class="btn-secondary" style="font-size:0.82rem; padding:6px 14px;"><i class="fa-solid fa-briefcase mr-1" style="color:#1d4ed8;"></i> Vagas</a>
-    <a href="#candidatos" class="btn-secondary" style="font-size:0.82rem; padding:6px 14px;"><i class="fa-solid fa-user mr-1" style="color:#8b5cf6;"></i> Candidatos</a>
-    <a href="#scoring" class="btn-secondary" style="font-size:0.82rem; padding:6px 14px;"><i class="fa-solid fa-chart-bar mr-1" style="color:#10b981;"></i> Scoring</a>
-    <a href="#ranking" class="btn-secondary" style="font-size:0.82rem; padding:6px 14px;"><i class="fa-solid fa-ranking-star mr-1" style="color:#f59e0b;"></i> Ranking</a>
+    <a href="#passos" class="btn-secondary" style="font-size:0.82rem; padding:6px 14px;"><i class="fa-solid fa-list-ol mr-1" style="color:#10b981;"></i> 7 Passos</a>
     <a href="#pipeline" class="btn-secondary" style="font-size:0.82rem; padding:6px 14px;"><i class="fa-solid fa-filter mr-1" style="color:#f59e0b;"></i> Pipeline</a>
-    <a href="#exportar" class="btn-secondary" style="font-size:0.82rem; padding:6px 14px;"><i class="fa-solid fa-download mr-1" style="color:#16a34a;"></i> Exportar</a>
+    <a href="#ranking" class="btn-secondary" style="font-size:0.82rem; padding:6px 14px;"><i class="fa-solid fa-ranking-star mr-1" style="color:#f59e0b;"></i> Ranking Geral</a>
+    <a href="#scoring" class="btn-secondary" style="font-size:0.82rem; padding:6px 14px;"><i class="fa-solid fa-chart-bar mr-1" style="color:#10b981;"></i> Pontuação</a>
     <a href="#utilizadores" class="btn-secondary" style="font-size:0.82rem; padding:6px 14px;"><i class="fa-solid fa-users-gear mr-1" style="color:#0891b2;"></i> Utilizadores</a>
 </div>
 
-<!-- ── Início Rápido ─────────────────────────────────────── -->
-<div id="inicio" class="section-card mb-4" style="border-left: 4px solid #8b5cf6;">
+<!-- ── Visão Geral ────────────────────────────────────────── -->
+<div id="visao" class="section-card mb-4" style="border-left:4px solid #8b5cf6;">
     <h2 style="font-size:1.15rem; font-weight:800; color:#1e3a8a; margin-bottom:4px;">
-        <i class="fa-solid fa-play mr-2" style="color:#8b5cf6;"></i> Início Rápido — 5 Passos
+        <i class="fa-solid fa-map mr-2" style="color:#8b5cf6;"></i> Visão Geral do Sistema
     </h2>
-    <p class="text-sm text-slate-500 mb-5">Siga estes passos pela primeira vez para completar um processo de selecção do início ao fim.</p>
+    <p class="text-sm text-slate-500 mb-5">O TalentIQ organiza o recrutamento por <strong>Vagas</strong>. Cada vaga tem o seu próprio processo guiado de 7 passos, desde o ToR até à decisão final.</p>
 
-    <div class="space-y-3">
-        <!-- Step 1 -->
-        <div class="flex items-start gap-4 p-4 rounded-xl" style="background:#f5f3ff; border:1px solid #ddd6fe;">
-            <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 font-extrabold text-white text-sm" style="background:#7c3aed;">1</div>
-            <div class="flex-1">
-                <div class="font-bold text-slate-800 mb-1">Criar uma Vaga <span class="ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium">Menu: Vagas</span></div>
-                <p class="text-sm text-slate-600">Clique em <strong>Vagas</strong> no menu e depois em <strong>Nova Vaga</strong>. Pode carregar um documento (ToR/JD em PDF ou Word) — a IA extrai os campos automaticamente — ou preencher o formulário à mão. Defina o <strong>título, competências requeridas, nível de formação e anos de experiência mínimos</strong>. Estes campos são essenciais para o scoring.</p>
-            </div>
+    <!-- Navigation map -->
+    <div class="grid grid-cols-4 gap-3 mb-4">
+        <div class="rounded-xl p-4 text-center" style="background:#eff6ff; border:1px solid #bfdbfe;">
+            <i class="fa-solid fa-briefcase fa-lg mb-2" style="color:#1d4ed8; display:block;"></i>
+            <div class="font-bold text-slate-800 text-sm mb-1">Vagas</div>
+            <div class="text-xs text-slate-500">Cria e gere cada processo de recrutamento. Clica numa vaga para seguir os 7 passos.</div>
         </div>
+        <div class="rounded-xl p-4 text-center" style="background:#f0fdf4; border:1px solid #bbf7d0;">
+            <i class="fa-solid fa-filter fa-lg mb-2" style="color:#15803d; display:block;"></i>
+            <div class="font-bold text-slate-800 text-sm mb-1">Pipeline</div>
+            <div class="text-xs text-slate-500">Vista kanban de todos os candidatos organizados por etapa do processo de selecção.</div>
+        </div>
+        <div class="rounded-xl p-4 text-center" style="background:#fffbeb; border:1px solid #fde68a;">
+            <i class="fa-solid fa-ranking-star fa-lg mb-2" style="color:#d97706; display:block;"></i>
+            <div class="font-bold text-slate-800 text-sm mb-1">Ranking Geral</div>
+            <div class="text-xs text-slate-500">Todos os candidatos de todas as vagas ordenados por score, numa única vista.</div>
+        </div>
+        <div class="rounded-xl p-4 text-center" style="background:#f0f9ff; border:1px solid #bae6fd;">
+            <i class="fa-solid fa-users-gear fa-lg mb-2" style="color:#0369a1; display:block;"></i>
+            <div class="font-bold text-slate-800 text-sm mb-1">Utilizadores</div>
+            <div class="text-xs text-slate-500">Gere quem tem acesso ao sistema e com que permissões.</div>
+        </div>
+    </div>
 
-        <!-- Step 2 -->
-        <div class="flex items-start gap-4 p-4 rounded-xl" style="background:#eff6ff; border:1px solid #bfdbfe;">
-            <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 font-extrabold text-white text-sm" style="background:#1d4ed8;">2</div>
-            <div class="flex-1">
-                <div class="font-bold text-slate-800 mb-1">Adicionar Candidatos <span class="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">Menu: Candidatos (dentro da Vaga)</span></div>
-                <p class="text-sm text-slate-600">Na página da vaga, clique em <strong>Adicionar Candidato</strong>. Carregue o CV (PDF ou Word) e clique em <strong>Analisar com IA</strong> para preencher o perfil automaticamente. Confirme e corrija os dados extraídos se necessário. Associe sempre o candidato à vaga correcta.</p>
-            </div>
-        </div>
-
-        <!-- Step 3 -->
-        <div class="flex items-start gap-4 p-4 rounded-xl" style="background:#f0fdf4; border:1px solid #bbf7d0;">
-            <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 font-extrabold text-white text-sm" style="background:#15803d;">3</div>
-            <div class="flex-1">
-                <div class="font-bold text-slate-800 mb-1">Calcular Scores <span class="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">Menu: Pontuação Fit</span></div>
-                <p class="text-sm text-slate-600">Clique em <strong>Pontuação Fit</strong> no menu. Seleccione a vaga no menu de topo. Clique em <strong>Calcular Todos os Scores</strong>. O sistema analisa cada candidato e atribui uma pontuação de 0–100 com base em competências, experiência e formação. Aguarde a página recarregar.</p>
-            </div>
-        </div>
-
-        <!-- Step 4 -->
-        <div class="flex items-start gap-4 p-4 rounded-xl" style="background:#fffbeb; border:1px solid #fde68a;">
-            <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 font-extrabold text-white text-sm" style="background:#d97706;">4</div>
-            <div class="flex-1">
-                <div class="font-bold text-slate-800 mb-1">Analisar o Ranking <span class="ml-2 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">Menu: Ranking Geral</span></div>
-                <p class="text-sm text-slate-600">Clique em <strong>Ranking Geral</strong> para ver todos os candidatos de todas as vagas ordenados por score. Use os filtros por vaga, alinhamento ou etapa do pipeline. Identifique os melhores candidatos para avançar no processo.</p>
-            </div>
-        </div>
-
-        <!-- Step 5 -->
-        <div class="flex items-start gap-4 p-4 rounded-xl" style="background:#f0f9ff; border:1px solid #bae6fd;">
-            <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 font-extrabold text-white text-sm" style="background:#0369a1;">5</div>
-            <div class="flex-1">
-                <div class="font-bold text-slate-800 mb-1">Gerir Pipeline e Exportar <span class="ml-2 text-xs bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full font-medium">Menu: Pipeline / Pontuação Fit</span></div>
-                <p class="text-sm text-slate-600">No <strong>Pipeline</strong>, mova os candidatos seleccionados pelas etapas do processo (Triagem → Entrevista → Proposta → Contratado). Na página <strong>Pontuação Fit</strong>, exporte o relatório em <strong>Excel</strong> (tabela com scores) ou <strong>Word</strong> (relatório descritivo com análise individual) para partilhar com a equipa ou gestão.</p>
-            </div>
-        </div>
+    <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-xs bg-blue-50 text-blue-700 px-3 py-1 rounded-full font-medium border border-blue-200"><i class="fa-solid fa-briefcase mr-1"></i> Criar Vaga</span>
+        <i class="fa-solid fa-arrow-right text-slate-300 text-xs"></i>
+        <span class="text-xs bg-purple-50 text-purple-700 px-3 py-1 rounded-full font-medium border border-purple-200"><i class="fa-solid fa-robot mr-1"></i> Analisar ToR</span>
+        <i class="fa-solid fa-arrow-right text-slate-300 text-xs"></i>
+        <span class="text-xs bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full font-medium border border-indigo-200"><i class="fa-solid fa-check mr-1"></i> Aprovar ToR</span>
+        <i class="fa-solid fa-arrow-right text-slate-300 text-xs"></i>
+        <span class="text-xs bg-sky-50 text-sky-700 px-3 py-1 rounded-full font-medium border border-sky-200"><i class="fa-solid fa-file-arrow-up mr-1"></i> Upload CVs</span>
+        <i class="fa-solid fa-arrow-right text-slate-300 text-xs"></i>
+        <span class="text-xs bg-green-50 text-green-700 px-3 py-1 rounded-full font-medium border border-green-200"><i class="fa-solid fa-star mr-1"></i> Scoring</span>
+        <i class="fa-solid fa-arrow-right text-slate-300 text-xs"></i>
+        <span class="text-xs bg-amber-50 text-amber-700 px-3 py-1 rounded-full font-medium border border-amber-200"><i class="fa-solid fa-comments mr-1"></i> Guião Entrevista</span>
+        <i class="fa-solid fa-arrow-right text-slate-300 text-xs"></i>
+        <span class="text-xs bg-red-50 text-red-700 px-3 py-1 rounded-full font-medium border border-red-200"><i class="fa-solid fa-gavel mr-1"></i> Decisão Final</span>
     </div>
 </div>
 
 <!-- ── Vagas ──────────────────────────────────────────── -->
 <div id="vagas" class="section-card mb-4">
     <h2 style="font-size:1.15rem; font-weight:800; color:#1e3a8a; margin-bottom:12px;">
-        <i class="fa-solid fa-briefcase mr-2" style="color:#1d4ed8;"></i> Criar e Gerir Vagas
+        <i class="fa-solid fa-briefcase mr-2" style="color:#1d4ed8;"></i> Menu: Vagas
     </h2>
     <div class="grid grid-cols-2 gap-6">
         <div>
-            <p class="text-sm text-slate-600 mb-3">Cada vaga define o perfil ideal contra o qual os candidatos serão avaliados. Quanto mais completa a vaga, mais preciso o scoring.</p>
+            <p class="text-sm text-slate-600 mb-3">A lista de Vagas é o ponto de entrada principal. Cada linha representa um processo de recrutamento. Clica numa vaga para abrir o processo guiado de 7 passos.</p>
             <div class="space-y-2">
                 <div class="flex items-start gap-2 text-sm">
-                    <i class="fa-solid fa-file-arrow-up mt-0.5" style="color:#1d4ed8;"></i>
-                    <div><strong>Carregar ToR/JD</strong> — Faça upload do Termos de Referência em PDF ou Word. A IA extrai automaticamente o título, requisitos, competências e responsabilidades.</div>
+                    <i class="fa-solid fa-plus mt-0.5" style="color:#1d4ed8;"></i>
+                    <div><strong>Nova Vaga</strong> — Cria uma nova posição. Podes preencher os campos manualmente ou editar depois de carregar o ToR.</div>
                 </div>
                 <div class="flex items-start gap-2 text-sm">
-                    <i class="fa-solid fa-pen mt-0.5" style="color:#1d4ed8;"></i>
-                    <div><strong>Preencher manualmente</strong> — Preencha o formulário directamente. Pode combinar os dois métodos: carregar o ficheiro e editar os campos.</div>
+                    <i class="fa-solid fa-eye mt-0.5" style="color:#1d4ed8;"></i>
+                    <div><strong>Ver Vaga</strong> — Abre o processo guiado de 7 passos para essa posição específica.</div>
                 </div>
                 <div class="flex items-start gap-2 text-sm">
                     <i class="fa-solid fa-toggle-on mt-0.5" style="color:#1d4ed8;"></i>
-                    <div><strong>Estado da vaga</strong> — Pode ser <em>Aberta</em> ou <em>Fechada</em>. Apenas vagas abertas aparecem no pipeline activo.</div>
+                    <div><strong>Estado</strong> — <em>Aberta</em> (em processo) ou <em>Fechada</em> (processo concluído).</div>
                 </div>
             </div>
         </div>
-        <div class="bg-slate-50 rounded-xl p-4">
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Campos da Vaga</p>
-            <div class="space-y-1.5 text-xs">
-                <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0"></span><span class="font-semibold text-slate-700">Título</span><span class="text-slate-400">— Nome do cargo</span></div>
-                <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0"></span><span class="font-semibold text-slate-700">Organização / Local</span><span class="text-slate-400">— Entidade e localização</span></div>
-                <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></span><span class="font-semibold text-slate-700">Competências requeridas</span><span class="text-slate-400">— Lista separada por vírgula</span><span class="text-xs bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-medium ml-1">Scoring</span></div>
-                <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></span><span class="font-semibold text-slate-700">Nível de formação</span><span class="text-slate-400">— Licenciatura, Mestrado…</span><span class="text-xs bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-medium ml-1">Scoring</span></div>
-                <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></span><span class="font-semibold text-slate-700">Anos de experiência mín.</span><span class="text-slate-400">— Número inteiro</span><span class="text-xs bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-medium ml-1">Scoring</span></div>
-                <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-slate-400 flex-shrink-0"></span><span class="font-semibold text-slate-700">Responsabilidades / Descrição</span><span class="text-slate-400">— Texto livre</span></div>
+        <div class="bg-blue-50 rounded-xl p-4 border border-blue-100">
+            <p class="text-xs font-bold text-blue-700 uppercase tracking-widest mb-3">Campos importantes para o Scoring</p>
+            <div class="space-y-1.5 text-xs text-blue-700">
+                <div class="flex items-center gap-2"><i class="fa-solid fa-circle-dot text-xs"></i><strong>Competências requeridas</strong> — Lista separada por vírgula. Peso: 50 pts.</div>
+                <div class="flex items-center gap-2"><i class="fa-solid fa-circle-dot text-xs"></i><strong>Nível de formação mínimo</strong> — Ex: Licenciatura, Mestrado. Peso: 20 pts.</div>
+                <div class="flex items-center gap-2"><i class="fa-solid fa-circle-dot text-xs"></i><strong>Anos de experiência mínimos</strong> — Número inteiro. Peso: 30 pts.</div>
+            </div>
+            <div class="mt-3 p-2 bg-white rounded-lg border border-blue-200 text-xs text-blue-600">
+                <i class="fa-solid fa-lightbulb mr-1"></i> Quanto mais completa a vaga, mais preciso o scoring dos candidatos.
             </div>
         </div>
     </div>
 </div>
 
-<!-- ── Candidatos ──────────────────────────────────────── -->
-<div id="candidatos" class="section-card mb-4">
-    <h2 style="font-size:1.15rem; font-weight:800; color:#1e3a8a; margin-bottom:12px;">
-        <i class="fa-solid fa-user mr-2" style="color:#8b5cf6;"></i> Carregar e Gerir Candidatos
+<!-- ── 7 Passos ────────────────────────────────────────────── -->
+<div id="passos" class="section-card mb-4">
+    <h2 style="font-size:1.15rem; font-weight:800; color:#1e3a8a; margin-bottom:4px;">
+        <i class="fa-solid fa-list-ol mr-2" style="color:#10b981;"></i> Os 7 Passos dentro de uma Vaga
     </h2>
-    <div class="grid grid-cols-2 gap-6">
-        <div>
-            <p class="text-sm text-slate-600 mb-3">Os candidatos são carregados via CV ou inseridos manualmente. A IA analisa o CV e preenche o perfil automaticamente.</p>
-            <div class="space-y-2">
-                <div class="flex items-start gap-2 text-sm">
-                    <i class="fa-solid fa-robot mt-0.5" style="color:#8b5cf6;"></i>
-                    <div><strong>Análise automática de CV</strong> — Após o upload, clique em <strong>Analisar com IA</strong> para extrair nome, competências, formação, anos de experiência e idiomas.</div>
-                </div>
-                <div class="flex items-start gap-2 text-sm">
-                    <i class="fa-solid fa-link mt-0.5" style="color:#8b5cf6;"></i>
-                    <div><strong>Associar a uma vaga</strong> — Seleccione a vaga durante o registo. Sem esta associação o candidato não aparece no scoring nem no pipeline.</div>
-                </div>
-                <div class="flex items-start gap-2 text-sm">
-                    <i class="fa-solid fa-pen mt-0.5" style="color:#8b5cf6;"></i>
-                    <div><strong>Editar o perfil</strong> — Reveja e corrija os dados extraídos. A qualidade do scoring depende da precisão do perfil.</div>
+    <p class="text-sm text-slate-500 mb-5">Ao clicar numa vaga, o sistema mostra um processo guiado. Cada passo desbloqueia o seguinte automaticamente.</p>
+
+    <div class="space-y-3">
+
+        <div class="flex items-start gap-4 p-4 rounded-xl" style="background:#f5f3ff; border:1px solid #ddd6fe;">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-extrabold text-white text-sm" style="background:#7c3aed;">1</div>
+            <div>
+                <div class="font-bold text-slate-800 mb-1">Termos de Referência (ToR) <span class="ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Obrigatório</span></div>
+                <p class="text-sm text-slate-600">Faz upload do documento ToR ou JD (PDF ou Word). Este documento define os requisitos oficiais da posição. Se já preencheste os campos da vaga manualmente, podes saltar este passo.</p>
+            </div>
+        </div>
+
+        <div class="flex items-start gap-4 p-4 rounded-xl" style="background:#eff6ff; border:1px solid #bfdbfe;">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-extrabold text-white text-sm" style="background:#1d4ed8;">2</div>
+            <div>
+                <div class="font-bold text-slate-800 mb-1">Análise IA do ToR</div>
+                <p class="text-sm text-slate-600">Clica em <strong>Analisar ToR com IA</strong>. O sistema lê o documento e extrai automaticamente as competências requeridas, nível de formação, anos de experiência e responsabilidades. Revê e corrige os resultados se necessário.</p>
+            </div>
+        </div>
+
+        <div class="flex items-start gap-4 p-4 rounded-xl" style="background:#f0fdf4; border:1px solid #bbf7d0;">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-extrabold text-white text-sm" style="background:#15803d;">3</div>
+            <div>
+                <div class="font-bold text-slate-800 mb-1">Aprovação do ToR</div>
+                <p class="text-sm text-slate-600">Confirma que os requisitos extraídos estão correctos e aprova o ToR. Este passo valida os critérios que serão usados no scoring dos candidatos. Só avança para o passo 4 após aprovação.</p>
+            </div>
+        </div>
+
+        <div class="flex items-start gap-4 p-4 rounded-xl" style="background:#fdf4ff; border:1px solid #e9d5ff;">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-extrabold text-white text-sm" style="background:#7c3aed;">4</div>
+            <div>
+                <div class="font-bold text-slate-800 mb-1">Upload de CVs</div>
+                <p class="text-sm text-slate-600">Faz upload dos CVs dos candidatos (PDF ou Word), um a um. Após cada upload, clica em <strong>Analisar com IA</strong> para extrair automaticamente as competências, formação e experiência. Revê o perfil antes de guardar.</p>
+                <div class="mt-2 text-xs text-purple-600 bg-purple-50 rounded-lg p-2 border border-purple-200">
+                    <i class="fa-solid fa-triangle-exclamation mr-1"></i> CVs digitalizados (scan de papel) não são suportados — insere os dados manualmente nesses casos.
                 </div>
             </div>
         </div>
-        <div class="bg-slate-50 rounded-xl p-4">
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Formatos de CV Suportados</p>
-            <div class="space-y-2">
-                <div class="flex items-center gap-2 text-sm"><i class="fa-solid fa-file-pdf" style="color:#dc2626;"></i> <strong>PDF</strong> — Funciona com PDFs de texto. PDFs digitalizados (imagem) não são suportados.</div>
-                <div class="flex items-center gap-2 text-sm"><i class="fa-solid fa-file-word" style="color:#1d4ed8;"></i> <strong>Word (.docx)</strong> — Suporte completo incluindo tabelas e listas.</div>
-                <div class="flex items-center gap-2 text-sm"><i class="fa-solid fa-keyboard" style="color:#64748b;"></i> <strong>Manual</strong> — Inserção directa sem ficheiro.</div>
+
+        <div class="flex items-start gap-4 p-4 rounded-xl" style="background:#f0fdf4; border:1px solid #bbf7d0;">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-extrabold text-white text-sm" style="background:#15803d;">5</div>
+            <div>
+                <div class="font-bold text-slate-800 mb-1">Scoring dos CVs</div>
+                <p class="text-sm text-slate-600">Clica em <strong>Calcular Scores</strong>. O sistema analisa cada candidato contra os requisitos da vaga e atribui uma pontuação de 0–100 em 3 dimensões: competências (50 pts), experiência (30 pts) e formação (20 pts). Podes exportar o relatório em <strong>Excel</strong> ou <strong>Word</strong> a partir deste passo.</p>
             </div>
-            <div class="mt-3 p-2 bg-amber-50 rounded-lg border border-amber-200">
-                <p class="text-xs text-amber-700"><i class="fa-solid fa-triangle-exclamation mr-1"></i> CVs digitalizados (scan de papel) não permitem extracção de texto — insira os dados manualmente.</p>
+        </div>
+
+        <div class="flex items-start gap-4 p-4 rounded-xl" style="background:#fffbeb; border:1px solid #fde68a;">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-extrabold text-white text-sm" style="background:#d97706;">6</div>
+            <div>
+                <div class="font-bold text-slate-800 mb-1">Guião de Entrevista</div>
+                <p class="text-sm text-slate-600">O sistema gera automaticamente um guião de entrevista personalizado com base nos requisitos da vaga. Podes partilhar um link com o júri de avaliação para que registem as suas notas directamente na plataforma.</p>
+            </div>
+        </div>
+
+        <div class="flex items-start gap-4 p-4 rounded-xl" style="background:#fff1f2; border:1px solid #fecdd3;">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-extrabold text-white text-sm" style="background:#dc2626;">7</div>
+            <div>
+                <div class="font-bold text-slate-800 mb-1">Avaliação e Decisão Final</div>
+                <p class="text-sm text-slate-600">Consolida as avaliações do júri com os scores de CV. O sistema apresenta um ranking final combinado e permite registar a decisão (contratado, lista de espera, rejeitado) para cada candidato. Fecha o processo.</p>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ── Pipeline ──────────────────────────────────────────── -->
+<div id="pipeline" class="section-card mb-4">
+    <h2 style="font-size:1.15rem; font-weight:800; color:#1e3a8a; margin-bottom:12px;">
+        <i class="fa-solid fa-filter mr-2" style="color:#f59e0b;"></i> Menu: Pipeline
+    </h2>
+    <p class="text-sm text-slate-600 mb-4">O Pipeline mostra todos os candidatos organizados em colunas por etapa do processo. É uma vista transversal — mostra candidatos de todas as vagas ao mesmo tempo.</p>
+    <div class="grid grid-cols-6 gap-2 mb-4">
+        <div class="rounded-lg p-3 text-center" style="background:#eff6ff; border:1px solid #bfdbfe;"><i class="fa-solid fa-inbox" style="color:#1d4ed8;"></i><div class="text-xs font-bold mt-2 text-blue-700">Candidatura</div></div>
+        <div class="rounded-lg p-3 text-center" style="background:#f0fdf4; border:1px solid #bbf7d0;"><i class="fa-solid fa-magnifying-glass" style="color:#15803d;"></i><div class="text-xs font-bold mt-2 text-green-700">Triagem CV</div></div>
+        <div class="rounded-lg p-3 text-center" style="background:#fdf4ff; border:1px solid #e9d5ff;"><i class="fa-solid fa-comments" style="color:#7c3aed;"></i><div class="text-xs font-bold mt-2 text-purple-700">Entrevista</div></div>
+        <div class="rounded-lg p-3 text-center" style="background:#fff7ed; border:1px solid #fed7aa;"><i class="fa-solid fa-clipboard-check" style="color:#c2410c;"></i><div class="text-xs font-bold mt-2 text-orange-700">Avaliação Téc.</div></div>
+        <div class="rounded-lg p-3 text-center" style="background:#f0fdf4; border:1px solid #bbf7d0;"><i class="fa-solid fa-file-signature" style="color:#15803d;"></i><div class="text-xs font-bold mt-2 text-green-700">Proposta</div></div>
+        <div class="rounded-lg p-3 text-center" style="background:#dcfce7; border:1px solid #86efac;"><i class="fa-solid fa-user-check" style="color:#15803d;"></i><div class="text-xs font-bold mt-2 text-green-700">Contratado</div></div>
+    </div>
+    <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 text-sm text-slate-600">
+        <i class="fa-solid fa-arrows-left-right mr-2 text-slate-400"></i>
+        Usa as setas <strong>← →</strong> em cada cartão para mover o candidato entre etapas. Filtra por vaga para focar num processo específico.
+    </div>
+</div>
+
+<!-- ── Ranking Geral ──────────────────────────────────────── -->
+<div id="ranking" class="section-card mb-4">
+    <h2 style="font-size:1.15rem; font-weight:800; color:#1e3a8a; margin-bottom:12px;">
+        <i class="fa-solid fa-ranking-star mr-2" style="color:#f59e0b;"></i> Menu: Ranking Geral
+    </h2>
+    <div class="grid grid-cols-2 gap-6">
+        <div>
+            <p class="text-sm text-slate-600 mb-3">O Ranking Geral mostra <strong>todos os candidatos de todas as vagas</strong> ordenados por score, numa única vista consolidada. Ideal para comparar candidatos entre vagas ou ter uma visão global do pipeline.</p>
+            <div class="space-y-2">
+                <div class="flex items-start gap-2 text-sm"><i class="fa-solid fa-filter mt-0.5" style="color:#f59e0b;"></i><div><strong>Filtrar por vaga</strong> — Mostra apenas os candidatos de uma vaga específica.</div></div>
+                <div class="flex items-start gap-2 text-sm"><i class="fa-solid fa-sort mt-0.5" style="color:#f59e0b;"></i><div><strong>Ordenação automática</strong> — Do maior para o menor score.</div></div>
+                <div class="flex items-start gap-2 text-sm"><i class="fa-solid fa-circle-info mt-0.5" style="color:#f59e0b;"></i><div><strong>Só leitura</strong> — Para calcular scores ou exportar, vai à vaga e usa o Passo 5.</div></div>
+            </div>
+        </div>
+        <div class="bg-amber-50 rounded-xl p-4 border border-amber-200">
+            <p class="text-xs font-bold text-amber-700 uppercase tracking-widest mb-3">Cores do Score</p>
+            <div class="space-y-2">
+                <div class="flex items-center gap-3"><span class="score-badge alto">75–100</span><span class="text-sm text-slate-600">Alinhamento Alto — Candidato recomendado</span></div>
+                <div class="flex items-center gap-3"><span class="score-badge medio">50–74</span><span class="text-sm text-slate-600">Alinhamento Médio — Candidato com potencial</span></div>
+                <div class="flex items-center gap-3"><span class="score-badge baixo">0–49</span><span class="text-sm text-slate-600">Alinhamento Baixo — Fraco alinhamento</span></div>
             </div>
         </div>
     </div>
@@ -153,213 +224,66 @@
 <!-- ── Scoring ──────────────────────────────────────────── -->
 <div id="scoring" class="section-card mb-4">
     <h2 style="font-size:1.15rem; font-weight:800; color:#1e3a8a; margin-bottom:12px;">
-        <i class="fa-solid fa-chart-bar mr-2" style="color:#10b981;"></i> Sistema de Pontuação Fit (0–100)
+        <i class="fa-solid fa-chart-bar mr-2" style="color:#10b981;"></i> Sistema de Pontuação (0–100)
     </h2>
-    <p class="text-sm text-slate-600 mb-4">O score mede o alinhamento entre o perfil do candidato e os requisitos da vaga. É calculado em 3 dimensões com pesos diferentes.</p>
-
-    <div class="grid grid-cols-3 gap-4 mb-5">
+    <p class="text-sm text-slate-600 mb-4">O score é calculado no <strong>Passo 5</strong> de cada vaga. Compara o perfil do candidato com os requisitos da vaga em 3 dimensões.</p>
+    <div class="grid grid-cols-3 gap-4 mb-4">
         <div class="rounded-xl p-4" style="background:#f0fdf4; border:1px solid #bbf7d0;">
-            <div class="flex items-center justify-between mb-2">
-                <span class="font-bold text-sm text-green-700">Competências</span>
-                <span class="text-2xl font-extrabold text-green-700">50pts</span>
-            </div>
-            <div class="text-xs text-green-600 leading-relaxed">Correspondência entre competências do candidato e as exigidas pela vaga. É o campo com maior peso.</div>
-            <div class="mt-3 h-2 rounded-full bg-green-100">
-                <div class="h-2 rounded-full bg-green-500" style="width:50%;"></div>
-            </div>
+            <div class="flex items-center justify-between mb-2"><span class="font-bold text-sm text-green-700">Competências</span><span class="text-2xl font-extrabold text-green-700">50pts</span></div>
+            <div class="text-xs text-green-600">Correspondência entre as competências do candidato e as exigidas. É o campo com maior peso — preenche sempre as competências na vaga.</div>
+            <div class="mt-3 h-2 rounded-full bg-green-100"><div class="h-2 rounded-full bg-green-500" style="width:50%;"></div></div>
         </div>
         <div class="rounded-xl p-4" style="background:#eff6ff; border:1px solid #bfdbfe;">
-            <div class="flex items-center justify-between mb-2">
-                <span class="font-bold text-sm text-blue-700">Experiência</span>
-                <span class="text-2xl font-extrabold text-blue-700">30pts</span>
-            </div>
-            <div class="text-xs text-blue-600 leading-relaxed">Anos de experiência do candidato vs. mínimo exigido pela vaga.</div>
-            <div class="mt-3 h-2 rounded-full bg-blue-100">
-                <div class="h-2 rounded-full bg-blue-500" style="width:30%;"></div>
-            </div>
+            <div class="flex items-center justify-between mb-2"><span class="font-bold text-sm text-blue-700">Experiência</span><span class="text-2xl font-extrabold text-blue-700">30pts</span></div>
+            <div class="text-xs text-blue-600">Anos de experiência do candidato vs. mínimo exigido na vaga.</div>
+            <div class="mt-3 h-2 rounded-full bg-blue-100"><div class="h-2 rounded-full bg-blue-500" style="width:30%;"></div></div>
         </div>
         <div class="rounded-xl p-4" style="background:#fdf4ff; border:1px solid #e9d5ff;">
-            <div class="flex items-center justify-between mb-2">
-                <span class="font-bold text-sm text-purple-700">Formação</span>
-                <span class="text-2xl font-extrabold text-purple-700">20pts</span>
-            </div>
-            <div class="text-xs text-purple-600 leading-relaxed">Nível académico do candidato vs. nível requerido na vaga.</div>
-            <div class="mt-3 h-2 rounded-full bg-purple-100">
-                <div class="h-2 rounded-full bg-purple-500" style="width:20%;"></div>
-            </div>
+            <div class="flex items-center justify-between mb-2"><span class="font-bold text-sm text-purple-700">Formação</span><span class="text-2xl font-extrabold text-purple-700">20pts</span></div>
+            <div class="text-xs text-purple-600">Nível académico do candidato vs. nível requerido na vaga.</div>
+            <div class="mt-3 h-2 rounded-full bg-purple-100"><div class="h-2 rounded-full bg-purple-500" style="width:20%;"></div></div>
         </div>
     </div>
-
-    <div class="grid grid-cols-3 gap-3 mb-4">
-        <div class="rounded-lg p-3 bg-green-50 border border-green-200 text-center">
-            <div class="text-xl font-extrabold text-green-700">75–100</div>
-            <div class="text-xs font-bold text-green-600 mt-1">Alinhamento Alto</div>
-            <div class="text-xs text-green-600 mt-1">Candidato recomendado. Avançar para entrevista.</div>
-        </div>
-        <div class="rounded-lg p-3 bg-yellow-50 border border-yellow-200 text-center">
-            <div class="text-xl font-extrabold text-yellow-700">50–74</div>
-            <div class="text-xs font-bold text-yellow-600 mt-1">Alinhamento Médio</div>
-            <div class="text-xs text-yellow-600 mt-1">Candidato com potencial. Verificar pontos em falta na entrevista.</div>
-        </div>
-        <div class="rounded-lg p-3 bg-red-50 border border-red-200 text-center">
-            <div class="text-xl font-extrabold text-red-700">0–49</div>
-            <div class="text-xs font-bold text-red-600 mt-1">Alinhamento Baixo</div>
-            <div class="text-xs text-red-600 mt-1">Candidato com fraco alinhamento.</div>
-        </div>
-    </div>
-
-    <div class="bg-blue-50 rounded-xl p-4 border border-blue-100">
-        <p class="text-xs font-bold text-blue-700 mb-2"><i class="fa-solid fa-lightbulb mr-1"></i> Como obter melhores resultados</p>
-        <div class="grid grid-cols-2 gap-2 text-xs text-blue-700">
-            <div><i class="fa-solid fa-check mr-1"></i> Preencha as competências requeridas na vaga — têm o maior peso (50pts)</div>
-            <div><i class="fa-solid fa-check mr-1"></i> Use a IA para extrair as competências do CV do candidato</div>
-            <div><i class="fa-solid fa-check mr-1"></i> Defina o nível de formação e anos de experiência mínimos na vaga</div>
-            <div><i class="fa-solid fa-check mr-1"></i> Reveja o perfil do candidato após a extracção automática</div>
-        </div>
-    </div>
-</div>
-
-<!-- ── Ranking Geral ──────────────────────────────────────── -->
-<div id="ranking" class="section-card mb-4">
-    <h2 style="font-size:1.15rem; font-weight:800; color:#1e3a8a; margin-bottom:12px;">
-        <i class="fa-solid fa-ranking-star mr-2" style="color:#f59e0b;"></i> Ranking Geral
-    </h2>
-    <div class="grid grid-cols-2 gap-6">
-        <div>
-            <p class="text-sm text-slate-600 mb-3">O Ranking Geral mostra <strong>todos os candidatos de todas as vagas</strong> ordenados por score, numa única vista consolidada.</p>
-            <div class="space-y-2">
-                <div class="flex items-start gap-2 text-sm">
-                    <i class="fa-solid fa-filter mt-0.5" style="color:#f59e0b;"></i>
-                    <div><strong>Filtrar por vaga</strong> — Use o selector para ver apenas os candidatos de uma vaga específica.</div>
-                </div>
-                <div class="flex items-start gap-2 text-sm">
-                    <i class="fa-solid fa-sort mt-0.5" style="color:#f59e0b;"></i>
-                    <div><strong>Ordenação automática</strong> — Os candidatos aparecem sempre do maior para o menor score.</div>
-                </div>
-                <div class="flex items-start gap-2 text-sm">
-                    <i class="fa-solid fa-eye mt-0.5" style="color:#f59e0b;"></i>
-                    <div><strong>Vista rápida</strong> — Ideal para comparar candidatos de diferentes vagas e identificar os melhores perfis disponíveis.</div>
-                </div>
-            </div>
-        </div>
-        <div class="bg-amber-50 rounded-xl p-4 border border-amber-200">
-            <p class="text-xs font-bold text-amber-700 uppercase tracking-widest mb-3">Diferença: Ranking vs. Pontuação Fit</p>
-            <div class="space-y-2 text-xs text-amber-700">
-                <div class="flex items-start gap-2">
-                    <i class="fa-solid fa-ranking-star mt-0.5"></i>
-                    <div><strong>Ranking Geral</strong> — Vista consolidada de todos os candidatos. Só leitura.</div>
-                </div>
-                <div class="flex items-start gap-2">
-                    <i class="fa-solid fa-chart-bar mt-0.5"></i>
-                    <div><strong>Pontuação Fit</strong> — Vista por vaga, com botão para calcular scores e exportar relatórios.</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ── Pipeline ──────────────────────────────────────────── -->
-<div id="pipeline" class="section-card mb-4">
-    <h2 style="font-size:1.15rem; font-weight:800; color:#1e3a8a; margin-bottom:12px;">
-        <i class="fa-solid fa-filter mr-2" style="color:#f59e0b;"></i> Pipeline de Selecção
-    </h2>
-    <p class="text-sm text-slate-600 mb-4">O pipeline mostra os candidatos organizados por etapa do processo. Mova candidatos entre etapas com as setas.</p>
-    <div class="grid grid-cols-6 gap-2 mb-4">
-        <div class="rounded-lg p-3 text-center" style="background:#eff6ff; border:1px solid #bfdbfe;"><i class="fa-solid fa-inbox" style="color:#1d4ed8;"></i><div class="text-xs font-bold mt-2 text-blue-700">Candidatura</div></div>
-        <div class="rounded-lg p-3 text-center" style="background:#f0fdf4; border:1px solid #bbf7d0;"><i class="fa-solid fa-magnifying-glass" style="color:#15803d;"></i><div class="text-xs font-bold mt-2 text-green-700">Triagem CV</div></div>
-        <div class="rounded-lg p-3 text-center" style="background:#fdf4ff; border:1px solid #e9d5ff;"><i class="fa-solid fa-comments" style="color:#7c3aed;"></i><div class="text-xs font-bold mt-2 text-purple-700">Entrevista</div></div>
-        <div class="rounded-lg p-3 text-center" style="background:#fff7ed; border:1px solid #fed7aa;"><i class="fa-solid fa-clipboard-check" style="color:#c2410c;"></i><div class="text-xs font-bold mt-2 text-orange-700">Avaliação Tec.</div></div>
-        <div class="rounded-lg p-3 text-center" style="background:#f0fdf4; border:1px solid #bbf7d0;"><i class="fa-solid fa-file-signature" style="color:#15803d;"></i><div class="text-xs font-bold mt-2 text-green-700">Proposta</div></div>
-        <div class="rounded-lg p-3 text-center" style="background:#dcfce7; border:1px solid #86efac;"><i class="fa-solid fa-user-check" style="color:#15803d;"></i><div class="text-xs font-bold mt-2 text-green-700">Contratado</div></div>
-    </div>
-    <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 text-sm text-slate-600">
-        <i class="fa-solid fa-arrows-left-right mr-2 text-slate-400"></i>
-        Use as setas <strong>&larr;</strong> e <strong>&rarr;</strong> em cada cartão para mover o candidato uma etapa de cada vez. Filtre por vaga para focar no processo específico.
-    </div>
-</div>
-
-<!-- ── Exportar ──────────────────────────────────────────── -->
-<div id="exportar" class="section-card mb-4">
-    <h2 style="font-size:1.15rem; font-weight:800; color:#1e3a8a; margin-bottom:12px;">
-        <i class="fa-solid fa-download mr-2" style="color:#16a34a;"></i> Exportar Relatórios
-    </h2>
-    <p class="text-sm text-slate-600 mb-4">Os relatórios estão disponíveis em <strong>Pontuação Fit</strong>, depois de seleccionar uma vaga e calcular os scores. Os botões aparecem no topo da página.</p>
     <div class="grid grid-cols-2 gap-4">
         <div class="rounded-xl p-4 border border-green-200 bg-green-50">
-            <div class="flex items-center gap-2 mb-3">
-                <i class="fa-solid fa-file-excel fa-lg" style="color:#16a34a;"></i>
-                <span class="font-bold text-green-800">Exportar para Excel</span>
-            </div>
-            <ul class="text-sm text-green-700 space-y-1">
-                <li><i class="fa-solid fa-check mr-1 text-xs"></i> Ranking completo de candidatos</li>
-                <li><i class="fa-solid fa-check mr-1 text-xs"></i> Score total e por dimensão (competências, experiência, formação)</li>
-                <li><i class="fa-solid fa-check mr-1 text-xs"></i> Etapa actual no pipeline</li>
-                <li><i class="fa-solid fa-check mr-1 text-xs"></i> Alinhamento (Alto / Médio / Baixo)</li>
-                <li><i class="fa-solid fa-check mr-1 text-xs"></i> Cabeçalhos coloridos e scores com código de cor</li>
+            <div class="flex items-center gap-2 mb-2"><i class="fa-solid fa-file-excel" style="color:#16a34a;"></i><span class="font-bold text-green-800">Exportar Excel</span></div>
+            <ul class="text-xs text-green-700 space-y-1">
+                <li><i class="fa-solid fa-check mr-1"></i> Ranking com score total e por dimensão</li>
+                <li><i class="fa-solid fa-check mr-1"></i> Etapa no pipeline e alinhamento</li>
+                <li><i class="fa-solid fa-check mr-1"></i> Cabeçalhos coloridos</li>
             </ul>
         </div>
         <div class="rounded-xl p-4 border border-blue-200 bg-blue-50">
-            <div class="flex items-center gap-2 mb-3">
-                <i class="fa-solid fa-file-word fa-lg" style="color:#1d4ed8;"></i>
-                <span class="font-bold text-blue-800">Relatório Word (Descritivo)</span>
-            </div>
-            <ul class="text-sm text-blue-700 space-y-1">
-                <li><i class="fa-solid fa-check mr-1 text-xs"></i> Sumário executivo com recomendação principal</li>
-                <li><i class="fa-solid fa-check mr-1 text-xs"></i> Perfil completo da vaga</li>
-                <li><i class="fa-solid fa-check mr-1 text-xs"></i> Ranking geral em tabela</li>
-                <li><i class="fa-solid fa-check mr-1 text-xs"></i> Análise individual por candidato</li>
-                <li><i class="fa-solid fa-check mr-1 text-xs"></i> Conclusão com próximos passos sugeridos</li>
+            <div class="flex items-center gap-2 mb-2"><i class="fa-solid fa-file-word" style="color:#1d4ed8;"></i><span class="font-bold text-blue-800">Exportar Word</span></div>
+            <ul class="text-xs text-blue-700 space-y-1">
+                <li><i class="fa-solid fa-check mr-1"></i> Sumário executivo com recomendação</li>
+                <li><i class="fa-solid fa-check mr-1"></i> Análise individual por candidato</li>
+                <li><i class="fa-solid fa-check mr-1"></i> Conclusão com próximos passos</li>
             </ul>
         </div>
-    </div>
-    <div class="mt-3 p-3 bg-amber-50 rounded-lg border border-amber-200 text-sm text-amber-700">
-        <i class="fa-solid fa-triangle-exclamation mr-1"></i>
-        Calcule sempre os scores antes de exportar para obter resultados completos.
     </div>
 </div>
 
 <!-- ── Utilizadores ──────────────────────────────────────── -->
 <div id="utilizadores" class="section-card mb-4">
     <h2 style="font-size:1.15rem; font-weight:800; color:#1e3a8a; margin-bottom:12px;">
-        <i class="fa-solid fa-users-gear mr-2" style="color:#0891b2;"></i> Gestão de Utilizadores
+        <i class="fa-solid fa-users-gear mr-2" style="color:#0891b2;"></i> Menu: Utilizadores
     </h2>
     <div class="grid grid-cols-2 gap-6">
         <div>
-            <p class="text-sm text-slate-600 mb-3">O administrador da organização pode criar e gerir contas de outros membros da equipa em <strong>Utilizadores</strong> no menu.</p>
+            <p class="text-sm text-slate-600 mb-3">O administrador pode criar e gerir contas de outros membros da equipa. Cada organização tem os seus próprios dados — utilizadores de uma organização não vêem dados de outras.</p>
             <div class="space-y-2">
-                <div class="flex items-start gap-2 text-sm">
-                    <i class="fa-solid fa-user-plus mt-0.5" style="color:#0891b2;"></i>
-                    <div><strong>Convidar utilizador</strong> — Introduza o nome, email e função. O utilizador receberá as credenciais de acesso.</div>
-                </div>
-                <div class="flex items-start gap-2 text-sm">
-                    <i class="fa-solid fa-shield-halved mt-0.5" style="color:#0891b2;"></i>
-                    <div><strong>Funções</strong> — <em>Admin</em> tem acesso total incluindo gestão de utilizadores. <em>Recrutador</em> gere vagas e candidatos. <em>Visualizador</em> só lê.</div>
-                </div>
-                <div class="flex items-start gap-2 text-sm">
-                    <i class="fa-solid fa-key mt-0.5" style="color:#0891b2;"></i>
-                    <div><strong>Alterar password</strong> — Cada utilizador pode alterar a sua própria password na página de perfil. O admin pode repor passwords de outros.</div>
-                </div>
-                <div class="flex items-start gap-2 text-sm">
-                    <i class="fa-solid fa-building mt-0.5" style="color:#0891b2;"></i>
-                    <div><strong>Multi-tenant</strong> — Cada organização tem os seus próprios dados. Os utilizadores de uma organização não vêem dados de outras.</div>
-                </div>
+                <div class="flex items-start gap-2 text-sm"><i class="fa-solid fa-user-plus mt-0.5" style="color:#0891b2;"></i><div><strong>Convidar utilizador</strong> — Clica em <strong>Novo Utilizador</strong>, preenche o nome, email e função.</div></div>
+                <div class="flex items-start gap-2 text-sm"><i class="fa-solid fa-key mt-0.5" style="color:#0891b2;"></i><div><strong>Repor password</strong> — Qualquer admin pode repor a password de outro utilizador.</div></div>
+                <div class="flex items-start gap-2 text-sm"><i class="fa-solid fa-toggle-on mt-0.5" style="color:#0891b2;"></i><div><strong>Activar/Desactivar</strong> — Um utilizador desactivado perde o acesso imediatamente.</div></div>
             </div>
         </div>
         <div class="bg-cyan-50 rounded-xl p-4 border border-cyan-200">
             <p class="text-xs font-bold text-cyan-700 uppercase tracking-widest mb-3">Funções e Permissões</p>
             <div class="space-y-3">
-                <div>
-                    <div class="flex items-center gap-2 mb-1"><span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">Admin</span></div>
-                    <p class="text-xs text-slate-600">Acesso total: vagas, candidatos, scoring, pipeline, exportar, utilizadores.</p>
-                </div>
-                <div>
-                    <div class="flex items-center gap-2 mb-1"><span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">Recrutador</span></div>
-                    <p class="text-xs text-slate-600">Gerir vagas e candidatos, calcular scores, exportar. Sem gestão de utilizadores.</p>
-                </div>
-                <div>
-                    <div class="flex items-center gap-2 mb-1"><span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-bold">Visualizador</span></div>
-                    <p class="text-xs text-slate-600">Apenas leitura — ver vagas, candidatos e ranking. Sem editar nem exportar.</p>
-                </div>
+                <div><div class="flex items-center gap-2 mb-1"><span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">Admin</span></div><p class="text-xs text-slate-600">Acesso total: vagas, candidatos, scoring, pipeline, exportar, utilizadores.</p></div>
+                <div><div class="flex items-center gap-2 mb-1"><span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">Recrutador</span></div><p class="text-xs text-slate-600">Gerir vagas, candidatos, calcular scores e exportar. Sem gestão de utilizadores.</p></div>
+                <div><div class="flex items-center gap-2 mb-1"><span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-bold">Visualizador</span></div><p class="text-xs text-slate-600">Apenas leitura — ver vagas, candidatos e ranking. Sem editar nem exportar.</p></div>
             </div>
         </div>
     </div>
