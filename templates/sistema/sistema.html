@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}Sistema{% endblock %}
+{% block breadcrumb %}Sistema{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h1 class="flex items-center gap-3">
+        <i class="fa-solid fa-server" style="color:#6366f1;"></i> Estado do Sistema
+    </h1>
+    <p class="text-slate-500 text-sm mt-1">Actualizado em {{ now|date:"d/m/Y H:i" }}</p>
+</div>
+
+<!-- Status geral -->
+<div class="grid grid-cols-1 gap-4 mb-6" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+
+    <!-- App -->
+    <div class="section-card flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background:#d1fae5;">
+            <i class="fa-solid fa-circle-check" style="color:#10b981;font-size:1.4rem;"></i>
+        </div>
+        <div>
+            <div class="text-xs text-slate-400 font-medium uppercase tracking-wide">Aplicação</div>
+            <div class="text-lg font-bold text-green-600">Online</div>
+        </div>
+    </div>
+
+    <!-- Base de dados -->
+    <div class="section-card flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center"
+             style="background:{% if db_ok %}#d1fae5{% else %}#fee2e2{% endif %};">
+            <i class="fa-solid fa-database"
+               style="color:{% if db_ok %}#10b981{% else %}#ef4444{% endif %};font-size:1.4rem;"></i>
+        </div>
+        <div>
+            <div class="text-xs text-slate-400 font-medium uppercase tracking-wide">Base de Dados</div>
+            <div class="text-lg font-bold {% if db_ok %}text-green-600{% else %}text-red-600{% endif %}">
+                {% if db_ok %}Ligada{% else %}Erro{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Python -->
+    <div class="section-card flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background:#ede9fe;">
+            <i class="fa-brands fa-python" style="color:#6366f1;font-size:1.4rem;"></i>
+        </div>
+        <div>
+            <div class="text-xs text-slate-400 font-medium uppercase tracking-wide">Python</div>
+            <div class="text-lg font-bold text-slate-700">{{ python_version }}</div>
+        </div>
+    </div>
+
+    <!-- Django -->
+    <div class="section-card flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background:#d1fae5;">
+            <i class="fa-solid fa-code" style="color:#10b981;font-size:1.4rem;"></i>
+        </div>
+        <div>
+            <div class="text-xs text-slate-400 font-medium uppercase tracking-wide">Django</div>
+            <div class="text-lg font-bold text-slate-700">{{ django_version }}</div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Métricas principais -->
+<h2 class="text-base font-bold text-slate-700 mb-3">Métricas da Plataforma</h2>
+<div class="grid grid-cols-2 gap-4 mb-6" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));">
+
+    <div class="section-card text-center">
+        <div class="text-3xl font-extrabold text-blue-600">{{ total_utilizadores }}</div>
+        <div class="text-xs text-slate-400 mt-1">Utilizadores</div>
+        {% if novos_utilizadores %}<div class="text-xs text-green-500 mt-1">+{{ novos_utilizadores }} esta semana</div>{% endif %}
+    </div>
+
+    <div class="section-card text-center">
+        <div class="text-3xl font-extrabold text-indigo-600">{{ total_vagas }}</div>
+        <div class="text-xs text-slate-400 mt-1">Vagas Total</div>
+        <div class="text-xs text-green-500 mt-1">{{ vagas_abertas }} abertas</div>
+    </div>
+
+    <div class="section-card text-center">
+        <div class="text-3xl font-extrabold text-emerald-600">{{ total_candidatos }}</div>
+        <div class="text-xs text-slate-400 mt-1">Candidatos</div>
+        {% if novos_candidatos %}<div class="text-xs text-green-500 mt-1">+{{ novos_candidatos }} esta semana</div>{% endif %}
+    </div>
+
+    <div class="section-card text-center">
+        <div class="text-3xl font-extrabold text-amber-600">{{ candidatos_com_score }}</div>
+        <div class="text-xs text-slate-400 mt-1">Com Score</div>
+        {% if score_medio %}<div class="text-xs text-slate-500 mt-1">Média: {{ score_medio }}/100</div>{% endif %}
+    </div>
+
+</div>
+
+<!-- Últimos logins -->
+<h2 class="text-base font-bold text-slate-700 mb-3">Últimos Acessos</h2>
+<div class="section-card">
+    <table class="w-full text-sm">
+        <thead>
+            <tr class="text-xs text-slate-400 uppercase border-b border-slate-100">
+                <th class="text-left py-2 font-medium">Utilizador</th>
+                <th class="text-left py-2 font-medium">Email</th>
+                <th class="text-left py-2 font-medium">Último Login</th>
+                <th class="text-left py-2 font-medium">Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in ultimos_logins %}
+            <tr class="border-b border-slate-50 hover:bg-slate-50">
+                <td class="py-2 font-medium text-slate-700">{{ u.get_full_name|default:u.email }}</td>
+                <td class="py-2 text-slate-500">{{ u.email }}</td>
+                <td class="py-2 text-slate-500">{{ u.last_login|date:"d/m/Y H:i" }}</td>
+                <td class="py-2">
+                    {% if u.is_active %}
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">Activo</span>
+                    {% else %}
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700">Inactivo</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="py-4 text-center text-slate-400">Sem registos de login</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Links externos -->
+<h2 class="text-base font-bold text-slate-700 mt-6 mb-3">Ferramentas de Monitorização</h2>
+<div class="grid gap-4" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+
+    <a href="https://sentry.io" target="_blank" class="section-card flex items-center gap-3 hover:shadow-md transition-shadow" style="text-decoration:none;">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:#f3e8ff;">
+            <i class="fa-solid fa-bug" style="color:#7c3aed;"></i>
+        </div>
+        <div>
+            <div class="font-semibold text-slate-700 text-sm">Sentry</div>
+            <div class="text-xs text-slate-400">Ver erros e exceptions</div>
+        </div>
+        <i class="fa-solid fa-arrow-up-right-from-square ml-auto text-slate-300 text-xs"></i>
+    </a>
+
+    <a href="https://uptimerobot.com" target="_blank" class="section-card flex items-center gap-3 hover:shadow-md transition-shadow" style="text-decoration:none;">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:#d1fae5;">
+            <i class="fa-solid fa-signal" style="color:#10b981;"></i>
+        </div>
+        <div>
+            <div class="font-semibold text-slate-700 text-sm">UptimeRobot</div>
+            <div class="text-xs text-slate-400">Ver uptime e incidentes</div>
+        </div>
+        <i class="fa-solid fa-arrow-up-right-from-square ml-auto text-slate-300 text-xs"></i>
+    </a>
+
+    <a href="https://railway.app" target="_blank" class="section-card flex items-center gap-3 hover:shadow-md transition-shadow" style="text-decoration:none;">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:#e0e7ff;">
+            <i class="fa-solid fa-train" style="color:#6366f1;"></i>
+        </div>
+        <div>
+            <div class="font-semibold text-slate-700 text-sm">Railway</div>
+            <div class="text-xs text-slate-400">Ver logs e métricas</div>
+        </div>
+        <i class="fa-solid fa-arrow-up-right-from-square ml-auto text-slate-300 text-xs"></i>
+    </a>
+
+    <a href="/health/" target="_blank" class="section-card flex items-center gap-3 hover:shadow-md transition-shadow" style="text-decoration:none;">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:#fef3c7;">
+            <i class="fa-solid fa-heart-pulse" style="color:#d97706;"></i>
+        </div>
+        <div>
+            <div class="font-semibold text-slate-700 text-sm">Health Check</div>
+            <div class="text-xs text-slate-400">Estado da DB em tempo real</div>
+        </div>
+        <i class="fa-solid fa-arrow-up-right-from-square ml-auto text-slate-300 text-xs"></i>
+    </a>
+
+</div>
+
+{% endblock %}

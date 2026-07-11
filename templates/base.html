@@ -195,6 +195,11 @@
             <a href="/gestao/utilizadores/" class="sidebar-link {% if '/gestao/' in request.path %}active{% endif %}">
                 <i class="fa-solid fa-users-gear fa-fw"></i> Utilizadores
             </a>
+            {% if user.is_superuser %}
+            <a href="/sistema/" class="sidebar-link {% if '/sistema/' in request.path %}active{% endif %}">
+                <i class="fa-solid fa-server fa-fw"></i> Sistema
+            </a>
+            {% endif %}
         </nav>
 
         <!-- User info -->
