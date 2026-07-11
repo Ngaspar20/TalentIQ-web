@@ -1,10 +1,24 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.http import JsonResponse
+from django.db import connection
 from .dashboard import dashboard
 from ajuda.views import ajuda_view
 from .gestao_views import utilizadores_list, utilizador_novo, utilizador_toggle, utilizador_reset_password, minha_senha
 
+
+def health_check(request):
+    try:
+        connection.ensure_connection()
+        db_ok = True
+    except Exception:
+        db_ok = False
+    status = 200 if db_ok else 503
+    return JsonResponse({"status": "ok" if db_ok else "degraded", "db": db_ok}, status=status)
+
+
 urlpatterns = [
+    path("health/", health_check, name="health"),
     path("admin/", admin.site.urls),
     path("gestao/utilizadores/", utilizadores_list, name="utilizadores_list"),
     path("gestao/utilizadores/novo/", utilizador_novo, name="utilizador_novo"),
