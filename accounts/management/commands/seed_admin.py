@@ -23,27 +23,14 @@ class Command(BaseCommand):
 
         try:
             user = User.objects.get(email__iexact=email)
-            # Existing user — only fix structural fields, NEVER touch the password.
-            # This preserves whatever password the user has set.
-            changed = False
-            if user.username != email:
-                user.username = email
-                changed = True
-            if not user.is_active:
-                user.is_active = True
-                changed = True
-            if not user.is_superuser:
-                user.is_superuser = True
-                changed = True
-            if not user.is_staff:
-                user.is_staff = True
-                changed = True
-            if user.organisation != org:
-                user.organisation = org
-                changed = True
-            if changed:
-                user.save()
-            self.stdout.write(f"Admin already exists: {email} (password unchanged)")
+            user.username = email
+            user.is_active = True
+            user.is_superuser = True
+            user.is_staff = True
+            user.organisation = org
+            user.set_password(password)
+            user.save()
+            self.stdout.write(f"Admin updated: {email} — password reset from ADMIN_PASSWORD")
         except User.DoesNotExist:
             # New user — set everything including the initial password.
             user = User.objects.create_user(
