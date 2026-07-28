@@ -1,0 +1,906 @@
+<title>TalentIQ — Technical Improvement Roadmap</title>
+<style>
+  /* ── Tokens ── */
+  :root {
+    --bg:        #F4F7FB;
+    --surface:   #FFFFFF;
+    --border:    #DDE4EF;
+    --text:      #111827;
+    --muted:     #6B7A99;
+    --navy:      #0F2150;
+    --blue:      #1E4FD8;
+    --blue-soft: #EAF0FD;
+    --red:       #C0392B;
+    --red-soft:  #FDECEB;
+    --amber:     #B45309;
+    --amber-soft:#FEF3C7;
+    --green:     #166534;
+    --green-soft:#DCFCE7;
+    --code-bg:   #F0F4FA;
+    --radius:    6px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:        #0A1628;
+      --surface:   #111E35;
+      --border:    #1E3057;
+      --text:      #E8EDF7;
+      --muted:     #7A8DAD;
+      --navy:      #C5D5F5;
+      --blue:      #4F7EF5;
+      --blue-soft: #0D1F45;
+      --red:       #F87171;
+      --red-soft:  #2A0E0E;
+      --amber:     #FCD34D;
+      --amber-soft:#2A1E00;
+      --green:     #4ADE80;
+      --green-soft:#052010;
+      --code-bg:   #0D1A30;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg:#F4F7FB; --surface:#FFFFFF; --border:#DDE4EF; --text:#111827;
+    --muted:#6B7A99; --navy:#0F2150; --blue:#1E4FD8; --blue-soft:#EAF0FD;
+    --red:#C0392B; --red-soft:#FDECEB; --amber:#B45309; --amber-soft:#FEF3C7;
+    --green:#166534; --green-soft:#DCFCE7; --code-bg:#F0F4FA;
+  }
+  :root[data-theme="dark"] {
+    --bg:#0A1628; --surface:#111E35; --border:#1E3057; --text:#E8EDF7;
+    --muted:#7A8DAD; --navy:#C5D5F5; --blue:#4F7EF5; --blue-soft:#0D1F45;
+    --red:#F87171; --red-soft:#2A0E0E; --amber:#FCD34D; --amber-soft:#2A1E00;
+    --green:#4ADE80; --green-soft:#052010; --code-bg:#0D1A30;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text);
+    background: var(--bg);
+  }
+
+  /* ── Layout ── */
+  .shell {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    min-height: 100vh;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 40px 20px 40px 24px;
+    border-right: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 32px;
+  }
+  .brand-mark {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--blue);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .brand-mark span {
+    color: #fff; font-weight: 800; font-size: 11px; letter-spacing: -0.5px;
+  }
+  .brand-name {
+    font-weight: 700; font-size: 13px; color: var(--text);
+    line-height: 1.2;
+  }
+  .brand-sub { font-size: 10px; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
+
+  .nav-label {
+    font-size: 10px; font-weight: 700; color: var(--muted);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    margin: 24px 0 8px;
+  }
+  .nav-label:first-of-type { margin-top: 0; }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 10px; border-radius: var(--radius);
+    text-decoration: none; font-size: 13px; font-weight: 500;
+    color: var(--muted); transition: background 0.15s, color 0.15s;
+    cursor: pointer;
+  }
+  .nav-item:hover { background: var(--bg); color: var(--text); }
+  .nav-item.active { background: var(--blue-soft); color: var(--blue); }
+
+  .sev-dot {
+    width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  }
+
+  /* ── Main ── */
+  .main { padding: 48px 52px 80px; }
+
+  /* ── Header ── */
+  .doc-header { margin-bottom: 48px; padding-bottom: 32px; border-bottom: 1px solid var(--border); }
+  .doc-eyebrow {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--blue); margin-bottom: 12px;
+  }
+  .doc-title {
+    font-size: 32px; font-weight: 800; color: var(--navy);
+    line-height: 1.2; text-wrap: balance; margin-bottom: 12px;
+    letter-spacing: -0.5px;
+  }
+  .doc-meta {
+    display: flex; gap: 24px; font-size: 13px; color: var(--muted);
+    flex-wrap: wrap; margin-top: 16px;
+  }
+  .doc-meta span { display: flex; align-items: center; gap: 6px; }
+
+  /* ── Executive summary ── */
+  .exec-summary {
+    background: var(--blue-soft);
+    border: 1px solid var(--blue);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 48px;
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.7;
+  }
+  .exec-summary strong { color: var(--blue); }
+
+  /* ── Sections ── */
+  .section { margin-bottom: 52px; scroll-margin-top: 32px; }
+  .section-header {
+    display: flex; align-items: flex-start; gap: 14px;
+    margin-bottom: 20px;
+  }
+  .sev-bar {
+    width: 4px; border-radius: 2px; flex-shrink: 0;
+    margin-top: 4px; align-self: stretch; min-height: 40px;
+  }
+  .sev-critical { background: var(--red); }
+  .sev-high     { background: var(--amber); }
+  .sev-medium   { background: var(--blue); }
+  .sev-low      { background: var(--green); }
+
+  .section-title {
+    font-size: 20px; font-weight: 800; color: var(--navy);
+    margin-bottom: 3px; letter-spacing: -0.3px;
+  }
+  .section-sub { font-size: 13px; color: var(--muted); }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 999px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+    text-transform: uppercase; flex-shrink: 0; margin-top: 2px;
+  }
+  .badge-critical { background: var(--red-soft); color: var(--red); }
+  .badge-high     { background: var(--amber-soft); color: var(--amber); }
+  .badge-medium   { background: var(--blue-soft); color: var(--blue); }
+  .badge-low      { background: var(--green-soft); color: var(--green); }
+
+  /* ── Finding cards ── */
+  .finding {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 14px;
+    background: var(--surface);
+  }
+  .finding-head {
+    padding: 14px 18px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    cursor: pointer; user-select: none;
+  }
+  .finding-head:hover { background: var(--bg); }
+  .finding-title { font-weight: 700; font-size: 14px; color: var(--text); }
+  .finding-body {
+    padding: 0 18px 16px;
+    border-top: 1px solid var(--border);
+    font-size: 14px; color: var(--muted);
+  }
+  .finding-body.hidden { display: none; }
+
+  /* ── Code ── */
+  pre, code {
+    font-family: "Cascadia Code", "Fira Code", "Consolas", monospace;
+    font-size: 12.5px;
+    background: var(--code-bg);
+    border-radius: 4px;
+  }
+  pre {
+    padding: 14px 16px;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    margin: 12px 0;
+    line-height: 1.6;
+    color: var(--text);
+  }
+  code { padding: 1px 5px; color: var(--blue); }
+
+  /* ── Lists ── */
+  ul.checklist { list-style: none; display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+  ul.checklist li {
+    display: flex; align-items: flex-start; gap: 10px;
+    font-size: 14px; color: var(--text); line-height: 1.5;
+  }
+  ul.checklist li::before {
+    content: ""; width: 16px; height: 16px; border-radius: 3px;
+    border: 1.5px solid var(--border); flex-shrink: 0; margin-top: 2px;
+  }
+
+  /* ── Priority matrix table ── */
+  .matrix-table {
+    width: 100%; border-collapse: collapse; font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  .matrix-table th {
+    text-align: left; padding: 10px 14px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase;
+    color: var(--muted); border-bottom: 2px solid var(--border);
+    background: var(--bg);
+  }
+  .matrix-table td {
+    padding: 11px 14px; border-bottom: 1px solid var(--border);
+    color: var(--text); vertical-align: top;
+  }
+  .matrix-table tr:last-child td { border-bottom: none; }
+  .matrix-table tr:hover td { background: var(--bg); }
+
+  .effort-pill {
+    display: inline-block; padding: 2px 8px; border-radius: 999px;
+    font-size: 11px; font-weight: 600;
+  }
+  .effort-days  { background: var(--green-soft);  color: var(--green); }
+  .effort-weeks { background: var(--amber-soft);  color: var(--amber); }
+  .effort-months{ background: var(--red-soft);    color: var(--red);   }
+
+  /* ── Divider ── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+
+  /* ── Scroll table wrapper ── */
+  .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); }
+
+  /* ── Responsive ── */
+  @media (max-width: 700px) {
+    .shell { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .main { padding: 24px 18px 60px; }
+    .doc-title { font-size: 22px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+
+<div class="shell">
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-mark"><span>TIQ</span></div>
+      <div>
+        <div class="brand-name">TalentIQ</div>
+        <div class="brand-sub">Audit 2026</div>
+      </div>
+    </div>
+
+    <div class="nav-label">Documento</div>
+    <a class="nav-item active" onclick="scrollTo('top')">Sumário Executivo</a>
+    <a class="nav-item" onclick="scrollTo('matrix')">Matriz de Prioridades</a>
+
+    <div class="nav-label">Áreas Críticas</div>
+    <a class="nav-item" onclick="scrollTo('security')">
+      <span class="sev-dot" style="background:var(--red)"></span> Segurança
+    </a>
+    <a class="nav-item" onclick="scrollTo('auth')">
+      <span class="sev-dot" style="background:var(--red)"></span> Autenticação
+    </a>
+
+    <div class="nav-label">Melhorias</div>
+    <a class="nav-item" onclick="scrollTo('authz')">
+      <span class="sev-dot" style="background:var(--amber)"></span> Autorização
+    </a>
+    <a class="nav-item" onclick="scrollTo('perf')">
+      <span class="sev-dot" style="background:var(--amber)"></span> Performance
+    </a>
+    <a class="nav-item" onclick="scrollTo('scoring')">
+      <span class="sev-dot" style="background:var(--blue)"></span> Scoring IA
+    </a>
+    <a class="nav-item" onclick="scrollTo('observ')">
+      <span class="sev-dot" style="background:var(--blue)"></span> Observabilidade
+    </a>
+    <a class="nav-item" onclick="scrollTo('tests')">
+      <span class="sev-dot" style="background:var(--blue)"></span> Testes
+    </a>
+    <a class="nav-item" onclick="scrollTo('product')">
+      <span class="sev-dot" style="background:var(--green)"></span> Produto
+    </a>
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+    <div id="top">
+
+      <!-- Header -->
+      <div class="doc-header">
+        <div class="doc-eyebrow">Auditoria Técnica e de Produto</div>
+        <h1 class="doc-title">TalentIQ — Guia de Melhorias</h1>
+        <p style="color:var(--muted); font-size:14px; max-width:560px; text-wrap:balance;">
+          Avaliação crítica da arquitectura, segurança, performance e qualidade de produto, com recomendações accionáveis ordenadas por prioridade.
+        </p>
+        <div class="doc-meta">
+          <span>📅 Julho 2026</span>
+          <span>🔒 Versão 0.2.0 Web</span>
+          <span>⚙️ Django 6 · PostgreSQL · Railway</span>
+        </div>
+      </div>
+
+      <!-- Executive summary -->
+      <div class="exec-summary" id="summary">
+        <strong>Sumário.</strong> O TalentIQ tem uma base técnica correcta e resolve um problema real no mercado de recrutamento em saúde. O fluxo guiado de 7 passos por vaga é um diferenciador genuíno. No entanto, antes de crescer a base de clientes, existem <strong>dois riscos críticos de segurança</strong> que expõem dados de candidatos à internet sem qualquer autenticação. A correção imediata dessas vulnerabilidades deve preceder qualquer nova funcionalidade.
+      </div>
+
+      <!-- Priority matrix -->
+      <div class="section" id="matrix">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Matriz de Prioridades</div>
+            <div class="section-sub">Todas as recomendações ordenadas por impacto e esforço estimado</div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Acção</th>
+                <th>Área</th>
+                <th>Severidade</th>
+                <th>Esforço</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td>Remover URLs <code>/debug-login/</code>, <code>/debug-auth/</code>, <code>/reset-admin/</code>, <code>/auto-login/</code> de produção</td>
+                <td>Segurança</td>
+                <td><span class="badge badge-critical">Crítico</span></td>
+                <td><span class="effort-pill effort-days">1 dia</span></td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>Rate limiting no endpoint de login (django-ratelimit)</td>
+                <td>Segurança</td>
+                <td><span class="badge badge-critical">Crítico</span></td>
+                <td><span class="effort-pill effort-days">1 dia</span></td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>Aplicar decorators de permissão em todas as views (Recrutador / Visualizador)</td>
+                <td>Autorização</td>
+                <td><span class="badge badge-high">Alto</span></td>
+                <td><span class="effort-pill effort-weeks">1 semana</span></td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>Redesenhar <code>seed_admin</code> para não repor password se utilizador já existe</td>
+                <td>Autenticação</td>
+                <td><span class="badge badge-high">Alto</span></td>
+                <td><span class="effort-pill effort-days">2 dias</span></td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td>Integrar Sentry para captura de erros em produção</td>
+                <td>Observabilidade</td>
+                <td><span class="badge badge-high">Alto</span></td>
+                <td><span class="effort-pill effort-days">2 dias</span></td>
+              </tr>
+              <tr>
+                <td>6</td>
+                <td>Processar análise IA de forma assíncrona (Celery + Redis)</td>
+                <td>Performance</td>
+                <td><span class="badge badge-high">Alto</span></td>
+                <td><span class="effort-pill effort-weeks">2 semanas</span></td>
+              </tr>
+              <tr>
+                <td>7</td>
+                <td>Paginação nas listas de candidatos e vagas</td>
+                <td>Performance</td>
+                <td><span class="badge badge-medium">Médio</span></td>
+                <td><span class="effort-pill effort-days">3 dias</span></td>
+              </tr>
+              <tr>
+                <td>8</td>
+                <td>Scoring semântico com normalização de sinónimos</td>
+                <td>IA / Scoring</td>
+                <td><span class="badge badge-medium">Médio</span></td>
+                <td><span class="effort-pill effort-weeks">3 semanas</span></td>
+              </tr>
+              <tr>
+                <td>9</td>
+                <td>Recalcular scores automaticamente após edição de perfil</td>
+                <td>IA / Scoring</td>
+                <td><span class="badge badge-medium">Médio</span></td>
+                <td><span class="effort-pill effort-days">2 dias</span></td>
+              </tr>
+              <tr>
+                <td>10</td>
+                <td>Testes automatizados (pytest-django) para flows críticos</td>
+                <td>Qualidade</td>
+                <td><span class="badge badge-medium">Médio</span></td>
+                <td><span class="effort-pill effort-weeks">3 semanas</span></td>
+              </tr>
+              <tr>
+                <td>11</td>
+                <td>API REST (Django REST Framework) para integrações e mobile</td>
+                <td>Produto</td>
+                <td><span class="badge badge-low">Futuro</span></td>
+                <td><span class="effort-pill effort-months">2+ meses</span></td>
+              </tr>
+              <tr>
+                <td>12</td>
+                <td>Autenticação de dois factores (2FA)</td>
+                <td>Segurança</td>
+                <td><span class="badge badge-low">Futuro</span></td>
+                <td><span class="effort-pill effort-weeks">1 semana</span></td>
+              </tr>
+              <tr>
+                <td>13</td>
+                <td>Auditoria de acções (quem fez o quê e quando)</td>
+                <td>Conformidade</td>
+                <td><span class="badge badge-low">Futuro</span></td>
+                <td><span class="effort-pill effort-weeks">1 semana</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- Security -->
+      <div class="section" id="security">
+        <div class="section-header">
+          <div class="sev-bar sev-critical"></div>
+          <div style="flex:1">
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:4px;">
+              <div class="section-title">Segurança</div>
+              <span class="badge badge-critical">Crítico — Actuar Hoje</span>
+            </div>
+            <div class="section-sub">Vulnerabilidades activas que expõem dados de candidatos sem autenticação</div>
+          </div>
+        </div>
+
+        <div class="finding">
+          <div class="finding-head" onclick="toggle(this)">
+            <span class="finding-title">🔴 URLs de debug expostas em produção</span>
+            <span class="badge badge-critical">Crítico</span>
+          </div>
+          <div class="finding-body">
+            <p style="margin-bottom:10px;">As seguintes URLs estão acessíveis a qualquer pessoa na internet sem qualquer autenticação:</p>
+            <pre>/accounts/debug-login/   → mostra hash da password e estado do utilizador
+/accounts/debug-auth/    → confirma credenciais via Django authenticate()
+/accounts/reset-admin/   → repõe a password do admin sem autenticação
+/accounts/auto-login/    → faz login como admin sem credenciais</pre>
+            <p style="margin-top:12px; color:var(--red); font-weight:600;">Num sistema com dados pessoais de candidatos, isto é uma violação de dados e pode ser ilegal sob a lei moçambicana de protecção de dados.</p>
+            <p style="margin-top:10px;"><strong>Solução:</strong> Remover estas views e URLs completamente antes de partilhar o link com clientes. As ferramentas de debug foram úteis durante o desenvolvimento mas não têm lugar em produção.</p>
+          </div>
+        </div>
+
+        <div class="finding">
+          <div class="finding-head" onclick="toggle(this)">
+            <span class="finding-title">🔴 Sem rate limiting no login</span>
+            <span class="badge badge-critical">Crítico</span>
+          </div>
+          <div class="finding-body">
+            <p>O endpoint <code>/accounts/login/</code> não tem limite de tentativas. Um atacante pode tentar milhares de passwords por minuto sem ser bloqueado.</p>
+            <p style="margin-top:10px;"><strong>Solução:</strong> Instalar <code>django-ratelimit</code> e decorar a view de login:</p>
+            <pre>pip install django-ratelimit
+
+# accounts/views.py
+from ratelimit.decorators import ratelimit
+
+@ratelimit(key='ip', rate='10/m', method='POST', block=True)
+def login_view(request):
+    ...</pre>
+          </div>
+        </div>
+
+        <div class="finding">
+          <div class="finding-head" onclick="toggle(this)">
+            <span class="finding-title">🟡 Sem HTTPS forçado em produção</span>
+            <span class="badge badge-high">Alto</span>
+          </div>
+          <div class="finding-body">
+            <p>O app não força HTTPS explicitamente nas definições Django. O Railway serve HTTPS, mas sem a configuração correcta o Django pode aceitar ligações HTTP.</p>
+            <pre># settings.py
+SECURE_SSL_REDIRECT = True
+SECURE_HSTS_SECONDS = 31536000
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Authentication -->
+      <div class="section" id="auth">
+        <div class="section-header">
+          <div class="sev-bar sev-critical"></div>
+          <div style="flex:1">
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:4px;">
+              <div class="section-title">Autenticação</div>
+              <span class="badge badge-high">Alto</span>
+            </div>
+            <div class="section-sub">O mecanismo de seed_admin cria uma dependência frágil entre arranque do servidor e credenciais</div>
+          </div>
+        </div>
+
+        <div class="finding">
+          <div class="finding-head" onclick="toggle(this)">
+            <span class="finding-title">seed_admin repõe a password em cada restart</span>
+            <span class="badge badge-high">Alto</span>
+          </div>
+          <div class="finding-body">
+            <p>O comando <code>seed_admin</code> corre em cada startup do Railway e redefine sempre a password do admin para o valor de <code>ADMIN_PASSWORD</code>. Isto foi a causa do problema recorrente de login.</p>
+            <p style="margin-top:10px;"><strong>Solução recomendada:</strong> Só repor a password se o utilizador não existir ainda.</p>
+            <pre># seed_admin.py
+user, created = User.objects.get_or_create(email=email)
+if created:
+    user.set_password(password)  # só na criação inicial
+user.is_active = True
+user.save()</pre>
+            <p style="margin-top:10px;">Após a primeira criação, gerir a password exclusivamente via painel de utilizadores ou django-admin.</p>
+          </div>
+        </div>
+
+        <div class="finding">
+          <div class="finding-head" onclick="toggle(this)">
+            <span class="finding-title">Sem recuperação de password self-service</span>
+            <span class="badge badge-high">Alto</span>
+          </div>
+          <div class="finding-body">
+            <p>Se um utilizador esquece a password, depende do admin para a repor. Em contexto multi-cliente, o admin pode não estar disponível.</p>
+            <p style="margin-top:10px;"><strong>Solução:</strong> Activar o flow nativo do Django (<code>PasswordResetView</code>) com envio de email. Requer configuração SMTP (ex: SendGrid, Mailgun) via variável de ambiente.</p>
+            <pre># settings.py
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.environ.get('EMAIL_HOST')
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Authorization -->
+      <div class="section" id="authz">
+        <div class="section-header">
+          <div class="sev-bar sev-high"></div>
+          <div style="flex:1">
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:4px;">
+              <div class="section-title">Autorização (RBAC)</div>
+              <span class="badge badge-high">Alto</span>
+            </div>
+            <div class="section-sub">As funções existem no modelo mas não estão aplicadas nas views</div>
+          </div>
+        </div>
+
+        <div class="finding">
+          <div class="finding-head" onclick="toggle(this)">
+            <span class="finding-title">Qualquer utilizador autenticado tem acesso total</span>
+            <span class="badge badge-high">Alto</span>
+          </div>
+          <div class="finding-body">
+            <p>Os roles Admin / Recrutador / Visualizador estão definidos no modelo <code>User</code> mas nenhuma view verifica o role antes de permitir a acção. Um Visualizador consegue actualmente eliminar vagas ou exportar dados.</p>
+            <p style="margin-top:10px;"><strong>Solução:</strong> Criar um decorator de permissão e aplicá-lo a cada view.</p>
+            <pre># accounts/decorators.py
+from functools import wraps
+from django.http import HttpResponseForbidden
+
+def role_required(*roles):
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapper(request, *args, **kwargs):
+            if not request.user.is_authenticated:
+                return redirect('/accounts/login/')
+            if request.user.role not in roles:
+                return HttpResponseForbidden("Acesso negado.")
+            return view_func(request, *args, **kwargs)
+        return wrapper
+    return decorator
+
+# Uso nas views:
+@role_required('admin', 'recruiter')
+def vaga_delete(request, pk):
+    ...</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Performance -->
+      <div class="section" id="perf">
+        <div class="section-header">
+          <div class="sev-bar sev-high"></div>
+          <div style="flex:1">
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:4px;">
+              <div class="section-title">Performance e Escalabilidade</div>
+              <span class="badge badge-high">Alto</span>
+            </div>
+            <div class="section-sub">Gargalos que se tornam críticos a partir de ~100 candidatos activos</div>
+          </div>
+        </div>
+
+        <div class="finding">
+          <div class="finding-head" onclick="toggle(this)">
+            <span class="finding-title">Análise IA bloqueia o request HTTP</span>
+            <span class="badge badge-high">Alto</span>
+          </div>
+          <div class="finding-body">
+            <p>Quando o utilizador clica "Analisar com IA", o servidor Django espera pela resposta da API Grok (pode demorar 10–30 segundos) antes de devolver a página. O Gunicorn tem um timeout de 30s — chamadas lentas causam erro 502.</p>
+            <p style="margin-top:10px;"><strong>Solução:</strong> Mover a análise IA para uma task assíncrona com Celery + Redis. A UI mostra um spinner e polling até a task terminar.</p>
+            <pre>pip install celery redis django-celery-results
+
+# tasks.py
+from celery import shared_task
+
+@shared_task
+def analisar_cv_async(candidato_id):
+    candidato = Candidato.objects.get(pk=candidato_id)
+    resultado = analisar_cv_com_ia(candidato.cv_path)
+    candidato.perfil_completo = resultado
+    candidato.save()
+
+# views.py
+task = analisar_cv_async.delay(candidato.pk)
+return JsonResponse({"task_id": task.id})</pre>
+          </div>
+        </div>
+
+        <div class="finding">
+          <div class="finding-head" onclick="toggle(this)">
+            <span class="finding-title">Listas sem paginação</span>
+            <span class="badge badge-medium">Médio</span>
+          </div>
+          <div class="finding-body">
+            <p>As views de candidatos e vagas carregam todos os registos da base de dados em memória. Com 500+ candidatos, as páginas ficarão lentas e o servidor pode atingir limites de memória no Railway.</p>
+            <p style="margin-top:10px;"><strong>Solução:</strong> Usar o <code>Paginator</code> nativo do Django.</p>
+            <pre># views.py
+from django.core.paginator import Paginator
+
+candidatos = Candidato.objects.filter(org=org).order_by('-created_at')
+paginator = Paginator(candidatos, 25)  # 25 por página
+page_obj = paginator.get_page(request.GET.get('page'))</pre>
+          </div>
+        </div>
+
+        <div class="finding">
+          <div class="finding-head" onclick="toggle(this)">
+            <span class="finding-title">Sem cache nas queries repetidas</span>
+            <span class="badge badge-medium">Médio</span>
+          </div>
+          <div class="finding-body">
+            <p>O dashboard e o ranking geral fazem queries complexas a cada page load, mesmo quando os dados não mudaram. Em Railway, o plano gratuito tem limites de CPU.</p>
+            <p style="margin-top:10px;"><strong>Solução de curto prazo:</strong> Cache por view com <code>cache_page</code>. Cache com Redis (mesmo Redis do Celery) para longa duração.</p>
+            <pre">from django.views.decorators.cache import cache_page
+
+@cache_page(60 * 5)  # cache 5 minutos
+def ranking_geral(request):
+    ...</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scoring -->
+      <div class="section" id="scoring">
+        <div class="section-header">
+          <div class="sev-bar sev-medium"></div>
+          <div style="flex:1">
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:4px;">
+              <div class="section-title">Motor de Scoring</div>
+              <span class="badge badge-medium">Médio</span>
+            </div>
+            <div class="section-sub">O algoritmo determinístico actual tem limitações que reduzem a precisão</div>
+          </div>
+        </div>
+
+        <div class="finding">
+          <div class="finding-head" onclick="toggle(this)">
+            <span class="finding-title">Correspondência de competências por palavras-chave exactas</span>
+            <span class="badge badge-medium">Médio</span>
+          </div>
+          <div class="finding-body">
+            <p>O motor actual compara competências como strings. "Gestão de Projectos" e "Project Management" são tratados como não correspondentes, mesmo sendo equivalentes. O mesmo acontece com variações como "VIH" vs "HIV".</p>
+            <p style="margin-top:10px;"><strong>Solução de curto prazo:</strong> Tabela de sinónimos configurável por domínio (saúde, RH, etc.).</p>
+            <p style="margin-top:8px;"><strong>Solução de médio prazo:</strong> Usar embeddings de texto (ex: <code>sentence-transformers</code>) para calcular similaridade semântica em vez de correspondência exacta.</p>
+            <pre">from sentence_transformers import SentenceTransformer, util
+
+model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
+
+def score_competencias(requeridas, candidato):
+    emb_req = model.encode(requeridas)
+    emb_cand = model.encode(candidato)
+    scores = util.cos_sim(emb_req, emb_cand)
+    return float(scores.max(dim=1).values.mean())</pre>
+          </div>
+        </div>
+
+        <div class="finding">
+          <div class="finding-head" onclick="toggle(this)">
+            <span class="finding-title">Score não recalcula após edição de perfil</span>
+            <span class="badge badge-medium">Médio</span>
+          </div>
+          <div class="finding-body">
+            <p>Quando o utilizador edita o perfil de um candidato (corrige competências, altera anos de experiência), o score não é recalculado automaticamente. O utilizador tem de se lembrar de voltar à página de scoring e recalcular manualmente.</p>
+            <p style="margin-top:10px;"><strong>Solução:</strong> Usar o signal <code>post_save</code> do Django para marcar o score como desactualizado e recalcular automaticamente (ou mostrar um aviso).</p>
+            <pre">from django.db.models.signals import post_save
+
+@receiver(post_save, sender=Candidato)
+def invalidar_score(sender, instance, **kwargs):
+    instance.score_fit = None
+    Candidato.objects.filter(pk=instance.pk).update(score_fit=None)</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Observability -->
+      <div class="section" id="observ">
+        <div class="section-header">
+          <div class="sev-bar sev-medium"></div>
+          <div style="flex:1">
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:4px;">
+              <div class="section-title">Observabilidade</div>
+              <span class="badge badge-medium">Médio</span>
+            </div>
+            <div class="section-sub">O app falha silenciosamente — erros em produção não são detectados</div>
+          </div>
+        </div>
+
+        <div class="finding">
+          <div class="finding-head" onclick="toggle(this)">
+            <span class="finding-title">Sem captura de erros em produção</span>
+            <span class="badge badge-high">Alto</span>
+          </div>
+          <div class="finding-body">
+            <p>Quando o app lança uma excepção em produção (timeout da API IA, erro de base de dados, bug de código), o utilizador vê um erro genérico e tu não és notificado. Sem Sentry ou equivalente, os erros são invisíveis.</p>
+            <p style="margin-top:10px;"><strong>Solução:</strong> Integrar Sentry (plano gratuito é suficiente para começar).</p>
+            <pre">pip install sentry-sdk
+
+# settings.py
+import sentry_sdk
+sentry_sdk.init(
+    dsn=os.environ.get("SENTRY_DSN"),
+    traces_sample_rate=0.1,
+    environment="production" if not DEBUG else "development",
+)</pre>
+            <p style="margin-top:10px;">Adicionar <code>SENTRY_DSN</code> às variáveis de ambiente no Railway.</p>
+          </div>
+        </div>
+
+        <div class="finding">
+          <div class="finding-head" onclick="toggle(this)">
+            <span class="finding-title">Sem métricas de uso</span>
+            <span class="badge badge-medium">Médio</span>
+          </div>
+          <div class="finding-body">
+            <p>Não é possível saber quantas vagas foram criadas esta semana, quantos candidatos foram analisados com IA, onde os utilizadores abandonam o processo, ou qual o tempo médio de cada passo.</p>
+            <p style="margin-top:10px;"><strong>Solução de baixo custo:</strong> Adicionar um campo <code>created_at</code> e <code>updated_at</code> a todos os modelos (se ainda não existir) e construir um dashboard de métricas interno no painel de Sistema. Para análise mais rica: Posthog (open-source, auto-hospedável).</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tests -->
+      <div class="section" id="tests">
+        <div class="section-header">
+          <div class="sev-bar sev-medium"></div>
+          <div style="flex:1">
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:4px;">
+              <div class="section-title">Testes Automatizados</div>
+              <span class="badge badge-medium">Médio</span>
+            </div>
+            <div class="section-sub">A ausência de testes faz com que cada deploy seja um risco de regressão</div>
+          </div>
+        </div>
+
+        <div class="finding">
+          <div class="finding-head" onclick="toggle(this)">
+            <span class="finding-title">Nenhum teste automatizado</span>
+            <span class="badge badge-medium">Médio</span>
+          </div>
+          <div class="finding-body">
+            <p>O bug do scoring silencioso (HTMX) e os caracteres garrafados no relatório Word são sintomas directos da ausência de testes — foram descobertos por acidente pelo utilizador, não por um pipeline de CI.</p>
+            <p style="margin-top:10px;"><strong>Prioridade dos primeiros testes:</strong></p>
+            <ul class="checklist" style="margin-top:8px;">
+              <li>Login com credenciais correctas e incorrectas</li>
+              <li>Criação de vaga com campos obrigatórios</li>
+              <li>Upload de CV e extracção de perfil</li>
+              <li>Cálculo de score determinístico (resultado esperado para inputs conhecidos)</li>
+              <li>Exportação Excel e Word (ficheiro gerado sem erro)</li>
+              <li>Isolamento multi-tenant (utilizador A não vê dados da org B)</li>
+            </ul>
+            <pre style="margin-top:12px">pip install pytest-django pytest-cov
+
+# pytest.ini
+[pytest]
+DJANGO_SETTINGS_MODULE = talentiq.settings
+python_files = tests_*.py
+
+# Correr testes
+pytest --cov=. --cov-report=html</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product -->
+      <div class="section" id="product">
+        <div class="section-header">
+          <div class="sev-bar sev-low"></div>
+          <div style="flex:1">
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:4px;">
+              <div class="section-title">Melhorias de Produto</div>
+              <span class="badge badge-low">Futuro</span>
+            </div>
+            <div class="section-sub">Funcionalidades que aumentam o valor para o cliente mas que não são urgentes</div>
+          </div>
+        </div>
+
+        <div class="finding">
+          <div class="finding-head" onclick="toggle(this)">
+            <span class="finding-title">API REST para integrações e mobile</span>
+            <span class="badge badge-low">Futuro</span>
+          </div>
+          <div class="finding-body">
+            <p>Sem uma API, o TalentIQ não pode ser integrado com sistemas de RH existentes (ex: DHIS2, sistemas de payroll), não permite uma app móvel nativa e não permite que clientes exportem dados para os seus próprios sistemas.</p>
+            <p style="margin-top:10px;"><strong>Stack recomendada:</strong> Django REST Framework + SimpleJWT para autenticação por token. Documentação automática com drf-spectacular (OpenAPI/Swagger).</p>
+          </div>
+        </div>
+
+        <div class="finding">
+          <div class="finding-head" onclick="toggle(this)">
+            <span class="finding-title">Auditoria de acções (Audit Log)</span>
+            <span class="badge badge-low">Futuro</span>
+          </div>
+          <div class="finding-body">
+            <p>Em contexto de saúde pública com múltiplos utilizadores, é importante saber quem alterou o estado de um candidato, quem exportou um relatório, ou quem eliminou uma vaga. Especialmente relevante para conformidade com doadores internacionais (PEPFAR, GF, etc.).</p>
+            <p style="margin-top:10px;"><strong>Solução:</strong> <code>django-auditlog</code> ou modelo <code>AuditEvent</code> próprio com <code>user</code>, <code>action</code>, <code>object_type</code>, <code>object_id</code>, <code>timestamp</code>.</p>
+          </div>
+        </div>
+
+        <div class="finding">
+          <div class="finding-head" onclick="toggle(this)">
+            <span class="finding-title">Portal do candidato (submissão de candidaturas online)</span>
+            <span class="badge badge-low">Futuro</span>
+          </div>
+          <div class="finding-body">
+            <p>Actualmente os CVs são carregados manualmente pelo recrutador. Um portal público onde os candidatos submetem os seus próprios CVs eliminaria este passo manual e tornaria o sistema mais escalável.</p>
+            <p style="margin-top:10px;">Cada vaga teria um link público de candidatura (<code>/candidatar/vaga-slug/</code>) sem login. O candidato submete nome, email e CV. O recrutador vê as candidaturas na plataforma e decide quais analisar com IA.</p>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- #top -->
+  </main>
+</div>
+
+<script>
+  function toggle(el) {
+    const body = el.nextElementSibling;
+    body.classList.toggle('hidden');
+  }
+  // Open all findings by default
+  document.querySelectorAll('.finding-body').forEach(b => b.classList.remove('hidden'));
+
+  function scrollTo(id) {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+</script>

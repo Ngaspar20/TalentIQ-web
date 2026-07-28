@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-TalentIQ Web is a multi-tenant SaaS Applicant Tracking System (ATS) for healthcare recruitment in Mozambique and Lusophone Africa. Recruiters upload CVs and Terms of Reference (ToR) documents; an LLM (with a deterministic fallback) extracts structured data and scores candidate-vacancy fit.
+TalentIQ Web is a multi-tenant SaaS Applicant Tracking System (ATS) for recruitment in Mozambique and Lusophone Africa. Recruiters upload CVs and Terms of Reference (ToR) documents; an LLM (with a deterministic fallback) extracts structured data and scores candidate-vacancy fit.
 
 A full architecture/ops reference already exists at `ENGINEERING.md` — read it before making non-trivial changes. It covers the database schema, LLM fallback chain, deployment startup sequence, coding standards, and a "Common Errors and Fixes" section. This file only summarizes what's needed to be immediately productive.
 
