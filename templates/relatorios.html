@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block title %}Relatórios{% endblock %}
+{% block breadcrumb %}Relatórios{% endblock %}
+
+{% block content %}
+<div style="max-width:900px;">
+
+  <!-- Page header -->
+  <div class="mb-6">
+    <h1 class="text-xl font-extrabold text-slate-800 flex items-center gap-2">
+      <i class="fa-solid fa-chart-bar" style="color:#f59e0b;"></i>
+      Relatórios
+    </h1>
+    <p class="text-slate-500 text-sm mt-1">Análise do processo de recrutamento</p>
+  </div>
+
+  <!-- Tabs -->
+  <div style="display:flex; border-bottom:2px solid #e2e8f0; margin-bottom:24px;">
+    <button onclick="showTab('vel')" id="tab-vel"
+      class="tab-btn active-tab"
+      style="padding:9px 20px; font-size:13px; font-weight:600; cursor:pointer; border:none; background:none; border-bottom:2px solid #f59e0b; margin-bottom:-2px; color:#f59e0b;">
+      Velocidade
+    </button>
+    <button onclick="showTab('conv')" id="tab-conv"
+      class="tab-btn"
+      style="padding:9px 20px; font-size:13px; font-weight:500; cursor:pointer; border:none; background:none; border-bottom:2px solid transparent; margin-bottom:-2px; color:#64748b;">
+      Conversão por Vaga
+    </button>
+  </div>
+
+  <!-- ── VELOCIDADE ── -->
+  <div id="panel-vel">
+
+    <!-- Stats row -->
+    <div class="grid grid-cols-3 gap-3 mb-4">
+      <div class="section-card text-center" style="margin-bottom:0; padding:16px;">
+        <div class="text-3xl font-extrabold text-slate-800">
+          {% if velocidade.avg_ttf %}{{ velocidade.avg_ttf }}d{% else %}—{% endif %}
+        </div>
+        <div class="text-xs text-slate-500 mt-1 font-semibold uppercase tracking-wide">Tempo médio para contratar</div>
+      </div>
+      <div class="section-card text-center" style="margin-bottom:0; padding:16px;">
+        <div class="text-3xl font-extrabold" style="color:#ef4444;">
+          {% if velocidade.slowest_days %}{{ velocidade.slowest_days }}d{% else %}—{% endif %}
+        </div>
+        <div class="text-xs text-slate-500 mt-1 font-semibold uppercase tracking-wide">
+          Etapa mais lenta{% if velocidade.slowest %} — {{ velocidade.slowest }}{% endif %}
+        </div>
+      </div>
+      <div class="section-card text-center" style="margin-bottom:0; padding:16px;">
+        <div class="text-3xl font-extrabold" style="color:#10b981;">
+          {% if velocidade.fastest_days %}{{ velocidade.fastest_days }}d{% else %}—{% endif %}
+        </div>
+        <div class="text-xs text-slate-500 mt-1 font-semibold uppercase tracking-wide">
+          Etapa mais rápida{% if velocidade.fastest %} — {{ velocidade.fastest }}{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Bars -->
+    <div class="section-card" style="margin-bottom:0;">
+      <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Tempo médio em cada etapa (dias actuais)</p>
+
+      {% if velocidade.triagem is not None %}
+      <div style="display:flex; align-items:center; gap:14px; margin-bottom:12px;">
+        <div style="width:160px; font-size:13px; color:#1e293b; flex-shrink:0;">Candidatura → Triagem</div>
+        <div style="flex:1; height:32px; background:#f8fafc; border-radius:6px; overflow:hidden; border:1px solid #e2e8f0;">
+          <div style="width:{% widthratio velocidade.triagem max_vel 100 %}%; height:100%; background:#3b82f6; border-radius:6px; display:flex; align-items:center; padding-left:10px;">
+            <span style="font-size:12px; font-weight:700; color:#fff;">{{ velocidade.triagem }}d</span>
+          </div>
+        </div>
+        <div style="width:40px; font-size:14px; font-weight:700; text-align:right; color:#3b82f6;">{{ velocidade.triagem }}d</div>
+      </div>
+      {% endif %}
+
+      {% if velocidade.entrevista is not None %}
+      <div style="display:flex; align-items:center; gap:14px; margin-bottom:12px;">
+        <div style="width:160px; font-size:13px; color:#1e293b; flex-shrink:0;">Triagem → Entrevista</div>
+        <div style="flex:1; height:32px; background:#f8fafc; border-radius:6px; overflow:hidden; border:1px solid #e2e8f0;">
+          <div style="width:{% widthratio velocidade.entrevista max_vel 100 %}%; height:100%; background:#8b5cf6; border-radius:6px; display:flex; align-items:center; padding-left:10px;">
+            <span style="font-size:12px; font-weight:700; color:#fff;">{{ velocidade.entrevista }}d</span>
+          </div>
+        </div>
+        <div style="width:40px; font-size:14px; font-weight:700; text-align:right; color:#8b5cf6;">{{ velocidade.entrevista }}d</div>
+      </div>
+      {% endif %}
+
+      {% if velocidade.proposta is not None %}
+      <div style="display:flex; align-items:center; gap:14px; margin-bottom:0;">
+        <div style="width:160px; font-size:13px; color:#1e293b; flex-shrink:0;">Entrevista → Proposta</div>
+        <div style="flex:1; height:32px; background:#f8fafc; border-radius:6px; overflow:hidden; border:1px solid #e2e8f0;">
+          <div style="width:{% widthratio velocidade.proposta max_vel 100 %}%; height:100%; background:#f59e0b; border-radius:6px; display:flex; align-items:center; padding-left:10px;">
+            <span style="font-size:12px; font-weight:700; color:#fff;">{{ velocidade.proposta }}d</span>
+          </div>
+        </div>
+        <div style="width:40px; font-size:14px; font-weight:700; text-align:right; color:#f59e0b;">{{ velocidade.proposta }}d</div>
+      </div>
+      {% endif %}
+
+      {% if not velocidade.triagem and not velocidade.entrevista and not velocidade.proposta %}
+      <div class="text-center py-6 text-slate-400 text-sm">
+        <i class="fa-solid fa-chart-simple fa-2x mb-2 block"></i>
+        Sem candidatos em progresso para calcular velocidade
+      </div>
+      {% endif %}
+
+      <div style="font-size:11px; color:#94a3b8; padding-top:12px; margin-top:14px; border-top:1px solid #f1f5f9; line-height:1.5;">
+        Tempo médio calculado com base nos candidatos actualmente em cada etapa.
+        {% if velocidade.slowest %}A etapa mais lenta é <strong style="color:#1e293b;">{{ velocidade.slowest }}</strong> — considere acelerar o processo de decisão nessa fase.{% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── CONVERSÃO POR VAGA ── -->
+  <div id="panel-conv" style="display:none;">
+
+    {% if conv_rows %}
+    <div class="section-card" style="margin-bottom:0; padding:0; overflow:hidden;">
+      <table style="width:100%; border-collapse:collapse; font-size:13px;">
+        <thead>
+          <tr style="background:#f8fafc;">
+            <th style="padding:10px 14px; text-align:left; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Vaga</th>
+            <th style="padding:10px 14px; text-align:center; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">CV → Triagem</th>
+            <th style="padding:10px 14px; text-align:center; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Triagem → Entrevista</th>
+            <th style="padding:10px 14px; text-align:center; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Entrevista → Proposta</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in conv_rows %}
+          <tr style="border-bottom:1px solid #f1f5f9;" onmouseover="this.style.background='#fffbeb'" onmouseout="this.style.background=''">
+            <td style="padding:12px 14px;">
+              <a href="/vagas/{{ row.vaga.pk }}/" class="font-semibold text-slate-800 hover:text-amber-600">{{ row.vaga.titulo }}</a>
+              <div style="font-size:10px; color:#94a3b8; margin-top:2px;">{{ row.total }} candidatos · {{ row.vaga.departamento }}</div>
+            </td>
+            <td style="padding:12px 14px; text-align:center;">
+              {% if row.cv_triagem is not None %}
+                {% if row.cv_triagem >= 40 %}
+                  <span style="display:inline-block; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:600; background:#f0fdf4; color:#10b981;">{{ row.cv_triagem }}%</span>
+                {% elif row.cv_triagem >= 20 %}
+                  <span style="display:inline-block; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:600; background:#fffbeb; color:#f59e0b;">{{ row.cv_triagem }}%</span>
+                {% else %}
+                  <span style="display:inline-block; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:600; background:#fef2f2; color:#ef4444;">{{ row.cv_triagem }}%</span>
+                {% endif %}
+              {% else %}<span style="color:#cbd5e1;">—</span>{% endif %}
+            </td>
+            <td style="padding:12px 14px; text-align:center;">
+              {% if row.triagem_entrevista is not None %}
+                {% if row.triagem_entrevista >= 40 %}
+                  <span style="display:inline-block; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:600; background:#f0fdf4; color:#10b981;">{{ row.triagem_entrevista }}%</span>
+                {% elif row.triagem_entrevista >= 20 %}
+                  <span style="display:inline-block; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:600; background:#fffbeb; color:#f59e0b;">{{ row.triagem_entrevista }}%</span>
+                {% else %}
+                  <span style="display:inline-block; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:600; background:#fef2f2; color:#ef4444;">{{ row.triagem_entrevista }}%</span>
+                {% endif %}
+              {% else %}<span style="color:#cbd5e1;">—</span>{% endif %}
+            </td>
+            <td style="padding:12px 14px; text-align:center;">
+              {% if row.entrevista_proposta is not None %}
+                {% if row.entrevista_proposta >= 40 %}
+                  <span style="display:inline-block; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:600; background:#f0fdf4; color:#10b981;">{{ row.entrevista_proposta }}%</span>
+                {% elif row.entrevista_proposta >= 20 %}
+                  <span style="display:inline-block; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:600; background:#fffbeb; color:#f59e0b;">{{ row.entrevista_proposta }}%</span>
+                {% else %}
+                  <span style="display:inline-block; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:600; background:#fef2f2; color:#ef4444;">{{ row.entrevista_proposta }}%</span>
+                {% endif %}
+              {% else %}<span style="color:#cbd5e1;">—</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div style="font-size:11px; color:#94a3b8; margin-top:10px; line-height:1.5;">
+      Verde ≥ 40% · Amarelo ≥ 20% · Vermelho &lt; 20% — taxas calculadas com base nos candidatos activos (excluindo rejeitados sem histórico de etapa).
+    </div>
+
+    {% else %}
+    <div class="section-card text-center py-8 text-slate-400 text-sm" style="margin-bottom:0;">
+      <i class="fa-solid fa-inbox fa-2x mb-2 block"></i>
+      Sem vagas abertas com candidatos suficientes para calcular conversão
+    </div>
+    {% endif %}
+
+  </div>
+
+</div>
+
+<script>
+function showTab(id) {
+  ['vel', 'conv'].forEach(function(t) {
+    var panel = document.getElementById('panel-' + t);
+    var tab = document.getElementById('tab-' + t);
+    if (t === id) {
+      panel.style.display = 'block';
+      tab.style.color = '#f59e0b';
+      tab.style.fontWeight = '600';
+      tab.style.borderBottom = '2px solid #f59e0b';
+    } else {
+      panel.style.display = 'none';
+      tab.style.color = '#64748b';
+      tab.style.fontWeight = '500';
+      tab.style.borderBottom = '2px solid transparent';
+    }
+  });
+}
+</script>
+{% endblock %}

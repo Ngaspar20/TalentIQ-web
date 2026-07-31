@@ -185,6 +185,9 @@
             <a href="/scoring/geral/" class="sidebar-link {% if 'geral' in request.path %}active{% endif %}">
                 <i class="fa-solid fa-ranking-star fa-fw"></i> Ranking Geral
             </a>
+            <a href="/relatorios/" class="sidebar-link {% if '/relatorios/' in request.path %}active{% endif %}">
+                <i class="fa-solid fa-chart-bar fa-fw"></i> Relatórios
+            </a>
 
             <div style="margin: 12px 0 4px; padding: 0 8px;">
                 <span style="font-size:0.68rem; font-weight:700; color:#93c5fd; letter-spacing:0.08em; text-transform:uppercase;">Sistema</span>
@@ -192,9 +195,11 @@
             <a href="/ajuda/" class="sidebar-link {% if '/ajuda/' in request.path %}active{% endif %}">
                 <i class="fa-solid fa-circle-question fa-fw"></i> Como Funciona
             </a>
+            {% if user.is_superuser or user.role == 'admin' %}
             <a href="/gestao/utilizadores/" class="sidebar-link {% if '/gestao/' in request.path %}active{% endif %}">
                 <i class="fa-solid fa-users-gear fa-fw"></i> Utilizadores
             </a>
+            {% endif %}
             {% if user.is_superuser %}
             <a href="/sistema/" class="sidebar-link {% if '/sistema/' in request.path %}active{% endif %}">
                 <i class="fa-solid fa-server fa-fw"></i> Sistema

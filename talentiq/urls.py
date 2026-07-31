@@ -3,6 +3,7 @@ from django.urls import path, include
 from django.http import JsonResponse
 from django.db import connection
 from .dashboard import dashboard
+from .relatorios import relatorios
 from ajuda.views import ajuda_view
 from .gestao_views import utilizadores_list, utilizador_novo, utilizador_toggle, utilizador_reset_password, minha_senha, utilizador_apagar
 from .system_views import sistema_view
@@ -34,5 +35,6 @@ urlpatterns = [
     path("pipeline/", include("pipeline.urls")),
     path("ajuda/", ajuda_view, name="ajuda"),
     path("sistema/", sistema_view, name="sistema"),
+    path("relatorios/", relatorios, name="relatorios"),
     path("", dashboard, name="dashboard"),
 ]
