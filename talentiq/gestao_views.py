@@ -1,14 +1,17 @@
-﻿from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from accounts.models import User, Organisation
+from accounts.decorators import admin_required
 
 
+@admin_required
 def utilizadores_list(request):
     org = getattr(request.user, "organisation", None)
     utilizadores = User.objects.filter(organisation=org).order_by("email") if org else User.objects.none()
     return render(request, "gestao/utilizadores.html", {"utilizadores": utilizadores})
 
 
+@admin_required
 def utilizador_novo(request):
     org = getattr(request.user, "organisation", None)
     error = None
@@ -32,6 +35,7 @@ def utilizador_novo(request):
     return render(request, "gestao/novo_utilizador.html", {"error": error})
 
 
+@admin_required
 def utilizador_toggle(request, pk):
     user = get_object_or_404(User, pk=pk)
     if request.method == "POST" and user != request.user:
@@ -64,6 +68,7 @@ def minha_senha(request):
     return render(request, "gestao/minha_senha.html", {"error": error, "skip_current": skip_current})
 
 
+@admin_required
 def utilizador_apagar(request, pk):
     user = get_object_or_404(User, pk=pk)
     if request.method == "POST" and user != request.user:
@@ -73,6 +78,7 @@ def utilizador_apagar(request, pk):
     return redirect("/gestao/utilizadores/")
 
 
+@admin_required
 def utilizador_reset_password(request, pk):
     user = get_object_or_404(User, pk=pk)
     if request.method == "POST":

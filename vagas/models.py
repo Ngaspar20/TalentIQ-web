@@ -58,6 +58,7 @@ class Vaga(models.Model):
     tor_analisado = models.BooleanField(default=False)
     tor_aprovado = models.BooleanField(default=False)
     avaliacao_group_token = models.UUIDField(null=True, blank=True)
+    avaliacao_encerrada = models.BooleanField(default=False)
     origem = models.CharField(max_length=100, blank=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,

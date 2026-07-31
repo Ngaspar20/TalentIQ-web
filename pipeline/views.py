@@ -62,7 +62,7 @@ def mover_etapa(request):
             candidato.etapa = nova_etapa
             candidato.save(update_fields=["etapa", "updated_at"])
         if request.htmx:
-            return HttpResponse(f'<span class="text-green-600 text-sm font-medium">âœ“ Movido para {nova_etapa}</span>')
+            return HttpResponse(f'<span class="text-green-600 text-sm font-medium">âœ" Movido para {nova_etapa}</span>')
         messages.success(request, f"{candidato.nome} movido para {nova_etapa}.")
     return JsonResponse({"ok": True})
 

@@ -70,7 +70,7 @@ def score_calculate(request):
 
     import logging
     log = logging.getLogger(__name__)
-    from core.scorer import _score_deterministic
+    from core.scorer import calcular_fit
 
     for candidato in qs:
         cand_dict = {
@@ -82,8 +82,7 @@ def score_calculate(request):
             "resumo": candidato.resumo or "",
         }
         try:
-            resultado = _score_deterministic(cand_dict, vaga_dict)
-            resultado["metodo"] = "Deterministico"
+            resultado = calcular_fit(cand_dict, vaga_dict)
             candidato.score_fit = resultado.get("score_total", 0)
             candidato.perfil_completo = resultado
             candidato.save(update_fields=["score_fit", "perfil_completo"])

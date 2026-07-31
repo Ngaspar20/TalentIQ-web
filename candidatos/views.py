@@ -1,9 +1,27 @@
-﻿import os
+import os
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
 from django.contrib import messages
 from django.views.decorators.http import require_POST
+from accounts.decorators import recruiter_required
 from .models import Candidato
+
+
+_ALLOWED_EXTENSIONS = (".pdf", ".docx", ".doc", ".txt")
+
+
+def _validate_upload(uploaded_file):
+    """Return an error string if the file is not an allowed type, else None."""
+    name = uploaded_file.name.lower()
+    if not any(name.endswith(ext) for ext in _ALLOWED_EXTENSIONS):
+        return "Tipo de ficheiro não permitido. Use PDF, DOCX ou TXT."
+    header = uploaded_file.read(8)
+    uploaded_file.seek(0)
+    if name.endswith(".pdf") and not header.startswith(b"%PDF"):
+        return "O ficheiro não é um PDF válido."
+    if name.endswith((".docx", ".doc")) and not header.startswith(b"PK\x03\x04"):
+        return "O ficheiro não é um DOCX válido."
+    return None
 
 
 def org_candidatos(request):
@@ -15,13 +33,14 @@ def candidato_list(request):
     return render(request, "candidatos/list.html", {"candidatos": candidatos})
 
 
+@recruiter_required
 def candidato_create(request):
     from vagas.models import Vaga
     if request.method == "POST":
         vaga_id = request.POST.get("vaga_id", "").strip()
         nome = request.POST.get("nome", "").strip()
         if not nome:
-            messages.error(request, "O nome do candidato Ã© obrigatÃ³rio.")
+            messages.error(request, "O nome do candidato é obrigatório.")
             vagas = Vaga.objects.filter(organisation=request.user.organisation, estado="Aberta")
             return render(request, "candidatos/create.html", {"vagas": vagas})
 
@@ -79,6 +98,7 @@ def candidato_detail(request, pk):
     })
 
 
+@recruiter_required
 def candidato_edit(request, pk):
     from vagas.models import Vaga
     candidato = get_object_or_404(org_candidatos(request), pk=pk)
@@ -86,7 +106,7 @@ def candidato_edit(request, pk):
     if request.method == "POST":
         nome = request.POST.get("nome", "").strip()
         if not nome:
-            messages.error(request, "O nome do candidato Ã© obrigatÃ³rio.")
+            messages.error(request, "O nome do candidato é obrigatório.")
             return render(request, "candidatos/edit.html", {"candidato": candidato, "vagas": vagas})
 
         competencias_raw = request.POST.get("competencias_input", "")
@@ -124,6 +144,7 @@ def candidato_edit(request, pk):
     return render(request, "candidatos/edit.html", {"candidato": candidato, "vagas": vagas})
 
 
+@recruiter_required
 def candidato_delete(request, pk):
     candidato = get_object_or_404(org_candidatos(request), pk=pk)
     if request.method == "POST":
@@ -306,6 +327,8 @@ def avaliacao_juri_view(request, token):
     session = get_object_or_404(AvaliacaoSession, token=token)
     if session.estado == AvaliacaoSession.ESTADO_CONFIRMADA:
         return render(request, "candidatos/avaliacao_fechada.html", {"session": session})
+    if session.candidato.vaga and session.candidato.vaga.avaliacao_encerrada:
+        return render(request, "candidatos/avaliacao_fechada.html", {"session": session})
 
     # Get interview questions from approved guide for this vaga
     perguntas = []
@@ -407,10 +430,14 @@ def guardar_nota_entrevista(request, pk):
 
 @require_POST
 def parse_cv_view(request):
-    """HTMX â€” extracts text from uploaded CV file and returns preview."""
+    """HTMX - extracts text from uploaded CV file and returns preview."""
     uploaded = request.FILES.get("cv_file")
     if not uploaded:
         return HttpResponse('<div class="alert-error">Nenhum ficheiro recebido.</div>')
+
+    err = _validate_upload(uploaded)
+    if err:
+        return HttpResponse(f'<div class="alert-error">{err}</div>')
 
     try:
         from core.parser import extract_text_from_file
@@ -419,7 +446,7 @@ def parse_cv_view(request):
         return HttpResponse(f'<div class="alert-error">Erro ao extrair texto: {e}</div>')
 
     if not texto.strip():
-        return HttpResponse('<div class="alert-error">NÃ£o foi possÃ­vel extrair texto. O ficheiro pode ser uma imagem digitalizada.</div>')
+        return HttpResponse('<div class="alert-error">Não foi possível extrair texto. O ficheiro pode ser uma imagem digitalizada.</div>')
 
     return render(request, "candidatos/_cv_preview.html", {
         "texto": texto[:4000],
@@ -429,11 +456,14 @@ def parse_cv_view(request):
 
 @require_POST
 def analyse_cv_view(request):
-    """HTMX â€” sends CV text to Grok and returns pre-filled candidate form."""
+    """HTMX — sends CV text to Grok and returns pre-filled candidate form."""
+    from talentiq.ratelimit import check_llm_rate_limit, rate_limited_response
+    if not check_llm_rate_limit(request):
+        return rate_limited_response()
     from django.conf import settings
     texto = request.POST.get("texto_completo", "")
     if not texto.strip():
-        return HttpResponse('<div class="alert-error">Texto nÃ£o encontrado. Carregue o CV novamente.</div>')
+        return HttpResponse('<div class="alert-error">Texto não encontrado. Carregue o CV novamente.</div>')
 
     try:
         os.environ["GROK_API_KEY"] = settings.GROK_API_KEY
@@ -442,7 +472,7 @@ def analyse_cv_view(request):
         from core.parser import parse_cv
         extraido = parse_cv(texto)
     except Exception as e:
-        return HttpResponse(f'<div class="alert-error">Erro na anÃ¡lise IA: {e}</div>')
+        return HttpResponse(f'<div class="alert-error">Erro na análise IA: {e}</div>')
 
     return render(request, "candidatos/_cv_form_fields.html", {
         "cv": extraido,

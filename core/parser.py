@@ -7,8 +7,11 @@ import logging
 from typing import Dict, Any
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import config
+try:
+    import config
+except ImportError:
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    import config
 from core.llm import get_llm_response
 
 logger = logging.getLogger(__name__)

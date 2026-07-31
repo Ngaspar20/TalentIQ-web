@@ -1,15 +1,36 @@
-﻿import json
+import json
 import sys
 import os
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
 from django.views.decorators.http import require_POST
-from django.contrib.auth.decorators import login_required
+from accounts.decorators import recruiter_required
 from .models import Vaga
 
 # Make sure core/ is on the path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+_ALLOWED_EXTENSIONS = (".pdf", ".docx", ".doc", ".txt")
+_MAGIC_SIGNATURES = {
+    b"%PDF": "PDF",
+    b"PK\x03\x04": "DOCX/ZIP",
+}
+
+
+def _validate_upload(uploaded_file):
+    """Return an error string if the file is not an allowed type, else None."""
+    name = uploaded_file.name.lower()
+    if not any(name.endswith(ext) for ext in _ALLOWED_EXTENSIONS):
+        return f"Tipo de ficheiro não permitido. Use PDF, DOCX ou TXT."
+    header = uploaded_file.read(8)
+    uploaded_file.seek(0)
+    if name.endswith(".pdf") and not header.startswith(b"%PDF"):
+        return "O ficheiro não é um PDF válido."
+    if name.endswith((".docx", ".doc")) and not header.startswith(b"PK\x03\x04"):
+        return "O ficheiro não é um DOCX válido."
+    return None
 
 
 def org_vagas(request):
@@ -21,18 +42,19 @@ def vaga_list(request):
     return render(request, "vagas/list.html", {"vagas": vagas})
 
 
+@recruiter_required
 def vaga_create(request):
     if request.method == "POST":
         titulo = request.POST.get("titulo", "").strip()
         if not titulo:
-            messages.error(request, "O tÃ­tulo da vaga Ã© obrigatÃ³rio.")
+            messages.error(request, "O título da vaga é obrigatório.")
             return render(request, "vagas/create.html")
 
         competencias_raw = request.POST.get("competencias_input", "")
         competencias = [c.strip().lower() for c in competencias_raw.split(",") if c.strip()]
 
         responsabilidades_raw = request.POST.get("responsabilidades_input", "")
-        responsabilidades = [r.strip().lstrip("â€¢").strip() for r in responsabilidades_raw.splitlines() if r.strip()]
+        responsabilidades = [r.strip().lstrip("•").strip() for r in responsabilidades_raw.splitlines() if r.strip()]
 
         tor_filename = request.POST.get("tor_filename", "").strip()
 
@@ -128,19 +150,20 @@ def vaga_aprovar_tor(request, pk):
     return redirect("vaga_detail", pk=pk)
 
 
+@recruiter_required
 def vaga_edit(request, pk):
     vaga = get_object_or_404(org_vagas(request), pk=pk)
     if request.method == "POST":
         titulo = request.POST.get("titulo", "").strip()
         if not titulo:
-            messages.error(request, "O tÃ­tulo da vaga Ã© obrigatÃ³rio.")
+            messages.error(request, "O título da vaga é obrigatório.")
             return render(request, "vagas/edit.html", {"vaga": vaga})
 
         competencias_raw = request.POST.get("competencias_input", "")
         competencias = [c.strip().lower() for c in competencias_raw.split(",") if c.strip()]
 
         responsabilidades_raw = request.POST.get("responsabilidades_input", "")
-        responsabilidades = [r.strip().lstrip("â€¢").strip() for r in responsabilidades_raw.splitlines() if r.strip()]
+        responsabilidades = [r.strip().lstrip("•").strip() for r in responsabilidades_raw.splitlines() if r.strip()]
 
         vaga.titulo = titulo
         vaga.organizacao = request.POST.get("organizacao", "").strip()
@@ -163,6 +186,7 @@ def vaga_edit(request, pk):
     return render(request, "vagas/edit.html", {"vaga": vaga})
 
 
+@recruiter_required
 def vaga_delete(request, pk):
     vaga = get_object_or_404(org_vagas(request), pk=pk)
     if request.method == "POST":
@@ -175,13 +199,17 @@ def vaga_delete(request, pk):
 @require_POST
 def parse_tor_view(request):
     """
-    HTMX endpoint â€” called when user uploads a ToR file.
+    HTMX endpoint - called when user uploads a ToR file.
     Step 1: extract text and return preview.
     """
     from django.conf import settings
     uploaded = request.FILES.get("tor_file")
     if not uploaded:
         return HttpResponse('<div class="alert-error">Nenhum ficheiro recebido.</div>')
+
+    err = _validate_upload(uploaded)
+    if err:
+        return HttpResponse(f'<div class="alert-error">{err}</div>')
 
     try:
         from core.parser import extract_text_from_file
@@ -190,7 +218,7 @@ def parse_tor_view(request):
         return HttpResponse(f'<div class="alert-error">Erro ao extrair texto: {e}</div>')
 
     if not texto.strip():
-        return HttpResponse('<div class="alert-error">NÃ£o foi possÃ­vel extrair texto. O ficheiro pode ser uma imagem digitalizada.</div>')
+        return HttpResponse('<div class="alert-error">Não foi possível extrair texto. O ficheiro pode ser uma imagem digitalizada.</div>')
 
     # Return the text preview + hidden field + AI analysis button
     texto_preview = texto[:4000]
@@ -203,13 +231,16 @@ def parse_tor_view(request):
 @require_POST
 def analyse_tor_view(request):
     """
-    HTMX endpoint â€” called when user clicks 'Analisar com IA'.
+    HTMX endpoint — called when user clicks 'Analisar com IA'.
     Sends text to Grok and returns pre-filled form fields.
     """
+    from talentiq.ratelimit import check_llm_rate_limit, rate_limited_response
+    if not check_llm_rate_limit(request):
+        return rate_limited_response()
     from django.conf import settings
     texto = request.POST.get("texto_completo", "")
     if not texto.strip():
-        return HttpResponse('<div class="alert-error">Texto nÃ£o encontrado. Carregue o ficheiro novamente.</div>')
+        return HttpResponse('<div class="alert-error">Texto não encontrado. Carregue o ficheiro novamente.</div>')
 
     try:
         os.environ["GROK_API_KEY"] = settings.GROK_API_KEY
@@ -218,7 +249,7 @@ def analyse_tor_view(request):
         from core.parser import parse_tor
         extraido = parse_tor(texto)
     except Exception as e:
-        return HttpResponse(f'<div class="alert-error">Erro na anÃ¡lise IA: {e}</div>')
+        return HttpResponse(f'<div class="alert-error">Erro na análise IA: {e}</div>')
 
     return render(request, "vagas/_form_fields.html", {
         "tor": extraido,
@@ -228,6 +259,19 @@ def analyse_tor_view(request):
 
 def gerar_perguntas_entrevista(request, pk):
     vaga = get_object_or_404(org_vagas(request), pk=pk)
+
+    session_key = f"perguntas_{pk}"
+    force_refresh = request.GET.get("refresh") == "1"
+
+    if not force_refresh and session_key in request.session:
+        texto = request.session[session_key]
+        categorias_parsed = _parse_perguntas(texto)
+        categorias = [{"nome": nome, "perguntas": rows} for nome, rows in categorias_parsed]
+        return render(request, "vagas/perguntas_preview.html", {"vaga": vaga, "texto": texto, "categorias": categorias})
+
+    from talentiq.ratelimit import check_llm_rate_limit, rate_limited_response
+    if not check_llm_rate_limit(request):
+        return rate_limited_response()
 
     competencias = ", ".join(vaga.competencias_requeridas) if vaga.competencias_requeridas else "nao especificadas"
     responsabilidades = "; ".join(vaga.responsabilidades) if vaga.responsabilidades else "nao especificadas"
@@ -354,9 +398,13 @@ A: Interesse genuino, qualidade e pertinencia das questoes colocadas."""
 
 def enviar_guiao_juri(request, pk):
     """HR generates a tokenized link and sends to committee chair."""
+    from talentiq.ratelimit import check_llm_rate_limit, rate_limited_response
     vaga = get_object_or_404(org_vagas(request), pk=pk)
 
     if request.method != "POST":
+        return redirect("vaga_detail", pk=pk)
+    if not check_llm_rate_limit(request):
+        messages.error(request, "Demasiadas análises em pouco tempo. Aguarde um momento e tente novamente.")
         return redirect("vaga_detail", pk=pk)
 
     from core.llm import get_llm_response
@@ -785,6 +833,9 @@ def comite_avaliacao_view(request, token):
     session = get_object_or_404(ComiteSession, token=token)
     vaga = session.vaga
 
+    if vaga.avaliacao_encerrada:
+        return render(request, "candidatos/avaliacao_fechada.html", {"session": session})
+
     secoes = []
     perguntas = []
     guiao = (InterviewGuideSession.objects
@@ -869,7 +920,6 @@ def comite_avaliacao_view(request, token):
     })
 
 
-@login_required
 def comite_resultados(request, pk):
     from .models import ComiteSession, ComiteAvaliacao
     from candidatos.models import Candidato
@@ -922,6 +972,7 @@ def comite_confirmar_decisoes(request, pk):
                 candidato=c,
                 defaults={"pontuacao": media, "recomendacao": rec_final, "notas": notas_concat}
             )
+    Vaga.objects.filter(pk=pk).update(avaliacao_encerrada=True)
     messages.success(request, "Avaliações do comité consolidadas. Confirme agora a decisão final para cada candidato.")
     return redirect("vaga_detail", pk=pk)
 
@@ -972,6 +1023,9 @@ def avaliacao_grupo_juri(request, token):
     from .models import InterviewGuideSession
 
     vaga = get_object_or_404(Vaga, avaliacao_group_token=token)
+
+    if vaga.avaliacao_encerrada:
+        return render(request, "candidatos/avaliacao_fechada.html", {"session": None})
 
     # Get interview questions from approved guide
     perguntas = []
@@ -1050,6 +1104,7 @@ def confirmar_avaliacoes_grupo(request, pk):
             nova_etapa = "Proposta" if rec == "recomendado" else ("Rejeitado" if rec == "nao_recomendado" else candidato.etapa)
             Candidato.objects.filter(pk=candidato.pk).update(etapa=nova_etapa)
 
+    Vaga.objects.filter(pk=pk).update(avaliacao_encerrada=True)
     messages.success(request, "Avaliações confirmadas. Os candidatos foram actualizados.")
     return redirect("vaga_detail", pk=pk)
 

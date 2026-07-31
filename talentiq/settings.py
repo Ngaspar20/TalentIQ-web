@@ -1,7 +1,9 @@
 import os
-import sentry_sdk
 from pathlib import Path
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    def load_dotenv(*a, **kw): pass
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
@@ -13,14 +15,18 @@ ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(","
 # ── Sentry error tracking ───────────────────────────────────────────────────
 SENTRY_DSN = os.environ.get("SENTRY_DSN", "")
 if SENTRY_DSN:
-    sentry_sdk.init(
-        dsn=SENTRY_DSN,
-        environment=os.environ.get("RAILWAY_ENVIRONMENT", "production"),
-        release=os.environ.get("RAILWAY_GIT_COMMIT_SHA", "unknown"),
-        traces_sample_rate=0.2,
-        profiles_sample_rate=0.1,
-        send_default_pii=False,
-    )
+    try:
+        import sentry_sdk
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            environment=os.environ.get("RAILWAY_ENVIRONMENT", "production"),
+            release=os.environ.get("RAILWAY_GIT_COMMIT_SHA", "unknown"),
+            traces_sample_rate=0.2,
+            profiles_sample_rate=0.1,
+            send_default_pii=False,
+        )
+    except ImportError:
+        pass
 
 # Allow all Railway and custom domains automatically
 RAILWAY_DOMAIN = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "")
