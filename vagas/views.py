@@ -1357,3 +1357,128 @@ def download_perguntas(request, pk):
 
     return _build_word_doc(vaga, categorias)
 
+
+
+# ── EMAIL HELPER ──────────────────────────────────────────────────────────────
+
+def _build_convite_email(avaliador_nome, vaga, candidato_nomes, link):
+    cand_items = "".join(
+        f'<li style="font-size:14px;color:#1e293b;padding:3px 0;">{n}</li>'
+        for n in candidato_nomes
+    )
+    cand_block = (
+        f'<div style="background:#f8fafc;border-radius:8px;padding:16px;'
+        f'margin-bottom:20px;border:1px solid #e2e8f0;">'
+        f'<p style="margin:0 0 8px;font-size:11px;font-weight:700;color:#64748b;'
+        f'text-transform:uppercase;letter-spacing:.05em;">Candidatos a avaliar</p>'
+        f'<ul style="margin:0;padding-left:18px;">{cand_items}</ul>'
+        f'</div>'
+    ) if cand_items else ""
+
+    dept = vaga.departamento or ""
+    return f"""<!DOCTYPE html>
+<html><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f8fafc;font-family:Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;padding:32px 16px;">
+<tr><td align="center">
+<table width="540" cellpadding="0" cellspacing="0"
+  style="background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;max-width:540px;">
+  <tr><td style="background:#1d4ed8;padding:22px 32px;">
+    <span style="font-size:22px;font-weight:900;color:#ffffff;letter-spacing:-.02em;">
+      Talent<span style="color:#93c5fd;">IQ</span>
+    </span>
+  </td></tr>
+  <tr><td style="padding:32px;">
+    <p style="margin:0 0 8px;font-size:16px;color:#1e293b;">
+      Caro/a <strong>{avaliador_nome}</strong>,
+    </p>
+    <p style="margin:0 0 20px;font-size:14px;color:#64748b;line-height:1.6;">
+      Foi convidado/a para participar na avaliação dos candidatos para a vaga de
+      <strong style="color:#1e293b;">{vaga.titulo}</strong>
+      {f"({dept})" if dept else ""}.
+    </p>
+    {cand_block}
+    <table cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
+      <tr><td style="background:#1d4ed8;border-radius:8px;padding:13px 28px;">
+        <a href="{link}"
+           style="color:#ffffff;font-weight:700;font-size:15px;text-decoration:none;">
+          Aceder ao formulario de avaliacao &#8594;
+        </a>
+      </td></tr>
+    </table>
+    <p style="margin:0 0 4px;font-size:12px;color:#94a3b8;">Ou copie este link:</p>
+    <p style="margin:0 0 24px;font-size:11px;color:#3b82f6;word-break:break-all;">{link}</p>
+    <p style="margin:0;font-size:12px;color:#94a3b8;border-top:1px solid #f1f5f9;padding-top:16px;">
+      Este link e pessoal e intransferivel. Apos submeter as suas avaliacoes, o RH sera notificado.
+    </p>
+  </td></tr>
+  <tr><td style="background:#f8fafc;padding:14px 32px;border-top:1px solid #e2e8f0;">
+    <p style="margin:0;font-size:11px;color:#94a3b8;">
+      TalentIQ &middot; Recrutamento Inteligente para Saude
+    </p>
+  </td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>"""
+
+
+@require_POST
+def comite_enviar_convites(request, pk):
+    """Send evaluation invite emails to all pending committee members."""
+    from .models import ComiteSession
+    from candidatos.models import Candidato
+
+    vaga = get_object_or_404(org_vagas(request), pk=pk)
+
+    api_key = os.environ.get("RESEND_API_KEY", "")
+    if not api_key:
+        messages.error(
+            request,
+            "Envio de email nao configurado. Adicione RESEND_API_KEY nas variaveis de ambiente do Railway."
+        )
+        return redirect(f"/vagas/{pk}/?show_comite=1")
+
+    import resend
+    resend.api_key = api_key
+
+    pendentes = ComiteSession.objects.filter(
+        vaga=vaga, estado=ComiteSession.ESTADO_PENDENTE
+    ).exclude(avaliador_email="")
+
+    if not pendentes.exists():
+        messages.warning(request, "Nao ha membros pendentes com email para notificar.")
+        return redirect(f"/vagas/{pk}/?show_comite=1")
+
+    candidato_nomes = list(
+        Candidato.objects.filter(vaga=vaga, etapa="Entrevista")
+        .values_list("nome", flat=True)
+    )
+
+    from_addr = os.environ.get("EMAIL_FROM", "TalentIQ <onboarding@resend.dev>")
+    host = request.get_host()
+    scheme = request.scheme
+    sent = 0
+    failed = 0
+
+    for session in pendentes:
+        link = f"{scheme}://{host}/vagas/comite/{session.token}/"
+        try:
+            resend.Emails.send({
+                "from": from_addr,
+                "to": [session.avaliador_email],
+                "subject": f"Convite para avaliacao de candidatos - {vaga.titulo}",
+                "html": _build_convite_email(session.avaliador_nome, vaga, candidato_nomes, link),
+            })
+            sent += 1
+        except Exception as exc:
+            failed += 1
+
+    if sent:
+        plural = "s" if sent != 1 else ""
+        messages.success(request, f"{sent} convite{plural} enviado{plural} com sucesso.")
+    if failed:
+        plural = "s" if failed != 1 else ""
+        messages.error(request, f"{failed} envio{plural} falhou. Verifique os enderecos de email e a chave RESEND_API_KEY.")
+
+    return redirect(f"/vagas/{pk}/?show_comite=1")

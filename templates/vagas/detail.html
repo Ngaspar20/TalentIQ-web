@@ -637,6 +637,17 @@
         <a href="/vagas/{{ vaga.pk }}/comite/resultados/" class="btn-secondary" style="font-size:.83rem;padding:7px 14px;text-decoration:none;">
           <i class="fa-solid fa-chart-bar mr-1"></i> Ver avaliações do comité
         </a>
+        {% with n_pendentes=comite_sessions|length %}
+        {% if n_pendentes %}
+        <form method="post" action="/vagas/{{ vaga.pk }}/comite/enviar-convites/"
+              onsubmit="return confirm('Enviar convite por email a todos os membros pendentes?')">
+          {% csrf_token %}
+          <button type="submit" class="btn-secondary" style="font-size:.83rem;padding:7px 14px;color:#7c3aed;border-color:#ddd6fe;">
+            <i class="fa-solid fa-envelope mr-1"></i> Enviar convites por email
+          </button>
+        </form>
+        {% endif %}
+        {% endwith %}
         <form method="post" action="/vagas/{{ vaga.pk }}/comite/confirmar/">
           {% csrf_token %}
           <button type="submit" class="btn-step btn-step-purple" style="font-size:.83rem;padding:7px 16px;">

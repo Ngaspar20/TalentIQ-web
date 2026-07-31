@@ -18,6 +18,7 @@ urlpatterns = [
     path("<uuid:pk>/guiao/<uuid:session_id>/download/", views.guiao_download, name="guiao_download"),
     path("juri/<uuid:token>/", views.guiao_juri_view, name="guiao_juri"),
     path("<uuid:pk>/comite/adicionar/", views.comite_adicionar_avaliador, name="comite_adicionar_avaliador"),
+    path("<uuid:pk>/comite/enviar-convites/", views.comite_enviar_convites, name="comite_enviar_convites"),
     path("comite/<uuid:token>/", views.comite_avaliacao_view, name="comite_avaliacao"),
     path("<uuid:pk>/comite/confirmar/", views.comite_confirmar_decisoes, name="comite_confirmar_decisoes"),
     path("<uuid:pk>/comite/<uuid:session_pk>/remover/", views.comite_remover_avaliador, name="comite_remover_avaliador"),
