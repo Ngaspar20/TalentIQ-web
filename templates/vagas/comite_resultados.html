@@ -37,6 +37,45 @@
       </div>
     </div>
 
+    <!-- Aggregate verdict -->
+    <div style="padding:.85rem 1.25rem;background:#f8fafc;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+      <div style="font-size:.78rem;color:#64748b;">
+        <strong>{{ item.n_submetido }}/{{ item.n_total }}</strong> avaliações submetidas
+      </div>
+      {% if item.avg_score %}
+      <div style="font-size:.78rem;color:#64748b;">
+        Média: <strong>{{ item.avg_score }}/5</strong>
+        {% for i in "12345" %}
+          <span style="color:{% if forloop.counter <= item.avg_score %}#f59e0b{% else %}#e2e8f0{% endif %};">★</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% if item.consenso == 'recomendado' %}
+        <span style="font-size:.78rem;font-weight:700;padding:.25rem .75rem;border-radius:999px;background:#dcfce7;color:#15803d;">
+          <i class="fa-solid fa-circle-check"></i> Consenso: Recomendado
+        </span>
+      {% elif item.consenso == 'nao_recomendado' %}
+        <span style="font-size:.78rem;font-weight:700;padding:.25rem .75rem;border-radius:999px;background:#fee2e2;color:#dc2626;">
+          <i class="fa-solid fa-circle-xmark"></i> Consenso: Não recomendado
+        </span>
+      {% elif item.consenso == 'a_considerar' %}
+        <span style="font-size:.78rem;font-weight:700;padding:.25rem .75rem;border-radius:999px;background:#fef9c3;color:#92400e;">
+          <i class="fa-solid fa-circle-exclamation"></i> Consenso: A considerar
+        </span>
+      {% elif item.n_submetido > 0 %}
+        <span style="font-size:.78rem;font-weight:700;padding:.25rem .75rem;border-radius:999px;background:#f1f5f9;color:#64748b;">
+          Sem consenso
+        </span>
+      {% endif %}
+      {% if item.rec_count %}
+      <div style="font-size:.72rem;color:#94a3b8;margin-left:auto;">
+        {% if item.rec_count.recomendado %}<span style="color:#15803d;">✅ {{ item.rec_count.recomendado }}</span>{% endif %}
+        {% if item.rec_count.a_considerar %} <span style="color:#d97706;">⚠️ {{ item.rec_count.a_considerar }}</span>{% endif %}
+        {% if item.rec_count.nao_recomendado %} <span style="color:#dc2626;">❌ {{ item.rec_count.nao_recomendado }}</span>{% endif %}
+      </div>
+      {% endif %}
+    </div>
+
     <!-- Evaluations per member -->
     {% for entry in avs %}
     {% with s=entry.session av=entry.av %}

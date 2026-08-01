@@ -90,14 +90,19 @@ def dashboard(request):
     for v in open_vagas:
         cands = v.candidatos.all()
         scores = [c.score_fit for c in cands if c.score_fit is not None]
+        contratados_vaga = cands.filter(etapa="Contratado").count()
         vaga_rows.append({
             "vaga": v,
             "cvs": cands.count(),
             "triagem": cands.filter(etapa="Em Triagem").count(),
             "entrevista": cands.filter(etapa="Entrevista").count(),
             "proposta": cands.filter(etapa="Proposta").count(),
+            "contratados": contratados_vaga,
+            "numero_vagas": v.numero_vagas,
             "score_medio": round(sum(scores) / len(scores)) if scores else None,
             "days_open": (now - v.created_at).days,
+            "prazo_data": v.prazo_data,
+            "prazo_vencido": v.prazo_data and v.prazo_data < now.date(),
         })
     vaga_rows.sort(key=lambda x: -x["days_open"])
 

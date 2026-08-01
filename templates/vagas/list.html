@@ -69,8 +69,14 @@
         </div>
 
         <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-            <span>ID: {{ vaga.short_id }} · Criada em {{ vaga.created_at|date:"d/m/Y H:i" }} · Origem: {{ vaga.origem|default:"—" }}</span>
-            <span>{{ vaga.candidatos.count }} candidato(s)</span>
+            <span>ID: {{ vaga.short_id }} · Criada em {{ vaga.created_at|date:"d/m/Y H:i" }} · Origem: {{ vaga.origem|default:"—" }}
+              {% if vaga.prazo_data %}
+              · <span style="{% if vaga.prazo_data < today %}color:#ef4444;font-weight:600;{% endif %}">
+                <i class="fa-solid fa-calendar-xmark"></i> Prazo: {{ vaga.prazo_data|date:"d/m/Y" }}{% if vaga.prazo_data < today %} (vencido){% endif %}
+              </span>
+              {% endif %}
+            </span>
+            <span>{{ vaga.candidatos.count }} candidato(s) · <strong>{{ vaga.numero_vagas }}</strong> vaga{{ vaga.numero_vagas|pluralize:"s" }}</span>
         </div>
     </div>
     {% endfor %}

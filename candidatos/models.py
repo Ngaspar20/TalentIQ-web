@@ -15,6 +15,15 @@ class Candidato(models.Model):
         ("Rejeitado", "Rejeitado"),
     ]
 
+    MOTIVO_REJEICAO_CHOICES = [
+        ("perfil_inadequado", "Perfil não adequado ao cargo"),
+        ("experiencia_insuficiente", "Experiência insuficiente"),
+        ("formacao_insuficiente", "Formação abaixo do requisito"),
+        ("melhor_candidato", "Outro candidato mais adequado seleccionado"),
+        ("candidato_desistiu", "Candidato desistiu do processo"),
+        ("outro", "Outro motivo"),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE, related_name="candidatos")
     vaga = models.ForeignKey(Vaga, on_delete=models.SET_NULL, null=True, blank=True, related_name="candidatos")
@@ -29,6 +38,7 @@ class Candidato(models.Model):
     etapa = models.CharField(max_length=100, choices=ETAPA_CHOICES, default="Candidatura Recebida")
     score_fit = models.PositiveIntegerField(null=True, blank=True)
     notas = models.TextField(blank=True)
+    motivo_rejeicao = models.CharField(max_length=50, choices=MOTIVO_REJEICAO_CHOICES, blank=True)
     cv_file_path = models.CharField(max_length=500, blank=True)
     perfil_completo = models.JSONField(default=dict)
     created_by = models.ForeignKey(
@@ -111,3 +121,20 @@ class NotaEntrevista(models.Model):
 
     def __str__(self):
         return f"Entrevista — {self.candidato.nome}"
+
+
+class CandidatoNota(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    candidato = models.ForeignKey(Candidato, on_delete=models.CASCADE, related_name="notas_log")
+    texto = models.TextField()
+    criado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name="notas_candidato"
+    )
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-criado_em"]
+
+    def __str__(self):
+        return f"Nota — {self.candidato.nome}"

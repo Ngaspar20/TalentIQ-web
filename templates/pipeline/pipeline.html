@@ -36,6 +36,18 @@
     </form>
 </div>
 
+<!-- Bulk reject bar (hidden until checkboxes are ticked) -->
+<div id="bulk-bar" style="display:none; position:sticky; top:0; z-index:40; background:#fef2f2; border:1.5px solid #fca5a5; border-radius:10px; padding:10px 16px; margin-bottom:12px; display:none; align-items:center; gap:12px;">
+    <i class="fa-solid fa-circle-xmark" style="color:#ef4444;"></i>
+    <span id="bulk-count" style="font-size:.875rem; font-weight:700; color:#dc2626;"></span>
+    <button onclick="abrirModalBulk()" class="btn-primary" style="background:#ef4444; font-size:.8rem; padding:5px 14px; margin-left:auto;">
+        <i class="fa-solid fa-xmark mr-1"></i> Rejeitar seleccionados
+    </button>
+    <button onclick="deselectAll()" class="btn-secondary" style="font-size:.8rem; padding:5px 10px;">
+        Cancelar
+    </button>
+</div>
+
 <!-- Kanban board -->
 <div class="flex gap-3 overflow-x-auto pb-4" style="min-height: 500px;">
     {% for etapa in etapas %}
@@ -53,6 +65,16 @@
         {% if c.etapa == etapa %}
         <div class="kanban-card"
              style="border-left-color: {% if etapa == 'Candidatura Recebida' %}#3b82f6{% elif etapa == 'Em Triagem' %}#8b5cf6{% elif etapa == 'Entrevista' %}#f59e0b{% elif etapa == 'Proposta' %}#06b6d4{% elif etapa == 'Contratado' %}#10b981{% else %}#ef4444{% endif %};">
+
+            <!-- Checkbox (hidden in Rejeitado/Contratado columns) -->
+            {% if etapa != 'Rejeitado' and etapa != 'Contratado' %}
+            <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+                <input type="checkbox" class="card-checkbox" data-id="{{ c.pk }}"
+                       onchange="onCheckboxChange()"
+                       style="width:14px; height:14px; cursor:pointer; accent-color:#ef4444;">
+                <label style="font-size:.7rem; color:#94a3b8; cursor:pointer;" onclick="this.previousElementSibling.click()">seleccionar</label>
+            </div>
+            {% endif %}
 
             <div class="kanban-card-name">{{ c.nome }}</div>
             {% if c.vaga %}
@@ -90,20 +112,47 @@
     {% endfor %}
 </div>
 
-<!-- Move confirmation toasts -->
+<!-- Toast zone -->
 <div id="toast-zone" style="position:fixed; bottom:24px; right:24px; z-index:999; display:flex; flex-direction:column; gap:8px;"></div>
+
+<!-- Rejection reason modal -->
+<div id="modal-rejeicao" style="display:none; position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.45); align-items:center; justify-content:center;">
+    <div style="background:white; border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,0.2); padding:1.5rem; max-width:420px; width:calc(100% - 2rem); margin:1rem;">
+        <h3 style="font-size:1rem; font-weight:800; color:#1e293b; margin:0 0 .35rem;">
+            <i class="fa-solid fa-circle-xmark" style="color:#ef4444; margin-right:.4rem;"></i>
+            Motivo de Rejeição
+        </h3>
+        <p id="modal-rejeicao-sub" style="font-size:.82rem; color:#64748b; margin:0 0 1rem;"></p>
+        <label style="font-size:.78rem; font-weight:600; color:#475569; display:block; margin-bottom:.4rem;">Motivo *</label>
+        <select id="motivo-select" class="form-input" style="margin-bottom:1rem;">
+            <option value="">— Seleccionar motivo —</option>
+            <option value="perfil_inadequado">Perfil não adequado ao cargo</option>
+            <option value="experiencia_insuficiente">Experiência insuficiente</option>
+            <option value="formacao_insuficiente">Formação abaixo do requisito</option>
+            <option value="melhor_candidato">Outro candidato mais adequado seleccionado</option>
+            <option value="candidato_desistiu">Candidato desistiu do processo</option>
+            <option value="outro">Outro motivo</option>
+        </select>
+        <div style="display:flex; gap:.6rem;">
+            <button onclick="confirmarRejeicao()" class="btn-primary" style="background:#ef4444; flex:1;">
+                <i class="fa-solid fa-circle-check mr-1"></i> Confirmar
+            </button>
+            <button onclick="fecharModal()" class="btn-secondary" style="flex:1;">Cancelar</button>
+        </div>
+    </div>
+</div>
 
 <script>
 const ETAPAS = ["Candidatura Recebida","Em Triagem","Entrevista","Proposta","Contratado","Rejeitado"];
 const CSRF = '{{ csrf_token }}';
+let pendingMove = null;
+let isBulkMode = false;
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Count cards per column
     document.querySelectorAll('.kanban-col').forEach(function(col) {
         col.querySelector('.col-count').textContent = col.querySelectorAll('.kanban-card').length;
     });
 
-    // Wire up arrow buttons
     document.querySelectorAll('[data-candidato]').forEach(function(nav) {
         const candidatoId = nav.dataset.candidato;
         const etapa = nav.dataset.etapa;
@@ -116,34 +165,122 @@ document.addEventListener('DOMContentLoaded', function() {
         if (idx === ETAPAS.length - 1) btnNext.style.visibility = 'hidden';
 
         btnPrev.addEventListener('click', function() {
-            if (idx > 0) moverEtapa(candidatoId, ETAPAS[idx - 1]);
+            if (idx > 0) iniciarMover(candidatoId, ETAPAS[idx - 1]);
         });
         btnNext.addEventListener('click', function() {
-            if (idx < ETAPAS.length - 1) moverEtapa(candidatoId, ETAPAS[idx + 1]);
+            if (idx < ETAPAS.length - 1) iniciarMover(candidatoId, ETAPAS[idx + 1]);
         });
     });
 });
 
-function moverEtapa(candidatoId, novaEtapa) {
+function iniciarMover(candidatoId, novaEtapa) {
+    if (novaEtapa === 'Rejeitado') {
+        isBulkMode = false;
+        pendingMove = { candidatoId, novaEtapa };
+        document.getElementById('modal-rejeicao-sub').textContent = 'Seleccione o motivo pelo qual este candidato está a ser rejeitado.';
+        document.getElementById('motivo-select').value = '';
+        document.getElementById('modal-rejeicao').style.display = 'flex';
+    } else {
+        moverEtapa(candidatoId, novaEtapa, '');
+    }
+}
+
+function abrirModalBulk() {
+    const ids = getCheckedIds();
+    if (!ids.length) return;
+    isBulkMode = true;
+    pendingMove = null;
+    document.getElementById('modal-rejeicao-sub').textContent =
+        `Rejeitar ${ids.length} candidato${ids.length !== 1 ? 's' : ''} seleccionado${ids.length !== 1 ? 's' : ''}. Seleccione o motivo.`;
+    document.getElementById('motivo-select').value = '';
+    document.getElementById('modal-rejeicao').style.display = 'flex';
+}
+
+function confirmarRejeicao() {
+    const motivo = document.getElementById('motivo-select').value;
+    if (!motivo) {
+        document.getElementById('motivo-select').style.borderColor = '#ef4444';
+        return;
+    }
+    fecharModal();
+    if (isBulkMode) {
+        bulkRejeitar(motivo);
+    } else if (pendingMove) {
+        moverEtapa(pendingMove.candidatoId, pendingMove.novaEtapa, motivo);
+    }
+}
+
+function fecharModal() {
+    document.getElementById('modal-rejeicao').style.display = 'none';
+    document.getElementById('motivo-select').style.borderColor = '';
+    pendingMove = null;
+    isBulkMode = false;
+}
+
+function moverEtapa(candidatoId, novaEtapa, motivo) {
     const formData = new FormData();
     formData.append('candidato_id', candidatoId);
     formData.append('etapa', novaEtapa);
+    if (motivo) formData.append('motivo_rejeicao', motivo);
 
     fetch('/pipeline/mover/', {
         method: 'POST',
         headers: { 'X-CSRFToken': CSRF },
         body: formData,
     })
-    .then(r => r.text())
+    .then(r => r.json())
     .then(() => {
-        const toast = document.createElement('div');
-        toast.className = 'alert-success';
-        toast.style.cssText = 'padding:10px 16px; font-size:0.85rem; box-shadow:0 4px 12px rgba(0,0,0,0.1); min-width:220px;';
-        toast.innerHTML = '<i class="fa-solid fa-circle-check mr-2"></i>Movido para <strong>' + novaEtapa + '</strong>';
-        document.getElementById('toast-zone').appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
+        mostrarToast('Movido para <strong>' + novaEtapa + '</strong>');
         setTimeout(() => location.reload(), 600);
     });
+}
+
+function bulkRejeitar(motivo) {
+    const ids = getCheckedIds();
+    const formData = new FormData();
+    ids.forEach(id => formData.append('ids[]', id));
+    formData.append('motivo_rejeicao', motivo);
+
+    fetch('/pipeline/bulk-rejeitar/', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': CSRF },
+        body: formData,
+    })
+    .then(r => r.json())
+    .then(data => {
+        mostrarToast(`${data.count} candidato${data.count !== 1 ? 's' : ''} rejeitado${data.count !== 1 ? 's' : ''}`);
+        setTimeout(() => location.reload(), 600);
+    });
+}
+
+function getCheckedIds() {
+    return Array.from(document.querySelectorAll('.card-checkbox:checked')).map(el => el.dataset.id);
+}
+
+function onCheckboxChange() {
+    const ids = getCheckedIds();
+    const bar = document.getElementById('bulk-bar');
+    if (ids.length > 0) {
+        bar.style.display = 'flex';
+        document.getElementById('bulk-count').textContent =
+            `${ids.length} candidato${ids.length !== 1 ? 's' : ''} seleccionado${ids.length !== 1 ? 's' : ''}`;
+    } else {
+        bar.style.display = 'none';
+    }
+}
+
+function deselectAll() {
+    document.querySelectorAll('.card-checkbox').forEach(cb => cb.checked = false);
+    onCheckboxChange();
+}
+
+function mostrarToast(html) {
+    const toast = document.createElement('div');
+    toast.className = 'alert-success';
+    toast.style.cssText = 'padding:10px 16px; font-size:0.85rem; box-shadow:0 4px 12px rgba(0,0,0,0.1); min-width:220px;';
+    toast.innerHTML = '<i class="fa-solid fa-circle-check mr-2"></i>' + html;
+    document.getElementById('toast-zone').appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
 }
 </script>
 {% endblock %}

@@ -88,13 +88,15 @@ def candidato_create(request):
 
 def candidato_detail(request, pk):
     candidato = get_object_or_404(org_candidatos(request), pk=pk)
-    from .models import NotaEntrevista, AvaliacaoSession
+    from .models import NotaEntrevista, AvaliacaoSession, CandidatoNota
     nota = NotaEntrevista.objects.filter(candidato=candidato).first()
     avaliacao_session = candidato.avaliacao_sessions.order_by("-created_at").first()
+    notas_log = CandidatoNota.objects.filter(candidato=candidato).order_by("-criado_em")
     return render(request, "candidatos/detail.html", {
         "candidato": candidato,
         "nota": nota,
         "avaliacao_session": avaliacao_session,
+        "notas_log": notas_log,
     })
 
 
@@ -479,3 +481,19 @@ def analyse_cv_view(request):
         "metodo": extraido.get("metodo_extracao", "IA"),
     })
 
+
+
+@require_POST
+def adicionar_nota(request, pk):
+    from .models import CandidatoNota
+    candidato = get_object_or_404(
+        Candidato.objects.filter(organisation=request.user.organisation), pk=pk
+    )
+    texto = request.POST.get("texto", "").strip()
+    if texto:
+        CandidatoNota.objects.create(
+            candidato=candidato,
+            texto=texto,
+            criado_por=request.user,
+        )
+    return redirect(f"/candidatos/{pk}/")

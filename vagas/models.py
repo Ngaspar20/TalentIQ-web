@@ -50,6 +50,8 @@ class Vaga(models.Model):
     tipo_contrato = models.CharField(max_length=100, choices=CONTRATO_CHOICES, default="Tempo Inteiro")
     salario = models.CharField(max_length=100, blank=True)
     prazo_candidatura = models.CharField(max_length=100, blank=True)
+    prazo_data = models.DateField(null=True, blank=True)
+    numero_vagas = models.PositiveIntegerField(default=1)
     competencias_requeridas = models.JSONField(default=list)
     responsabilidades = models.JSONField(default=list)
     descricao = models.TextField(blank=True)

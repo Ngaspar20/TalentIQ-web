@@ -38,8 +38,9 @@ def org_vagas(request):
 
 
 def vaga_list(request):
+    from django.utils import timezone
     vagas = org_vagas(request).order_by("-created_at")
-    return render(request, "vagas/list.html", {"vagas": vagas})
+    return render(request, "vagas/list.html", {"vagas": vagas, "today": timezone.now().date()})
 
 
 @recruiter_required
@@ -70,6 +71,8 @@ def vaga_create(request):
             tipo_contrato=request.POST.get("tipo_contrato", "Tempo Inteiro"),
             salario=request.POST.get("salario", "").strip(),
             prazo_candidatura=request.POST.get("prazo_candidatura", "").strip(),
+            prazo_data=request.POST.get("prazo_data") or None,
+            numero_vagas=int(request.POST.get("numero_vagas", 1) or 1),
             competencias_requeridas=competencias,
             responsabilidades=responsabilidades,
             descricao=request.POST.get("descricao", "").strip(),
@@ -176,6 +179,8 @@ def vaga_edit(request, pk):
         vaga.tipo_contrato = request.POST.get("tipo_contrato", "Tempo Inteiro")
         vaga.salario = request.POST.get("salario", "").strip()
         vaga.prazo_candidatura = request.POST.get("prazo_candidatura", "").strip()
+        vaga.prazo_data = request.POST.get("prazo_data") or None
+        vaga.numero_vagas = int(request.POST.get("numero_vagas", 1) or 1)
         vaga.competencias_requeridas = competencias
         vaga.responsabilidades = responsabilidades
         vaga.descricao = request.POST.get("descricao", "").strip()
@@ -923,19 +928,39 @@ def comite_avaliacao_view(request, token):
 def comite_resultados(request, pk):
     from .models import ComiteSession, ComiteAvaliacao
     from candidatos.models import Candidato
+    from collections import Counter
 
     vaga = get_object_or_404(org_vagas(request), pk=pk)
     sessions = list(vaga.comite_sessions.prefetch_related("avaliacoes__candidato").order_by("created_at"))
     candidatos = list(Candidato.objects.filter(vaga=vaga, etapa="Entrevista").order_by("nome"))
 
-    # Build matrix: candidato → list of (session, avaliacao|None)
     matrix = []
     for c in candidatos:
         row = []
+        scores = []
+        recomendacoes = []
         for s in sessions:
             av = next((a for a in s.avaliacoes.all() if a.candidato_id == c.pk), None)
             row.append({"session": s, "av": av})
-        matrix.append({"candidato": c, "avaliacoes": row})
+            if av:
+                if av.pontuacao:
+                    scores.append(av.pontuacao)
+                if av.recomendacao:
+                    recomendacoes.append(av.recomendacao)
+
+        avg_score = round(sum(scores) / len(scores), 1) if scores else None
+        rec_count = Counter(recomendacoes)
+        consenso = rec_count.most_common(1)[0][0] if rec_count else None
+
+        matrix.append({
+            "candidato": c,
+            "avaliacoes": row,
+            "avg_score": avg_score,
+            "rec_count": dict(rec_count),
+            "consenso": consenso,
+            "n_submetido": len(recomendacoes),
+            "n_total": len(sessions),
+        })
 
     return render(request, "vagas/comite_resultados.html", {
         "vaga": vaga,
