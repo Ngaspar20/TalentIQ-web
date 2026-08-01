@@ -18,7 +18,6 @@ urlpatterns = [
     path("<uuid:pk>/guiao/<uuid:session_id>/download/", views.guiao_download, name="guiao_download"),
     path("juri/<uuid:token>/", views.guiao_juri_view, name="guiao_juri"),
     path("<uuid:pk>/comite/adicionar/", views.comite_adicionar_avaliador, name="comite_adicionar_avaliador"),
-    path("<uuid:pk>/comite/enviar-convites/", views.comite_enviar_convites, name="comite_enviar_convites"),
     path("comite/<uuid:token>/", views.comite_avaliacao_view, name="comite_avaliacao"),
     path("<uuid:pk>/comite/confirmar/", views.comite_confirmar_decisoes, name="comite_confirmar_decisoes"),
     path("<uuid:pk>/comite/<uuid:session_pk>/remover/", views.comite_remover_avaliador, name="comite_remover_avaliador"),
@@ -32,4 +31,5 @@ urlpatterns = [
     path("<uuid:pk>/shortlist/<uuid:candidato_pk>/entrevista/", views.mover_para_entrevista, name="mover_para_entrevista"),
     path("<uuid:pk>/relatorio/", views.relatorio_selecao, name="relatorio_selecao"),
     path("<uuid:pk>/relatorio/download/", views.relatorio_selecao_download, name="relatorio_selecao_download"),
+    path("<uuid:pk>/confirmar-notificacoes/", views.vaga_marcar_notificacoes, name="vaga_marcar_notificacoes"),
 ]

@@ -14,9 +14,15 @@
         </h1>
         <p>Carregue o CV do candidato — a IA extrai automaticamente o perfil completo</p>
     </div>
+    {% if vaga_sel %}
+    <a href="/vagas/{{ vaga_sel.pk }}/" class="btn-secondary">
+        <i class="fa-solid fa-arrow-left"></i> Voltar à Vaga
+    </a>
+    {% else %}
     <a href="/candidatos/" class="btn-secondary">
         <i class="fa-solid fa-arrow-left"></i> Voltar
     </a>
+    {% endif %}
 </div>
 
 <!-- Step 1: Select Vacancy -->

@@ -25,7 +25,11 @@
     </div>
     <div class="flex gap-2">
         <a href="/candidatos/{{ candidato.pk }}/editar/" class="btn-secondary"><i class="fa-solid fa-pen"></i> Editar</a>
+        {% if candidato.vaga %}
+        <a href="/vagas/{{ candidato.vaga.pk }}/" class="btn-secondary"><i class="fa-solid fa-arrow-left"></i> Voltar à Vaga</a>
+        {% else %}
         <a href="/candidatos/" class="btn-secondary"><i class="fa-solid fa-arrow-left"></i> Voltar</a>
+        {% endif %}
     </div>
 </div>
 

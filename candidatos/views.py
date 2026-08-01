@@ -80,10 +80,19 @@ def candidato_create(request):
             created_by=request.user,
         )
         messages.success(request, f"Candidato '{candidato.nome}' adicionado com sucesso!")
+        if vaga:
+            return redirect("vaga_detail", pk=vaga.pk)
         return redirect("candidato_list")
 
     vagas = Vaga.objects.filter(organisation=request.user.organisation, estado="Aberta", tor_aprovado=True)
-    return render(request, "candidatos/create.html", {"vagas": vagas})
+    vaga_sel = None
+    vaga_id_param = request.GET.get("vaga", "").strip()
+    if vaga_id_param:
+        try:
+            vaga_sel = Vaga.objects.get(pk=vaga_id_param, organisation=request.user.organisation)
+        except Vaga.DoesNotExist:
+            pass
+    return render(request, "candidatos/create.html", {"vagas": vagas, "vaga_sel": vaga_sel})
 
 
 def candidato_detail(request, pk):
@@ -313,13 +322,26 @@ def enviar_avaliacao_juri(request, pk):
 
 
 def _extrair_perguntas(texto):
-    """Extract numbered questions from interview guide text."""
+    """Extract P:/A: questions from interview guide text. Returns list of dicts."""
     import re
     perguntas = []
-    for m in re.finditer(r'^\s*\d+[\.\)]\s*(.+)', texto, re.MULTILINE):
-        q = m.group(1).strip()
-        if len(q) > 10:
-            perguntas.append(q)
+    current_p = None
+    current_criterio = ""
+    for line in texto.splitlines():
+        p_match = re.match(r'^P:\s*(.+)', line.strip())
+        a_match = re.match(r'^A:\s*(.+)', line.strip())
+        if p_match:
+            if current_p:
+                perguntas.append({"pergunta": current_p, "criterio": current_criterio})
+            current_p = p_match.group(1).strip()
+            current_criterio = ""
+        elif a_match and current_p:
+            current_criterio = a_match.group(1).strip()
+            perguntas.append({"pergunta": current_p, "criterio": current_criterio})
+            current_p = None
+            current_criterio = ""
+    if current_p:
+        perguntas.append({"pergunta": current_p, "criterio": current_criterio})
     return perguntas
 
 
@@ -351,9 +373,11 @@ def avaliacao_juri_view(request, token):
         session.notas = request.POST.get("notas", "").strip()
         # Save per-question responses
         respostas = []
-        for i, pergunta in enumerate(perguntas):
+        for i, item in enumerate(perguntas):
             nota = request.POST.get(f"resp_{i}", "").strip()
-            respostas.append({"pergunta": pergunta, "nota": nota})
+            score_raw = request.POST.get(f"qscore_{i}", "").strip()
+            score = int(score_raw) if score_raw.isdigit() and 1 <= int(score_raw) <= 5 else None
+            respostas.append({"pergunta": item["pergunta"], "criterio": item.get("criterio", ""), "score": score, "nota": nota})
         session.respostas_perguntas = respostas
         session.estado = AvaliacaoSession.ESTADO_SUBMETIDA
         session.save()

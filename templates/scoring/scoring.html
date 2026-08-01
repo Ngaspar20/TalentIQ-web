@@ -56,6 +56,9 @@
 
 <!-- Action buttons (separate from any form) -->
 <div class="flex items-center gap-3 mb-4">
+    <a href="/vagas/{{ vaga_sel.pk }}/" class="btn-secondary" style="flex-shrink:0;">
+        <i class="fa-solid fa-arrow-left"></i> Voltar à Vaga
+    </a>
     <form method="post" action="/scoring/calcular/" id="calc-form"
           onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<i class=\'fa-solid fa-circle-notch fa-spin\'></i> A calcular...';">
         {% csrf_token %}

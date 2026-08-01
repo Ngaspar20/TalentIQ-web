@@ -78,11 +78,28 @@
 
                 {% if perguntas %}
                 <div class="section-label"><i class="fa-solid fa-list-check"></i> Avaliação por pergunta</div>
-                {% for pergunta in perguntas %}
+                {% for item in perguntas %}
                 <div class="q-block">
                     <div style="display:flex;align-items:flex-start;gap:.65rem;margin-bottom:.5rem;">
                         <span class="q-num">{{ forloop.counter }}</span>
-                        <p style="font-size:.875rem;font-weight:600;color:#1e293b;line-height:1.5;">{{ pergunta }}</p>
+                        <div style="flex:1;">
+                            <p style="font-size:.875rem;font-weight:600;color:#1e293b;line-height:1.5;">{{ item.pergunta }}</p>
+                            {% if item.criterio %}
+                            <p style="font-size:.73rem;color:#8b5cf6;margin-top:.3rem;line-height:1.4;"><i class="fa-solid fa-magnifying-glass" style="font-size:.65rem;margin-right:.3rem;"></i>O que avaliar: {{ item.criterio }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:.35rem;align-items:center;margin:.4rem 0 .5rem;">
+                        {% for i in "12345" %}
+                        <button type="button"
+                                id="qstar-{{ c.pk }}-{{ forloop.parentloop.counter0 }}-{{ forloop.counter }}"
+                                style="font-size:1.3rem;color:#cbd5e1;cursor:pointer;border:none;background:none;padding:0;transition:transform .1s;"
+                                onclick="setQStar('{{ c.pk }}', {{ forloop.parentloop.counter0 }}, {{ forloop.counter }})">
+                            <i class="fa-regular fa-star"></i>
+                        </button>
+                        {% endfor %}
+                        <span id="qlbl-{{ c.pk }}-{{ forloop.counter0 }}" style="font-size:.78rem;color:#94a3b8;margin-left:.2rem;">— sem classificação</span>
+                        <input type="hidden" name="c{{ c.pk }}_qscore_{{ forloop.counter0 }}" id="qval-{{ c.pk }}-{{ forloop.counter0 }}">
                     </div>
                     <textarea name="c{{ c.pk }}_resp_{{ forloop.counter0 }}" rows="2"
                               placeholder="Observações sobre a resposta do candidato..." style="background:white;"></textarea>
@@ -159,6 +176,20 @@
 
 <script>
 const starLabels = ['', 'Muito fraco', 'Fraco', 'Adequado', 'Bom', 'Excelente'];
+
+function setQStar(candPk, qIdx, n) {
+    document.getElementById('qval-' + candPk + '-' + qIdx).value = n;
+    for (let i = 1; i <= 5; i++) {
+        const btn = document.getElementById('qstar-' + candPk + '-' + qIdx + '-' + i);
+        if (btn) {
+            const icon = btn.querySelector('i');
+            icon.className = i <= n ? 'fa-solid fa-star' : 'fa-regular fa-star';
+            icon.style.color = i <= n ? '#f59e0b' : '#cbd5e1';
+        }
+    }
+    const lbl = document.getElementById('qlbl-' + candPk + '-' + qIdx);
+    if (lbl) { lbl.textContent = starLabels[n]; lbl.style.color = '#f59e0b'; }
+}
 
 function setStar(candPk, n) {
     document.getElementById('pontuacao-' + candPk).value = n;

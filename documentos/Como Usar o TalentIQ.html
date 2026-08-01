@@ -1,0 +1,485 @@
+<title>Como usar o TalentIQ</title>
+<style>
+  :root {
+    --bg: #f7f6f3;
+    --surface: #ffffff;
+    --accent: #7c3aed;
+    --accent-soft: #ede9fe;
+    --accent-mid: #a78bfa;
+    --text: #1a1523;
+    --text-muted: #6b6480;
+    --border: #e5e0f5;
+    --line: #ddd6fe;
+    --phase-bg: #f3f0fd;
+    --tag-bg: #ede9fe;
+    --tag-text: #5b21b6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12101c;
+      --surface: #1c1830;
+      --accent: #a78bfa;
+      --accent-soft: #2a1f52;
+      --accent-mid: #7c3aed;
+      --text: #eeeaff;
+      --text-muted: #9b93c0;
+      --border: #2e2650;
+      --line: #3b3070;
+      --phase-bg: #1e1a30;
+      --tag-bg: #2e2060;
+      --tag-text: #c4b5fd;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #12101c;
+    --surface: #1c1830;
+    --accent: #a78bfa;
+    --accent-soft: #2a1f52;
+    --accent-mid: #7c3aed;
+    --text: #eeeaff;
+    --text-muted: #9b93c0;
+    --border: #2e2650;
+    --line: #3b3070;
+    --phase-bg: #1e1a30;
+    --tag-bg: #2e2060;
+    --tag-text: #c4b5fd;
+  }
+  :root[data-theme="light"] {
+    --bg: #f7f6f3;
+    --surface: #ffffff;
+    --accent: #7c3aed;
+    --accent-soft: #ede9fe;
+    --accent-mid: #a78bfa;
+    --text: #1a1523;
+    --text-muted: #6b6480;
+    --border: #e5e0f5;
+    --line: #ddd6fe;
+    --phase-bg: #f3f0fd;
+    --tag-bg: #ede9fe;
+    --tag-text: #5b21b6;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    line-height: 1.6;
+    padding: 2rem 1rem 5rem;
+  }
+
+  .page {
+    max-width: 660px;
+    margin: 0 auto;
+  }
+
+  /* Hero */
+  .hero {
+    margin-bottom: 3rem;
+  }
+  .hero-eyebrow {
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: .5rem;
+  }
+  .hero-title {
+    font-size: 1.85rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.2;
+    text-wrap: balance;
+    margin-bottom: .75rem;
+  }
+  .hero-sub {
+    font-size: .95rem;
+    color: var(--text-muted);
+    max-width: 520px;
+    line-height: 1.65;
+  }
+  .hero-divider {
+    margin-top: 1.75rem;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Phase label */
+  .phase-label {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--phase-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: .3rem .75rem;
+    margin-bottom: 1.25rem;
+    margin-top: 2.25rem;
+  }
+  .phase-label svg { flex-shrink: 0; }
+
+  /* Timeline */
+  .timeline {
+    position: relative;
+    padding-left: 52px;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 18px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: var(--line);
+    border-radius: 2px;
+  }
+
+  /* Step */
+  .step {
+    position: relative;
+    margin-bottom: 1rem;
+  }
+  .step-badge {
+    position: absolute;
+    left: -52px;
+    top: 14px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-size: .78rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid var(--bg);
+    box-shadow: 0 0 0 2px var(--accent);
+    z-index: 1;
+  }
+  .step-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.1rem;
+    transition: border-color .15s;
+  }
+  .step-card:hover {
+    border-color: var(--accent-mid);
+  }
+  .step-title {
+    font-size: .95rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: .35rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+  }
+  .step-tag {
+    font-size: .65rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    border-radius: 4px;
+    padding: .15rem .45rem;
+  }
+  .step-desc {
+    font-size: .85rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+  .step-detail {
+    margin-top: .5rem;
+    padding-top: .5rem;
+    border-top: 1px solid var(--border);
+    font-size: .78rem;
+    color: var(--text-muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem .75rem;
+  }
+  .step-detail span {
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+  }
+  .dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent-mid);
+    flex-shrink: 0;
+  }
+
+  /* Tips box */
+  .tips-box {
+    margin-top: 3rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 10px;
+    padding: 1.1rem 1.25rem;
+  }
+  .tips-box h3 {
+    font-size: .8rem;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: .75rem;
+  }
+  .tips-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+  }
+  .tips-list li {
+    font-size: .85rem;
+    color: var(--text-muted);
+    display: flex;
+    gap: .55rem;
+    align-items: flex-start;
+  }
+  .tips-list li::before {
+    content: '→';
+    color: var(--accent);
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: .05rem;
+  }
+</style>
+
+<div class="page">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-eyebrow">Guia de utilização</div>
+    <h1 class="hero-title">Como funciona o TalentIQ</h1>
+    <p class="hero-sub">
+      O TalentIQ guia o processo de recrutamento em 10 passos sequenciais — desde a publicação da vaga até à contratação. Cada passo desbloqueia o seguinte assim que estiver concluído.
+    </p>
+    <div class="hero-divider"></div>
+  </div>
+
+  <!-- Phase 1: Preparação -->
+  <div class="phase-label">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M6 3v3l2 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    Fase 1 — Preparação da Vaga
+  </div>
+
+  <div class="timeline">
+
+    <div class="step">
+      <div class="step-badge">1</div>
+      <div class="step-card">
+        <div class="step-title">Termos de Referência</div>
+        <div class="step-desc">
+          Carregue o documento ToR da vaga em PDF ou Word. Este documento é a base de todo o processo — define o cargo, requisitos e condições.
+        </div>
+        <div class="step-detail">
+          <span><span class="dot"></span>Formatos aceites: PDF, DOCX</span>
+          <span><span class="dot"></span>Obrigatório para avançar</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-badge">2</div>
+      <div class="step-card">
+        <div class="step-title">Análise IA do ToR</div>
+        <div class="step-desc">
+          A inteligência artificial lê o documento e extrai automaticamente: título do cargo, competências requeridas, anos de experiência e nível de formação.
+        </div>
+        <div class="step-detail">
+          <span><span class="dot"></span>Demora ~30 segundos</span>
+          <span><span class="dot"></span>Funciona mesmo sem ligação à IA (modo determinístico)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-badge">3</div>
+      <div class="step-card">
+        <div class="step-title">Aprovação do ToR</div>
+        <div class="step-desc">
+          Reveja os dados extraídos pela IA e corrija eventuais erros. Ao aprovar, a vaga fica activa e pronta a receber candidaturas.
+        </div>
+        <div class="step-detail">
+          <span><span class="dot"></span>Pode editar qualquer campo antes de aprovar</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Phase 2: Triagem -->
+  <div class="phase-label">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 3h8M3.5 6h5M5 9h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    Fase 2 — Triagem de Candidatos
+  </div>
+
+  <div class="timeline">
+
+    <div class="step">
+      <div class="step-badge">4</div>
+      <div class="step-card">
+        <div class="step-title">
+          Triagem de CVs
+          <span class="step-tag">Upload + Scoring</span>
+        </div>
+        <div class="step-desc">
+          Carregue um ou mais CVs (PDF ou Word). A IA extrai os dados de cada candidato e calcula um score de adequação de 0 a 100 face aos requisitos da vaga. Pode carregar candidatos individualmente ou em lote.
+        </div>
+        <div class="step-detail">
+          <span><span class="dot"></span>Score 75+ = forte adequação</span>
+          <span><span class="dot"></span>Score 50–74 = adequação moderada</span>
+          <span><span class="dot"></span>Score abaixo de 50 = fraca adequação</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-badge">5</div>
+      <div class="step-card">
+        <div class="step-title">
+          Shortlist para Entrevista
+          <span class="step-tag">Decisão manual</span>
+        </div>
+        <div class="step-desc">
+          Veja os candidatos ordenados por score. Seleccione quem avança para entrevista — os restantes permanecem em triagem e podem ser notificados na fase seguinte.
+        </div>
+        <div class="step-detail">
+          <span><span class="dot"></span>Acesso ao pipeline para ver o estado de cada candidato</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-badge">6</div>
+      <div class="step-card">
+        <div class="step-title">
+          Cartas de Notificação
+          <span class="step-tag">Novo</span>
+        </div>
+        <div class="step-desc">
+          Envie cartas de convite aos candidatos seleccionados para entrevista e cartas de exclusão aos que não avançaram na triagem. Os textos são gerados automaticamente e podem ser personalizados.
+        </div>
+        <div class="step-detail">
+          <span><span class="dot"></span>Carta de convite para entrevista</span>
+          <span><span class="dot"></span>Carta de exclusão de triagem</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Phase 3: Entrevistas -->
+  <div class="phase-label">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 9.5V3a1 1 0 011-1h6a1 1 0 011 1v6.5L6 8 2 9.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+    Fase 3 — Processo de Entrevista
+  </div>
+
+  <div class="timeline">
+
+    <div class="step">
+      <div class="step-badge">7</div>
+      <div class="step-card">
+        <div class="step-title">Guião de Entrevista</div>
+        <div class="step-desc">
+          Gere um guião de perguntas adaptado ao cargo. O presidente do júri recebe um link para rever e submeter o guião. O RH aprova e o guião fica disponível para download em Word.
+        </div>
+        <div class="step-detail">
+          <span><span class="dot"></span>10 perguntas estruturadas por categorias</span>
+          <span><span class="dot"></span>Inclui critérios de avaliação por pergunta</span>
+          <span><span class="dot"></span>Download em Word após aprovação</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-badge">8</div>
+      <div class="step-card">
+        <div class="step-title">
+          Comité de Avaliação
+          <span class="step-tag">Multi-avaliador</span>
+        </div>
+        <div class="step-desc">
+          Cada membro do júri recebe um link único para avaliar os candidatos entrevistados. O formulário mostra as perguntas do guião aprovado, com critérios de avaliação, pontuação por pergunta, pontos fortes/fracos e recomendação final. O RH confirma os resultados.
+        </div>
+        <div class="step-detail">
+          <span><span class="dot"></span>Link único por membro do júri</span>
+          <span><span class="dot"></span>Avaliação por pergunta + pontuação global</span>
+          <span><span class="dot"></span>Recomendação: Avançar · A considerar · Excluir</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Phase 4: Decisão -->
+  <div class="phase-label">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Fase 4 — Decisão Final
+  </div>
+
+  <div class="timeline">
+
+    <div class="step">
+      <div class="step-badge">9</div>
+      <div class="step-card">
+        <div class="step-title">Relatório de Seleção</div>
+        <div class="step-desc">
+          Gere o relatório final de seleção com o sumário das avaliações do comité. O responsável de RH revê e aprova o documento antes de ser partilhado.
+        </div>
+        <div class="step-detail">
+          <span><span class="dot"></span>Exportação em Word</span>
+          <span><span class="dot"></span>Inclui scores, recomendações e notas do júri</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-badge">10</div>
+      <div class="step-card">
+        <div class="step-title">
+          Decisão Final e Cartas
+          <span class="step-tag">Encerramento</span>
+        </div>
+        <div class="step-desc">
+          Marque cada candidato como Contratado, Rejeitado ou Em proposta. Gere e envie as cartas finais correspondentes — carta de oferta ou carta de exclusão pós-entrevista. O processo fica encerrado.
+        </div>
+        <div class="step-detail">
+          <span><span class="dot"></span>Carta de oferta de emprego</span>
+          <span><span class="dot"></span>Carta de exclusão pós-entrevista</span>
+          <span><span class="dot"></span>Candidatos movidos automaticamente no pipeline</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Tips -->
+  <div class="tips-box">
+    <h3>Notas importantes</h3>
+    <ul class="tips-list">
+      <li>Cada passo só desbloqueia após o anterior estar concluído. O sistema guia a sequência.</li>
+      <li>O pipeline de candidatos actualiza-se automaticamente conforme avança nos passos — não precisa de actualizar manualmente.</li>
+      <li>Os links partilhados com o júri (guião e avaliação) funcionam sem login — qualquer membro pode aceder directamente.</li>
+      <li>Se a ligação à IA falhar, o sistema usa análise determinística como reserva — o processo nunca pára.</li>
+      <li>Todos os documentos gerados (guião, relatório, cartas) ficam disponíveis para download em Word a qualquer momento.</li>
+    </ul>
+  </div>
+
+</div>
