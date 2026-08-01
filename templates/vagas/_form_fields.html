@@ -55,11 +55,6 @@
                 {% endwith %}
             </select>
         </div>
-        <div class="mb-4">
-            <label>Número de Vagas</label>
-            <input type="number" name="numero_vagas" class="form-input" min="1" max="99"
-                   value="{{ vaga.numero_vagas|default:1 }}">
-        </div>
     </div>
 
     <!-- Right: Requirements -->
@@ -102,14 +97,9 @@
                    value="{{ tor.salario|default:'' }}">
         </div>
         <div class="mb-4">
-            <label>Prazo de Candidatura</label>
+            <label>Prazo de Candidatura <span class="text-slate-400 font-normal text-xs">— texto livre (opcional)</span></label>
             <input type="text" name="prazo_candidatura" class="form-input" placeholder="Ex: 31 de Julho de 2026"
                    value="{{ tor.prazo_candidatura|default:'' }}">
-        </div>
-        <div class="mb-4">
-            <label>Prazo (data exacta)</label>
-            <input type="date" name="prazo_data" class="form-input"
-                   value="{{ vaga.prazo_data|date:'Y-m-d'|default:'' }}">
         </div>
     </div>
 </div>
