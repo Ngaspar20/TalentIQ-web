@@ -63,7 +63,7 @@
 
       {% if velocidade.triagem is not None %}
       <div style="display:flex; align-items:center; gap:14px; margin-bottom:12px;">
-        <div style="width:160px; font-size:13px; color:#1e293b; flex-shrink:0;">Candidatura → Triagem</div>
+        <div style="width:180px; font-size:13px; color:#1e293b; flex-shrink:0;">Candidatura → Triagem</div>
         <div style="flex:1; height:32px; background:#f8fafc; border-radius:6px; overflow:hidden; border:1px solid #e2e8f0;">
           <div style="width:{% widthratio velocidade.triagem max_vel 100 %}%; height:100%; background:#3b82f6; border-radius:6px; display:flex; align-items:center; padding-left:10px;">
             <span style="font-size:12px; font-weight:700; color:#fff;">{{ velocidade.triagem }}d</span>
@@ -73,9 +73,21 @@
       </div>
       {% endif %}
 
+      {% if velocidade.pre_seleccionado is not None %}
+      <div style="display:flex; align-items:center; gap:14px; margin-bottom:12px;">
+        <div style="width:180px; font-size:13px; color:#1e293b; flex-shrink:0;">Triagem → Pré-Seleccionado</div>
+        <div style="flex:1; height:32px; background:#f8fafc; border-radius:6px; overflow:hidden; border:1px solid #e2e8f0;">
+          <div style="width:{% widthratio velocidade.pre_seleccionado max_vel 100 %}%; height:100%; background:#f97316; border-radius:6px; display:flex; align-items:center; padding-left:10px;">
+            <span style="font-size:12px; font-weight:700; color:#fff;">{{ velocidade.pre_seleccionado }}d</span>
+          </div>
+        </div>
+        <div style="width:40px; font-size:14px; font-weight:700; text-align:right; color:#f97316;">{{ velocidade.pre_seleccionado }}d</div>
+      </div>
+      {% endif %}
+
       {% if velocidade.entrevista is not None %}
       <div style="display:flex; align-items:center; gap:14px; margin-bottom:12px;">
-        <div style="width:160px; font-size:13px; color:#1e293b; flex-shrink:0;">Triagem → Entrevista</div>
+        <div style="width:180px; font-size:13px; color:#1e293b; flex-shrink:0;">Pré-Seleccionado → Entrevista</div>
         <div style="flex:1; height:32px; background:#f8fafc; border-radius:6px; overflow:hidden; border:1px solid #e2e8f0;">
           <div style="width:{% widthratio velocidade.entrevista max_vel 100 %}%; height:100%; background:#8b5cf6; border-radius:6px; display:flex; align-items:center; padding-left:10px;">
             <span style="font-size:12px; font-weight:700; color:#fff;">{{ velocidade.entrevista }}d</span>
@@ -87,7 +99,7 @@
 
       {% if velocidade.proposta is not None %}
       <div style="display:flex; align-items:center; gap:14px; margin-bottom:0;">
-        <div style="width:160px; font-size:13px; color:#1e293b; flex-shrink:0;">Entrevista → Proposta</div>
+        <div style="width:180px; font-size:13px; color:#1e293b; flex-shrink:0;">Entrevista → Proposta</div>
         <div style="flex:1; height:32px; background:#f8fafc; border-radius:6px; overflow:hidden; border:1px solid #e2e8f0;">
           <div style="width:{% widthratio velocidade.proposta max_vel 100 %}%; height:100%; background:#f59e0b; border-radius:6px; display:flex; align-items:center; padding-left:10px;">
             <span style="font-size:12px; font-weight:700; color:#fff;">{{ velocidade.proposta }}d</span>
@@ -97,7 +109,7 @@
       </div>
       {% endif %}
 
-      {% if not velocidade.triagem and not velocidade.entrevista and not velocidade.proposta %}
+      {% if not velocidade.triagem and not velocidade.pre_seleccionado and not velocidade.entrevista and not velocidade.proposta %}
       <div class="text-center py-6 text-slate-400 text-sm">
         <i class="fa-solid fa-chart-simple fa-2x mb-2 block"></i>
         Sem candidatos em progresso para calcular velocidade
@@ -122,7 +134,8 @@
           <tr style="background:#f8fafc;">
             <th style="padding:10px 14px; text-align:left; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Vaga</th>
             <th style="padding:10px 14px; text-align:center; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">CV → Triagem</th>
-            <th style="padding:10px 14px; text-align:center; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Triagem → Entrevista</th>
+            <th style="padding:10px 14px; text-align:center; font-size:10px; color:#f97316; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Triagem → Pré-Selecc</th>
+            <th style="padding:10px 14px; text-align:center; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Pré-Selecc → Entrevista</th>
             <th style="padding:10px 14px; text-align:center; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Entrevista → Proposta</th>
           </tr>
         </thead>
@@ -145,13 +158,24 @@
               {% else %}<span style="color:#cbd5e1;">—</span>{% endif %}
             </td>
             <td style="padding:12px 14px; text-align:center;">
-              {% if row.triagem_entrevista is not None %}
-                {% if row.triagem_entrevista >= 40 %}
-                  <span style="display:inline-block; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:600; background:#f0fdf4; color:#10b981;">{{ row.triagem_entrevista }}%</span>
-                {% elif row.triagem_entrevista >= 20 %}
-                  <span style="display:inline-block; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:600; background:#fffbeb; color:#f59e0b;">{{ row.triagem_entrevista }}%</span>
+              {% if row.triagem_pre is not None %}
+                {% if row.triagem_pre >= 40 %}
+                  <span style="display:inline-block; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:600; background:#fff7ed; color:#f97316;">{{ row.triagem_pre }}%</span>
+                {% elif row.triagem_pre >= 20 %}
+                  <span style="display:inline-block; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:600; background:#fffbeb; color:#f59e0b;">{{ row.triagem_pre }}%</span>
                 {% else %}
-                  <span style="display:inline-block; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:600; background:#fef2f2; color:#ef4444;">{{ row.triagem_entrevista }}%</span>
+                  <span style="display:inline-block; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:600; background:#fef2f2; color:#ef4444;">{{ row.triagem_pre }}%</span>
+                {% endif %}
+              {% else %}<span style="color:#cbd5e1;">—</span>{% endif %}
+            </td>
+            <td style="padding:12px 14px; text-align:center;">
+              {% if row.pre_entrevista is not None %}
+                {% if row.pre_entrevista >= 40 %}
+                  <span style="display:inline-block; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:600; background:#f0fdf4; color:#10b981;">{{ row.pre_entrevista }}%</span>
+                {% elif row.pre_entrevista >= 20 %}
+                  <span style="display:inline-block; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:600; background:#fffbeb; color:#f59e0b;">{{ row.pre_entrevista }}%</span>
+                {% else %}
+                  <span style="display:inline-block; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:600; background:#fef2f2; color:#ef4444;">{{ row.pre_entrevista }}%</span>
                 {% endif %}
               {% else %}<span style="color:#cbd5e1;">—</span>{% endif %}
             </td>

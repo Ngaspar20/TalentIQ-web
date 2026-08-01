@@ -28,6 +28,7 @@ def dashboard(request):
     funnel = {
         "cvs": total_candidatos,
         "triagem": active_cands.filter(etapa="Em Triagem").count(),
+        "pre_seleccionado": active_cands.filter(etapa="Pré-Seleccionado").count(),
         "entrevista": active_cands.filter(etapa="Entrevista").count(),
         "proposta": active_cands.filter(etapa="Proposta").count(),
         "contratado": contratados,
@@ -36,12 +37,12 @@ def dashboard(request):
     # ── ATTENTION ITEMS ───────────────────────────────────────────────────────
     atencao = []
 
-    # Vagas paralidas: aberta > 20 dias, nenhum candidato em Entrevista/Proposta/Contratado
+    # Vagas paralidas: aberta > 20 dias, nenhum candidato em Pré-Seleccionado/Entrevista/Proposta/Contratado
     for v in open_vagas:
         days_open = (now - v.created_at).days
         if days_open <= 20:
             continue
-        advanced = v.candidatos.filter(etapa__in=["Entrevista", "Proposta", "Contratado"]).exists()
+        advanced = v.candidatos.filter(etapa__in=["Pré-Seleccionado", "Entrevista", "Proposta", "Contratado"]).exists()
         if advanced:
             continue
         in_triagem = v.candidatos.filter(etapa="Em Triagem").count()
@@ -95,6 +96,7 @@ def dashboard(request):
             "vaga": v,
             "cvs": cands.count(),
             "triagem": cands.filter(etapa="Em Triagem").count(),
+            "pre_seleccionado": cands.filter(etapa="Pré-Seleccionado").count(),
             "entrevista": cands.filter(etapa="Entrevista").count(),
             "proposta": cands.filter(etapa="Proposta").count(),
             "contratados": contratados_vaga,

@@ -24,6 +24,7 @@ def relatorios(request):
         return round(sum(days) / len(days))
 
     vel_triagem = avg_days_in_stage("Em Triagem")
+    vel_pre_seleccionado = avg_days_in_stage("Pré-Seleccionado")
     vel_entrevista = avg_days_in_stage("Entrevista")
     vel_proposta = avg_days_in_stage("Proposta")
 
@@ -39,6 +40,7 @@ def relatorios(request):
     # Slowest and fastest stages
     stage_times = {
         "Triagem": vel_triagem,
+        "Pré-Seleccionado": vel_pre_seleccionado,
         "Entrevista": vel_entrevista,
         "Proposta": vel_proposta,
     }
@@ -48,6 +50,7 @@ def relatorios(request):
 
     velocidade = {
         "triagem": vel_triagem,
+        "pre_seleccionado": vel_pre_seleccionado,
         "entrevista": vel_entrevista,
         "proposta": vel_proposta,
         "avg_ttf": avg_ttf,
@@ -58,7 +61,7 @@ def relatorios(request):
     }
 
     # Max days for bar width scaling
-    max_vel = max((v for v in [vel_triagem, vel_entrevista, vel_proposta] if v), default=1)
+    max_vel = max((v for v in [vel_triagem, vel_pre_seleccionado, vel_entrevista, vel_proposta] if v), default=1)
 
     # ── CONVERSÃO POR VAGA ────────────────────────────────────────────────────
     conv_rows = []
@@ -67,7 +70,8 @@ def relatorios(request):
         total = cands.count()
         if total == 0:
             continue
-        reached_triagem = cands.filter(etapa__in=["Em Triagem", "Entrevista", "Proposta", "Contratado"]).count()
+        reached_triagem = cands.filter(etapa__in=["Em Triagem", "Pré-Seleccionado", "Entrevista", "Proposta", "Contratado"]).count()
+        reached_pre = cands.filter(etapa__in=["Pré-Seleccionado", "Entrevista", "Proposta", "Contratado"]).count()
         reached_entrevista = cands.filter(etapa__in=["Entrevista", "Proposta", "Contratado"]).count()
         reached_proposta = cands.filter(etapa__in=["Proposta", "Contratado"]).count()
 
@@ -78,7 +82,8 @@ def relatorios(request):
             "vaga": v,
             "total": total,
             "cv_triagem": pct(reached_triagem, total),
-            "triagem_entrevista": pct(reached_entrevista, reached_triagem) if reached_triagem else None,
+            "triagem_pre": pct(reached_pre, reached_triagem) if reached_triagem else None,
+            "pre_entrevista": pct(reached_entrevista, reached_pre) if reached_pre else None,
             "entrevista_proposta": pct(reached_proposta, reached_entrevista) if reached_entrevista else None,
         })
 

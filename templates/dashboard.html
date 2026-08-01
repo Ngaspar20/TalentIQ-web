@@ -92,11 +92,22 @@
       <div style="color:#e2e8f0; font-size:16px; padding-bottom:28px;">›</div>
 
       <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:5px;">
+        <div class="text-lg font-extrabold text-slate-800">{{ funnel.pre_seleccionado }}</div>
+        <div style="width:100%; height:{% widthratio funnel.pre_seleccionado funnel.cvs 100 %}px; background:#f97316; border-radius:5px 5px 0 0; min-height:4px;"></div>
+        <div class="text-xs text-slate-500 text-center">Pré-Seleccionado</div>
+        {% if funnel.triagem > 0 and funnel.pre_seleccionado > 0 %}
+        <div class="text-xs text-slate-400">{% widthratio funnel.pre_seleccionado funnel.triagem 100 %}% da triagem</div>
+        {% endif %}
+      </div>
+
+      <div style="color:#e2e8f0; font-size:16px; padding-bottom:28px;">›</div>
+
+      <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:5px;">
         <div class="text-lg font-extrabold text-slate-800">{{ funnel.entrevista }}</div>
         <div style="width:100%; height:{% widthratio funnel.entrevista funnel.cvs 100 %}px; background:#f59e0b; border-radius:5px 5px 0 0; min-height:4px;"></div>
         <div class="text-xs text-slate-500 text-center">Entrevista</div>
-        {% if funnel.triagem > 0 and funnel.entrevista > 0 %}
-        <div class="text-xs text-slate-400">{% widthratio funnel.entrevista funnel.triagem 100 %}% da triagem</div>
+        {% if funnel.pre_seleccionado > 0 and funnel.entrevista > 0 %}
+        <div class="text-xs text-slate-400">{% widthratio funnel.entrevista funnel.pre_seleccionado 100 %}% pré-seleccionados</div>
         {% endif %}
       </div>
 
@@ -135,6 +146,7 @@
             <th style="padding:8px 10px; text-align:left; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Vaga</th>
             <th style="padding:8px 10px; text-align:center; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">CVs</th>
             <th style="padding:8px 10px; text-align:center; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Triagem</th>
+            <th style="padding:8px 10px; text-align:center; font-size:10px; color:#f97316; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Pré-Seleccionado</th>
             <th style="padding:8px 10px; text-align:center; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Entrevista</th>
             <th style="padding:8px 10px; text-align:center; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Proposta</th>
             <th style="padding:8px 10px; text-align:center; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Headcount</th>
@@ -151,6 +163,7 @@
             </td>
             <td style="padding:10px; text-align:center; font-weight:700; color:#1e293b;">{{ row.cvs }}</td>
             <td style="padding:10px; text-align:center; color:#1e293b;">{{ row.triagem }}</td>
+            <td style="padding:10px; text-align:center; color:{% if row.pre_seleccionado > 0 %}#f97316; font-weight:700;{% else %}#94a3b8;{% endif %}">{{ row.pre_seleccionado }}</td>
             <td style="padding:10px; text-align:center;
               {% if row.entrevista == 0 and row.cvs > 0 %}color:#f59e0b; font-weight:700;{% else %}color:#1e293b;{% endif %}">
               {{ row.entrevista }}{% if row.entrevista == 0 and row.triagem > 0 %} ⚠{% endif %}

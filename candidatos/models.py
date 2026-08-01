@@ -9,6 +9,7 @@ class Candidato(models.Model):
     ETAPA_CHOICES = [
         ("Candidatura Recebida", "Candidatura Recebida"),
         ("Em Triagem", "Em Triagem"),
+        ("Pré-Seleccionado", "Pré-Seleccionado"),
         ("Entrevista", "Entrevista"),
         ("Proposta", "Proposta"),
         ("Contratado", "Contratado"),
