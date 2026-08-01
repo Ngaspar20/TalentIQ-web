@@ -3,197 +3,225 @@
 {% block breadcrumb %}Dashboard{% endblock %}
 
 {% block content %}
-<div style="max-width:900px;">
+<div style="max-width:1100px;">
 
-  <!-- Page header -->
-  <div class="mb-6">
+<!-- ── HEADER ──────────────────────────────────────────────────────────────── -->
+<div class="flex items-start justify-between mb-5 flex-wrap gap-3">
+  <div>
     <h1 class="text-xl font-extrabold text-slate-800 flex items-center gap-2">
       <i class="fa-solid fa-chart-line" style="color:#f59e0b;"></i>
       Dashboard de Recrutamento
     </h1>
-    <p class="text-slate-500 text-sm mt-1">{{ user.organisation.name }}</p>
+    <p class="text-slate-500 text-sm mt-0.5">{{ user.organisation.name }}</p>
   </div>
 
-  {% if atencao %}
-  <!-- ① PRECISA DE ATENÇÃO -->
-  <div class="mb-1">
-    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
-      <i class="fa-solid fa-bolt" style="color:#ef4444;"></i> Precisa de atenção
-    </p>
+  <!-- Mode tabs -->
+  <div style="display:flex; border:1.5px solid #e2e8f0; border-radius:10px; overflow:hidden; background:#f8fafc;">
+    <a href="?modo=recrutador&periodo={{ periodo }}"
+       style="padding:7px 18px; font-size:.82rem; font-weight:700; text-decoration:none; display:flex; align-items:center; gap:6px;
+              {% if modo == 'recrutador' %}background:#1e293b; color:#fff;{% else %}color:#64748b;{% endif %}">
+      <i class="fa-solid fa-list-check"></i> Recrutador
+    </a>
+    <a href="?modo=chefe&periodo={{ periodo }}"
+       style="padding:7px 18px; font-size:.82rem; font-weight:700; text-decoration:none; display:flex; align-items:center; gap:6px;
+              {% if modo == 'chefe' %}background:#1e293b; color:#fff;{% else %}color:#64748b;{% endif %}">
+      <i class="fa-solid fa-chart-bar"></i> Chefe de Divisão
+    </a>
   </div>
-  <div class="flex flex-col gap-2 mb-6">
-    {% for item in atencao %}
-    <div style="border-radius:8px; padding:12px 16px; display:flex; align-items:center; gap:12px;
-      {% if item.tipo == 'red' %}background:#fef2f2; border:1px solid #fecaca;{% else %}background:#fffbeb; border:1px solid #fde68a;{% endif %}">
-      <div style="width:26px; height:26px; border-radius:6px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-weight:700; font-size:13px; color:#fff;
-        {% if item.tipo == 'red' %}background:#ef4444;{% else %}background:#f59e0b;{% endif %}">!</div>
-      <div style="flex:1;">
-        <div class="font-semibold text-slate-800 text-sm">{{ item.titulo }}</div>
-        <div class="text-xs text-slate-500 mt-0.5">{{ item.sub }}</div>
-        <a href="{{ item.link }}" class="text-xs font-semibold text-blue-600 mt-1 inline-block hover:underline">
-          → {{ item.link_label }}
-        </a>
+</div>
+
+<!-- ── PERIOD FILTER (both views) ──────────────────────────────────────────── -->
+<div class="flex items-center gap-2 mb-5 flex-wrap">
+  <span style="font-size:.72rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em;">Período:</span>
+  {% for p_val, p_label in period_options %}
+  <a href="?modo={{ modo }}&periodo={{ p_val }}"
+     style="padding:4px 12px; border-radius:20px; font-size:.78rem; font-weight:600; text-decoration:none;
+            {% if periodo == p_val %}background:#1e293b; color:#fff;{% else %}background:#f1f5f9; color:#64748b; border:1px solid #e2e8f0;{% endif %}">
+    {{ p_label }}
+  </a>
+  {% endfor %}
+</div>
+
+{% if not modo %}{% comment %}fallback safety{% endcomment %}{% endif %}
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+{% if modo == 'recrutador' %}
+<!-- ── RECRUITER VIEW ──────────────────────────────────────────────────────── -->
+
+  <!-- Hero row -->
+  <div class="grid grid-cols-4 gap-3 mb-5">
+
+    <div class="section-card text-center" style="margin-bottom:0; padding:18px 12px;">
+      <div class="text-3xl font-extrabold text-slate-800">{{ total_vagas }}</div>
+      <div class="text-xs text-slate-500 mt-1 font-semibold uppercase tracking-wide">Vagas Abertas</div>
+      {% if vagas_criticas_count > 0 %}
+      <div style="margin-top:6px;">
+        <span style="background:#fef2f2; color:#ef4444; font-size:.7rem; font-weight:700; padding:2px 8px; border-radius:10px; border:1px solid #fecaca;">
+          {{ vagas_criticas_count }} crítica{{ vagas_criticas_count|pluralize:"s" }}
+        </span>
       </div>
-      <div class="text-xs text-slate-400 whitespace-nowrap pl-2">{{ item.age }}</div>
+      {% endif %}
     </div>
-    {% endfor %}
+
+    <div class="section-card text-center" style="margin-bottom:0; padding:18px 12px;">
+      <div class="text-3xl font-extrabold text-slate-800">{{ total_ativos }}</div>
+      <div class="text-xs text-slate-500 mt-1 font-semibold uppercase tracking-wide">Candidatos Activos</div>
+    </div>
+
+    <div class="section-card text-center" style="margin-bottom:0; padding:18px 12px;">
+      <div class="text-3xl font-extrabold {% if acoes_count > 0 %}text-amber-600{% else %}text-slate-800{% endif %}">
+        {{ acoes_count }}
+      </div>
+      <div class="text-xs text-slate-500 mt-1 font-semibold uppercase tracking-wide">Acções Pendentes</div>
+      {% if acoes_count > 0 %}
+      <div style="margin-top:6px;">
+        <span style="background:#fffbeb; color:#d97706; font-size:.7rem; font-weight:700; padding:2px 8px; border-radius:10px; border:1px solid #fde68a;">
+          requer atenção
+        </span>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="section-card text-center" style="margin-bottom:0; padding:18px 12px;">
+      <div class="text-3xl font-extrabold {% if vagas_risco %}text-red-500{% else %}text-slate-800{% endif %}">
+        {{ vagas_risco|length }}
+      </div>
+      <div class="text-xs text-slate-500 mt-1 font-semibold uppercase tracking-wide">Vagas em Risco</div>
+      {% if vagas_aviso_count > 0 and vagas_criticas_count == 0 %}
+      <div style="margin-top:6px;">
+        <span style="background:#fffbeb; color:#d97706; font-size:.7rem; font-weight:700; padding:2px 8px; border-radius:10px; border:1px solid #fde68a;">
+          {{ vagas_aviso_count }} em aviso
+        </span>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- Pending Actions -->
+  {% if acoes %}
+  <div class="section-card mb-5" style="padding:20px 24px;">
+    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
+      <i class="fa-solid fa-bolt" style="color:#f59e0b;"></i> Acções pendentes
+    </p>
+    <div class="flex flex-col gap-3">
+      {% for a in acoes %}
+      <div style="display:flex; align-items:flex-start; gap:12px; padding:12px 14px; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0;">
+        <div style="width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:{{ a.color }}20; color:{{ a.color }}; font-size:.85rem; margin-top:1px;">
+          <i class="fa-solid {{ a.icon }}"></i>
+        </div>
+        <div style="flex:1; min-width:0;">
+          <div class="font-semibold text-slate-800 text-sm">{{ a.titulo }}</div>
+          <div style="font-size:.75rem; color:#64748b; margin-top:2px; display:flex; align-items:center; gap:5px;">
+            <i class="fa-solid fa-circle-info" style="color:#94a3b8; font-size:.65rem;"></i>
+            {{ a.porque }}
+          </div>
+          <a href="{{ a.link }}" style="font-size:.75rem; font-weight:700; color:{{ a.color }}; margin-top:5px; display:inline-block; text-decoration:none;">
+            → {{ a.label }}
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
   </div>
   {% endif %}
 
-  <!-- ② KPI STRIP -->
-  <div class="grid grid-cols-4 gap-3 mb-6">
-    <div class="section-card text-center" style="margin-bottom:0; padding:16px;">
-      <div class="text-3xl font-extrabold text-slate-800">{{ total_vagas }}</div>
-      <div class="text-xs text-slate-500 mt-1 font-semibold uppercase tracking-wide">Vagas abertas</div>
-    </div>
-    <div class="section-card text-center" style="margin-bottom:0; padding:16px;">
-      <div class="text-3xl font-extrabold text-slate-800">{{ total_candidatos }}</div>
-      <div class="text-xs text-slate-500 mt-1 font-semibold uppercase tracking-wide">Candidatos</div>
-    </div>
-    <div class="section-card text-center" style="margin-bottom:0; padding:16px;">
-      <div class="text-3xl font-extrabold text-slate-800">{{ taxa_conversao }}%</div>
-      <div class="text-xs text-slate-500 mt-1 font-semibold uppercase tracking-wide">Taxa CV → Contratado</div>
-    </div>
-    <div class="section-card text-center" style="margin-bottom:0; padding:16px;">
-      <div class="text-3xl font-extrabold text-slate-800">{{ media_dias }}d</div>
-      <div class="text-xs text-slate-500 mt-1 font-semibold uppercase tracking-wide">Média dias em aberto</div>
+  <!-- Vagas em Risco -->
+  {% if vagas_risco %}
+  <div class="section-card mb-5" style="padding:20px 24px;">
+    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
+      <i class="fa-solid fa-triangle-exclamation" style="color:#ef4444;"></i> Vagas em risco
+    </p>
+    <div class="flex flex-col gap-2">
+      {% for v in vagas_risco %}
+      <div style="display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:8px;
+                  {% if v.nivel == 'critico' %}background:#fef2f2; border:1px solid #fecaca;{% else %}background:#fffbeb; border:1px solid #fde68a;{% endif %}">
+        <div style="width:8px; height:8px; border-radius:50%; flex-shrink:0;
+                    {% if v.nivel == 'critico' %}background:#ef4444;{% else %}background:#f59e0b;{% endif %}"></div>
+        <div style="flex:1; min-width:0;">
+          <a href="/vagas/{{ v.vaga.pk }}/" class="font-semibold text-slate-800 text-sm hover:underline" style="text-decoration:none;">
+            {{ v.vaga.titulo }}
+          </a>
+          <div style="font-size:.72rem; color:#64748b; margin-top:1px;">{{ v.motivo }}</div>
+        </div>
+        <span style="font-size:.72rem; font-weight:700; padding:3px 9px; border-radius:10px; white-space:nowrap; flex-shrink:0;
+                     {% if v.nivel == 'critico' %}background:#fecaca; color:#b91c1c;{% else %}background:#fde68a; color:#92400e;{% endif %}">
+          {{ v.days_open }}d aberta
+        </span>
+      </div>
+      {% endfor %}
     </div>
   </div>
+  {% endif %}
 
-  <!-- ③ FUNNEL + TABLE -->
-  <div class="section-card" style="margin-bottom:0;">
-    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Funil global — todas as vagas abertas</p>
-
-    <!-- Funnel bars -->
-    {% if funnel.cvs > 0 %}
-    <div style="display:flex; align-items:flex-end; gap:6px; margin-bottom:20px;">
-
-      {% with max_val=funnel.cvs %}
-
-      <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:5px;">
-        <div class="text-lg font-extrabold text-slate-800">{{ funnel.cvs }}</div>
-        <div style="width:100%; height:100px; background:#3b82f6; border-radius:5px 5px 0 0;"></div>
-        <div class="text-xs text-slate-500 text-center">CVs recebidos</div>
-      </div>
-
-      <div style="color:#e2e8f0; font-size:16px; padding-bottom:28px;">›</div>
-
-      <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:5px;">
-        <div class="text-lg font-extrabold text-slate-800">{{ funnel.triagem }}</div>
-        {% with h=funnel.triagem|default:0 %}
-        <div style="width:100%; height:{% widthratio funnel.triagem funnel.cvs 100 %}px; background:#8b5cf6; border-radius:5px 5px 0 0; min-height:4px;"></div>
-        {% endwith %}
-        <div class="text-xs text-slate-500 text-center">Em Triagem</div>
-        {% if funnel.cvs > 0 and funnel.triagem > 0 %}
-        <div class="text-xs text-slate-400">{% widthratio funnel.triagem funnel.cvs 100 %}% dos CVs</div>
-        {% endif %}
-      </div>
-
-      <div style="color:#e2e8f0; font-size:16px; padding-bottom:28px;">›</div>
-
-      <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:5px;">
-        <div class="text-lg font-extrabold text-slate-800">{{ funnel.pre_seleccionado }}</div>
-        <div style="width:100%; height:{% widthratio funnel.pre_seleccionado funnel.cvs 100 %}px; background:#f97316; border-radius:5px 5px 0 0; min-height:4px;"></div>
-        <div class="text-xs text-slate-500 text-center">Pré-Seleccionado</div>
-        {% if funnel.triagem > 0 and funnel.pre_seleccionado > 0 %}
-        <div class="text-xs text-slate-400">{% widthratio funnel.pre_seleccionado funnel.triagem 100 %}% da triagem</div>
-        {% endif %}
-      </div>
-
-      <div style="color:#e2e8f0; font-size:16px; padding-bottom:28px;">›</div>
-
-      <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:5px;">
-        <div class="text-lg font-extrabold text-slate-800">{{ funnel.entrevista }}</div>
-        <div style="width:100%; height:{% widthratio funnel.entrevista funnel.cvs 100 %}px; background:#f59e0b; border-radius:5px 5px 0 0; min-height:4px;"></div>
-        <div class="text-xs text-slate-500 text-center">Entrevista</div>
-        {% if funnel.pre_seleccionado > 0 and funnel.entrevista > 0 %}
-        <div class="text-xs text-slate-400">{% widthratio funnel.entrevista funnel.pre_seleccionado 100 %}% pré-seleccionados</div>
-        {% endif %}
-      </div>
-
-      <div style="color:#e2e8f0; font-size:16px; padding-bottom:28px;">›</div>
-
-      <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:5px;">
-        <div class="text-lg font-extrabold text-slate-800">{{ funnel.proposta }}</div>
-        <div style="width:100%; height:{% widthratio funnel.proposta funnel.cvs 100 %}px; background:#10b981; border-radius:5px 5px 0 0; min-height:4px;"></div>
-        <div class="text-xs text-slate-500 text-center">Proposta</div>
-        {% if funnel.entrevista > 0 and funnel.proposta > 0 %}
-        <div class="text-xs text-slate-400">{% widthratio funnel.proposta funnel.entrevista 100 %}% das entrev.</div>
-        {% endif %}
-      </div>
-
-      <div style="color:#e2e8f0; font-size:16px; padding-bottom:28px;">›</div>
-
-      <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:5px;">
-        <div class="text-lg font-extrabold text-slate-800">{{ funnel.contratado }}</div>
-        <div style="width:100%; height:{% widthratio funnel.contratado funnel.cvs 100 %}px; background:#0f766e; border-radius:5px 5px 0 0; min-height:4px;"></div>
-        <div class="text-xs text-slate-500 text-center">Contratado</div>
-        {% if funnel.proposta > 0 and funnel.contratado > 0 %}
-        <div class="text-xs text-slate-400">{% widthratio funnel.contratado funnel.proposta 100 %}% das propostas</div>
-        {% endif %}
-      </div>
-
-      {% endwith %}
+  <!-- Per-Vaga Table -->
+  <div class="section-card" style="padding:0; overflow:hidden;">
+    <div style="padding:16px 20px; border-bottom:1px solid #f1f5f9;">
+      <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Vagas abertas — detalhe por processo</p>
     </div>
-    {% endif %}
-
-    <!-- Per-vaga table -->
     {% if vaga_rows %}
-    <div style="border-top:1px solid #e2e8f0; margin-top:4px;">
+    <div style="overflow-x:auto;">
       <table style="width:100%; border-collapse:collapse; font-size:12px;">
         <thead>
           <tr style="background:#f8fafc;">
-            <th style="padding:8px 10px; text-align:left; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Vaga</th>
-            <th style="padding:8px 10px; text-align:center; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">CVs</th>
-            <th style="padding:8px 10px; text-align:center; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Triagem</th>
-            <th style="padding:8px 10px; text-align:center; font-size:10px; color:#f97316; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Pré-Seleccionado</th>
-            <th style="padding:8px 10px; text-align:center; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Entrevista</th>
-            <th style="padding:8px 10px; text-align:center; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Proposta</th>
-            <th style="padding:8px 10px; text-align:center; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Headcount</th>
-            <th style="padding:8px 10px; text-align:center; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Score IA</th>
-            <th style="padding:8px 10px; text-align:center; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Prazo / Dias</th>
+            <th style="padding:9px 14px; text-align:left; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0; white-space:nowrap;">Vaga</th>
+            <th style="padding:9px 10px; text-align:center; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">CVs</th>
+            <th style="padding:9px 10px; text-align:center; font-size:10px; color:#3b82f6; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Candidatura</th>
+            <th style="padding:9px 10px; text-align:center; font-size:10px; color:#f59e0b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Entrevista</th>
+            <th style="padding:9px 10px; text-align:center; font-size:10px; color:#06b6d4; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Proposta</th>
+            <th style="padding:9px 10px; text-align:center; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Headcount</th>
+            <th style="padding:9px 10px; text-align:center; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Score IA</th>
+            <th style="padding:9px 10px; text-align:center; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0; white-space:nowrap;">Prazo / Dias</th>
           </tr>
         </thead>
         <tbody>
           {% for row in vaga_rows %}
-          <tr style="border-bottom:1px solid #f1f5f9;" onmouseover="this.style.background='#fffbeb'" onmouseout="this.style.background=''">
-            <td style="padding:10px 10px;">
-              <a href="/vagas/{{ row.vaga.pk }}/" class="font-semibold text-slate-800 text-sm hover:text-amber-600">{{ row.vaga.titulo }}</a>
-              <div class="text-xs text-slate-400 mt-0.5">{{ row.vaga.departamento }}{% if row.vaga.local %} · {{ row.vaga.local }}{% endif %}</div>
+          <tr style="border-bottom:1px solid #f1f5f9; {% if row.risco == 'critico' %}background:#fff9f9;{% elif row.risco == 'aviso' %}background:#fffdf0;{% endif %}"
+              onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='{% if row.risco == "critico" %}#fff9f9{% elif row.risco == "aviso" %}#fffdf0{% else %}{% endif %}'">
+            <td style="padding:11px 14px;">
+              <div style="display:flex; align-items:center; gap:6px;">
+                {% if row.risco == 'critico' %}
+                <i class="fa-solid fa-circle-exclamation" style="color:#ef4444; font-size:.75rem; flex-shrink:0;"></i>
+                {% elif row.risco == 'aviso' %}
+                <i class="fa-solid fa-triangle-exclamation" style="color:#f59e0b; font-size:.75rem; flex-shrink:0;"></i>
+                {% endif %}
+                <div>
+                  <a href="/vagas/{{ row.vaga.pk }}/" class="font-semibold text-slate-800 hover:text-amber-600" style="font-size:.82rem;">{{ row.vaga.titulo }}</a>
+                  <div class="text-xs text-slate-400 mt-0.5">{{ row.vaga.departamento }}{% if row.vaga.local %} · {{ row.vaga.local }}{% endif %}</div>
+                </div>
+              </div>
             </td>
-            <td style="padding:10px; text-align:center; font-weight:700; color:#1e293b;">{{ row.cvs }}</td>
-            <td style="padding:10px; text-align:center; color:#1e293b;">{{ row.triagem }}</td>
-            <td style="padding:10px; text-align:center; color:{% if row.pre_seleccionado > 0 %}#f97316; font-weight:700;{% else %}#94a3b8;{% endif %}">{{ row.pre_seleccionado }}</td>
-            <td style="padding:10px; text-align:center;
-              {% if row.entrevista == 0 and row.cvs > 0 %}color:#f59e0b; font-weight:700;{% else %}color:#1e293b;{% endif %}">
-              {{ row.entrevista }}{% if row.entrevista == 0 and row.triagem > 0 %} ⚠{% endif %}
+            <td style="padding:11px 10px; text-align:center; font-weight:700; color:#1e293b;">{{ row.cvs }}</td>
+            <td style="padding:11px 10px; text-align:center; color:#3b82f6; font-weight:600;">{{ row.candidatura }}</td>
+            <td style="padding:11px 10px; text-align:center; {% if row.entrevista == 0 and row.cvs > 0 %}color:#f59e0b; font-weight:700;{% else %}color:#1e293b;{% endif %}">
+              {{ row.entrevista }}
             </td>
-            <td style="padding:10px; text-align:center; color:#1e293b;">{{ row.proposta }}</td>
-            <td style="padding:10px; text-align:center;">
+            <td style="padding:11px 10px; text-align:center; color:#1e293b;">{{ row.proposta }}</td>
+            <td style="padding:11px 10px; text-align:center;">
               <span style="font-weight:700; {% if row.contratados >= row.numero_vagas %}color:#10b981;{% else %}color:#1e293b;{% endif %}">
                 {{ row.contratados }}/{{ row.numero_vagas }}
               </span>
               {% if row.contratados >= row.numero_vagas %}
-              <div class="text-xs text-emerald-600">completo</div>
+              <div style="font-size:.65rem; color:#059669; font-weight:700; text-transform:uppercase;">completo</div>
               {% endif %}
             </td>
-            <td style="padding:10px; text-align:center;">
+            <td style="padding:11px 10px; text-align:center;">
               {% if row.score_medio is not None %}
-              <span style="display:inline-flex; align-items:center; gap:4px;">
-                <span style="width:7px; height:7px; border-radius:50%; background:{% if row.score_medio >= 70 %}#10b981{% else %}#f59e0b{% endif %};"></span>
-                {{ row.score_medio }} pts
+              <span style="display:inline-flex; align-items:center; gap:4px; font-size:.8rem;">
+                <span style="width:7px; height:7px; border-radius:50%; background:{% if row.score_medio >= 75 %}#10b981{% elif row.score_medio >= 50 %}#3b82f6{% else %}#f59e0b{% endif %};"></span>
+                {{ row.score_medio }}%
               </span>
               {% else %}
-              <span class="text-slate-300">—</span>
+              <span style="color:#cbd5e1;">—</span>
               {% endif %}
             </td>
-            <td style="padding:10px; text-align:center;">
+            <td style="padding:11px 10px; text-align:center;">
               {% if row.prazo_data %}
-              <div style="{% if row.prazo_vencido %}color:#ef4444; font-weight:700;{% else %}color:#1e293b;{% endif %} font-size:11px;">
+              <div style="{% if row.prazo_vencido %}color:#ef4444; font-weight:700;{% else %}color:#475569;{% endif %} font-size:.72rem;">
                 {{ row.prazo_data|date:"d/m/Y" }}{% if row.prazo_vencido %} <i class="fa-solid fa-triangle-exclamation"></i>{% endif %}
               </div>
               {% endif %}
-              <div style="{% if row.days_open > 45 %}color:#ef4444; font-weight:700;{% elif row.days_open > 30 %}color:#f59e0b; font-weight:600;{% else %}color:#94a3b8;{% endif %} font-size:11px;">
+              <div style="{% if row.days_open >= 30 %}color:#ef4444; font-weight:700;{% elif row.days_open >= 15 %}color:#f59e0b; font-weight:600;{% else %}color:#94a3b8;{% endif %} font-size:.72rem;">
                 {{ row.days_open }}d aberta
               </div>
             </td>
@@ -203,13 +231,194 @@
       </table>
     </div>
     {% else %}
-    <div class="text-center py-8 text-slate-400 text-sm">
-      <i class="fa-solid fa-inbox fa-2x mb-2 block"></i>
+    <div style="text-align:center; padding:48px 0; color:#94a3b8; font-size:.85rem;">
+      <i class="fa-solid fa-inbox fa-2x" style="display:block; margin-bottom:8px;"></i>
       Nenhuma vaga aberta com candidatos
     </div>
     {% endif %}
+  </div>
+
+
+{% else %}
+<!-- ── DIVISION HEAD VIEW ───────────────────────────────────────────────────── -->
+
+  <!-- Hero KPIs with deltas -->
+  <div class="grid grid-cols-4 gap-3 mb-5">
+
+    <!-- Vagas Abertas -->
+    <div class="section-card" style="margin-bottom:0; padding:18px 16px;">
+      <div style="font-size:.7rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.07em; margin-bottom:6px;">Vagas Abertas</div>
+      <div style="font-size:2.4rem; font-weight:900; color:#1e293b; line-height:1;">{{ total_vagas }}</div>
+      <div style="font-size:.72rem; color:#94a3b8; margin-top:4px;">posições em aberto</div>
+    </div>
+
+    <!-- Candidatos -->
+    <div class="section-card" style="margin-bottom:0; padding:18px 16px;">
+      <div style="font-size:.7rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.07em; margin-bottom:6px;">Candidatos</div>
+      <div style="display:flex; align-items:baseline; gap:8px;">
+        <div style="font-size:2.4rem; font-weight:900; color:#1e293b; line-height:1;">{{ total_ativos }}</div>
+        {% if delta_candidatos %}
+        <span style="font-size:.75rem; font-weight:700; padding:2px 7px; border-radius:8px;
+                     {% if delta_candidatos.good %}background:#f0fdf4; color:#16a34a;{% else %}background:#fef2f2; color:#dc2626;{% endif %}">
+          {{ delta_candidatos.label }}
+        </span>
+        {% endif %}
+      </div>
+      <div style="font-size:.72rem; color:#94a3b8; margin-top:4px;">activos no pipeline</div>
+    </div>
+
+    <!-- Tempo Médio para Contratar -->
+    <div class="section-card" style="margin-bottom:0; padding:18px 16px;">
+      <div style="font-size:.7rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.07em; margin-bottom:6px;">Tempo Médio p/ Contratar</div>
+      <div style="display:flex; align-items:baseline; gap:8px;">
+        <div style="font-size:2.4rem; font-weight:900; color:#1e293b; line-height:1;">{{ tempo_medio }}<span style="font-size:1.1rem; color:#64748b;">d</span></div>
+        {% if delta_tempo %}
+        <span style="font-size:.75rem; font-weight:700; padding:2px 7px; border-radius:8px;
+                     {% if delta_tempo.good %}background:#f0fdf4; color:#16a34a;{% else %}background:#fef2f2; color:#dc2626;{% endif %}">
+          {{ delta_tempo.label }}
+        </span>
+        {% endif %}
+      </div>
+      <div style="font-size:.72rem; color:#94a3b8; margin-top:4px;">desde abertura da vaga</div>
+    </div>
+
+    <!-- Taxa de Preenchimento -->
+    <div class="section-card" style="margin-bottom:0; padding:18px 16px;">
+      <div style="font-size:.7rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.07em; margin-bottom:6px;">Taxa de Preenchimento</div>
+      <div style="display:flex; align-items:baseline; gap:8px;">
+        <div style="font-size:2.4rem; font-weight:900; color:#1e293b; line-height:1;">{{ taxa_preenchimento }}<span style="font-size:1.1rem; color:#64748b;">%</span></div>
+        {% if delta_contratados %}
+        <span style="font-size:.75rem; font-weight:700; padding:2px 7px; border-radius:8px;
+                     {% if delta_contratados.good %}background:#f0fdf4; color:#16a34a;{% else %}background:#fef2f2; color:#dc2626;{% endif %}">
+          {{ delta_contratados.label }}
+        </span>
+        {% endif %}
+      </div>
+      <div style="font-size:.72rem; color:#94a3b8; margin-top:4px;">vagas preenchidas / total</div>
+    </div>
 
   </div>
+
+  <!-- Funnel + Score side by side -->
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+
+    <!-- Funnel with conversion rates -->
+    <div class="section-card" style="margin-bottom:0; padding:20px 24px;">
+      <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-5">Funil de Recrutamento</p>
+
+      {% if funnel %}
+      <div style="display:flex; flex-direction:column; gap:0;">
+        {% for stage in funnel %}
+        <div>
+          <!-- Bar row -->
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:4px;">
+            <span style="font-size:.72rem; color:#64748b; width:130px; flex-shrink:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ stage.etapa }}</span>
+            <div style="flex:1; height:22px; background:#f1f5f9; border-radius:4px; overflow:hidden; position:relative;">
+              {% if funnel_max > 0 %}
+              <div style="height:100%; background:{{ stage.color }}; border-radius:4px; width:{% widthratio stage.count funnel_max 100 %}%; min-width:{% if stage.count > 0 %}4px{% else %}0{% endif %};"></div>
+              {% endif %}
+            </div>
+            <span style="font-size:.85rem; font-weight:800; color:#1e293b; width:28px; text-align:right; flex-shrink:0;">{{ stage.count }}</span>
+          </div>
+          <!-- Conversion arrow -->
+          {% if stage.conv_next is not None %}
+          <div style="display:flex; align-items:center; margin-left:140px; margin-bottom:4px; gap:6px;">
+            <div style="width:1px; height:12px; background:#e2e8f0; margin-left:8px;"></div>
+            <span style="font-size:.68rem; color:#94a3b8; font-weight:600;">
+              {{ stage.conv_next }}% avança →
+            </span>
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div style="text-align:center; padding:24px 0; color:#94a3b8; font-size:.82rem;">
+        <i class="fa-solid fa-inbox" style="display:block; margin-bottom:6px;"></i> Sem dados
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Score metrics -->
+    <div class="section-card" style="margin-bottom:0; padding:20px 24px;">
+      <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Qualidade dos Candidatos (Score IA)</p>
+
+      <!-- Score averages -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
+        <div style="background:#f8fafc; border-radius:10px; padding:12px; text-align:center; border:1px solid #e2e8f0;">
+          <div style="font-size:.65rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px;">Média Shortlist</div>
+          {% if score_medio_shortlist is not None %}
+          <div style="font-size:1.8rem; font-weight:900; color:{% if score_medio_shortlist >= 75 %}#10b981{% elif score_medio_shortlist >= 50 %}#3b82f6{% else %}#f59e0b{% endif %}; line-height:1;">
+            {{ score_medio_shortlist }}<span style="font-size:.9rem; color:#64748b;">%</span>
+          </div>
+          {% else %}
+          <div style="font-size:1.4rem; font-weight:700; color:#cbd5e1;">—</div>
+          {% endif %}
+          <div style="font-size:.65rem; color:#94a3b8; margin-top:2px;">candidatos em entrevista+</div>
+        </div>
+        <div style="background:#f8fafc; border-radius:10px; padding:12px; text-align:center; border:1px solid #e2e8f0;">
+          <div style="font-size:.65rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px;">Média Contratados</div>
+          {% if score_medio_contratados is not None %}
+          <div style="font-size:1.8rem; font-weight:900; color:{% if score_medio_contratados >= 75 %}#10b981{% elif score_medio_contratados >= 50 %}#3b82f6{% else %}#f59e0b{% endif %}; line-height:1;">
+            {{ score_medio_contratados }}<span style="font-size:.9rem; color:#64748b;">%</span>
+          </div>
+          {% else %}
+          <div style="font-size:1.4rem; font-weight:700; color:#cbd5e1;">—</div>
+          {% endif %}
+          <div style="font-size:.65rem; color:#94a3b8; margin-top:2px;">candidatos contratados</div>
+        </div>
+      </div>
+
+      <!-- Score distribution histogram -->
+      <div style="font-size:.65rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:10px;">Distribuição de Scores</div>
+      <div style="display:flex; flex-direction:column; gap:7px;">
+        {% for d in score_dist %}
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:.7rem; color:#64748b; width:46px; flex-shrink:0; font-variant-numeric:tabular-nums;">{{ d.label }}</span>
+          <div style="flex:1; height:14px; background:#f1f5f9; border-radius:3px; overflow:hidden;">
+            {% if score_dist_max > 0 %}
+            <div style="height:100%; background:{{ d.color }}; border-radius:3px; width:{% widthratio d.count score_dist_max 100 %}%; min-width:{% if d.count > 0 %}3px{% else %}0{% endif %};"></div>
+            {% endif %}
+          </div>
+          <span style="font-size:.75rem; font-weight:700; color:#1e293b; width:20px; text-align:right; flex-shrink:0;">{{ d.count }}</span>
+        </div>
+        {% endfor %}
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Vagas em Risco summary -->
+  {% if vagas_risco %}
+  <div class="section-card" style="margin-bottom:0; padding:20px 24px;">
+    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
+      <i class="fa-solid fa-triangle-exclamation" style="color:#ef4444;"></i> Vagas em Risco
+      <span style="margin-left:8px; font-weight:400; text-transform:none; letter-spacing:normal; color:#94a3b8;">
+        {% if vagas_criticas_count > 0 %}<span style="color:#ef4444; font-weight:700;">{{ vagas_criticas_count }} crítica{{ vagas_criticas_count|pluralize:"s" }}</span>{% endif %}
+        {% if vagas_criticas_count > 0 and vagas_aviso_count > 0 %} · {% endif %}
+        {% if vagas_aviso_count > 0 %}<span style="color:#f59e0b; font-weight:700;">{{ vagas_aviso_count }} em aviso</span>{% endif %}
+      </span>
+    </p>
+    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:10px;">
+      {% for v in vagas_risco %}
+      <a href="/vagas/{{ v.vaga.pk }}/" style="text-decoration:none; display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px;
+         {% if v.nivel == 'critico' %}background:#fef2f2; border:1px solid #fecaca;{% else %}background:#fffbeb; border:1px solid #fde68a;{% endif %}">
+        <div style="width:8px; height:8px; border-radius:50%; flex-shrink:0; margin-top:1px;
+                    {% if v.nivel == 'critico' %}background:#ef4444;{% else %}background:#f59e0b;{% endif %}"></div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:.8rem; font-weight:700; color:#1e293b; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ v.vaga.titulo }}</div>
+          <div style="font-size:.7rem; color:#64748b; margin-top:1px;">{{ v.motivo }}</div>
+        </div>
+        <span style="font-size:.7rem; font-weight:700; white-space:nowrap; flex-shrink:0;
+                     {% if v.nivel == 'critico' %}color:#b91c1c;{% else %}color:#92400e;{% endif %}">{{ v.days_open }}d</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+{% endif %}
+<!-- ── END VIEWS ─────────────────────────────────────────────────────────── -->
 
 </div>
 {% endblock %}
