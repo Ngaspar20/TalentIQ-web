@@ -136,6 +136,15 @@ def vaga_detail(request, pk):
 
 
 @require_POST
+def vaga_marcar_notificacoes(request, pk):
+    vaga = get_object_or_404(org_vagas(request), pk=pk)
+    vaga.notificacoes_enviadas = True
+    vaga.save(update_fields=["notificacoes_enviadas"])
+    messages.success(request, "Notificações marcadas como enviadas.")
+    return redirect("vaga_detail", pk=pk)
+
+
+@require_POST
 def vaga_confirmar_analise(request, pk):
     vaga = get_object_or_404(org_vagas(request), pk=pk)
     vaga.tor_analisado = True
@@ -614,8 +623,8 @@ def guiao_aprovar(request, pk, session_id):
                 session.texto_editado = _reconstruct_texto(cat_nomes, perguntas_list, avaliar_list, cat_indices)
             session.estado = InterviewGuideSession.ESTADO_APROVADO
             session.save()
-            messages.success(request, "Guião aprovado. Pode agora fazer o download.")
-            return redirect("guiao_download", pk=pk, session_id=session.pk)
+            messages.success(request, "Guião aprovado. Pode descarregá-lo no passo 7.")
+            return redirect("vaga_detail", pk=pk)
         elif action == "devolver":
             session.estado = InterviewGuideSession.ESTADO_PENDENTE
             session.save()
@@ -849,41 +858,47 @@ def comite_avaliacao_view(request, token):
     if guiao:
         import re
         current_secao = {"titulo": "", "perguntas": []}
+        current_p = None
+        current_criterio = ""
         for line in guiao.texto_final().splitlines():
-            # Section heading: ## Heading or **Heading**
             heading = re.match(r'^#{1,3}\s*(.+)', line) or re.match(r'^\*{1,2}(.+?)\*{1,2}\s*$', line)
             if heading:
+                if current_p:
+                    current_secao["perguntas"].append({"texto": current_p, "criterio": current_criterio})
+                    perguntas.append(current_p)
+                    current_p = None
+                    current_criterio = ""
                 if current_secao["perguntas"]:
                     secoes.append(current_secao)
                 current_secao = {"titulo": heading.group(1).strip().rstrip(':'), "perguntas": []}
                 continue
-            # Format: "P: pergunta" (used by _reconstruct_texto)
             p_match = re.match(r'^P:\s*(.+)', line)
+            a_match = re.match(r'^A:\s*(.+)', line)
             if p_match:
-                q = p_match.group(1).strip()
-                if len(q) > 8:
-                    current_secao["perguntas"].append(q)
-                    perguntas.append(q)
-                continue
-            # Fallback: numbered questions "1. pergunta"
-            q_match = re.match(r'^\s*\d+[\.\)]\s*(.+)', line)
-            if q_match:
-                q = q_match.group(1).strip()
-                if len(q) > 8:
-                    current_secao["perguntas"].append(q)
-                    perguntas.append(q)
+                if current_p:
+                    current_secao["perguntas"].append({"texto": current_p, "criterio": current_criterio})
+                    perguntas.append(current_p)
+                current_p = p_match.group(1).strip()
+                current_criterio = ""
+            elif a_match and current_p:
+                current_criterio = a_match.group(1).strip()
+                current_secao["perguntas"].append({"texto": current_p, "criterio": current_criterio})
+                perguntas.append(current_p)
+                current_p = None
+                current_criterio = ""
+        if current_p:
+            current_secao["perguntas"].append({"texto": current_p, "criterio": current_criterio})
+            perguntas.append(current_p)
         if current_secao["perguntas"]:
             secoes.append(current_secao)
         if not secoes and perguntas:
-            secoes = [{"titulo": "Perguntas de Entrevista", "perguntas": perguntas}]
-        # Add flat index to each question so template can name fields c{pk}_resp_{idx}
+            secoes = [{"titulo": "Perguntas de Entrevista", "perguntas": [{"texto": q, "criterio": ""} for q in perguntas]}]
+        # Add flat index so template can name fields c{pk}_resp_{idx}
         flat_idx = 0
         for s in secoes:
-            qs_with_idx = []
-            for q in s["perguntas"]:
-                qs_with_idx.append({"texto": q, "idx": flat_idx})
+            for q_item in s["perguntas"]:
+                q_item["idx"] = flat_idx
                 flat_idx += 1
-            s["perguntas"] = qs_with_idx
 
     candidatos = Candidato.objects.filter(vaga=vaga, etapa="Entrevista").order_by("nome")
 
@@ -1059,10 +1074,23 @@ def avaliacao_grupo_juri(request, token):
              .order_by("-created_at").first())
     if guiao:
         import re
-        for m in re.finditer(r'^\s*\d+[\.\)]\s*(.+)', guiao.texto_final(), re.MULTILINE):
-            q = m.group(1).strip()
-            if len(q) > 10:
-                perguntas.append(q)
+        current_p = None
+        current_criterio = ""
+        for line in guiao.texto_final().splitlines():
+            p_match = re.match(r'^P:\s*(.+)', line.strip())
+            a_match = re.match(r'^A:\s*(.+)', line.strip())
+            if p_match:
+                if current_p:
+                    perguntas.append({"pergunta": current_p, "criterio": current_criterio})
+                current_p = p_match.group(1).strip()
+                current_criterio = ""
+            elif a_match and current_p:
+                current_criterio = a_match.group(1).strip()
+                perguntas.append({"pergunta": current_p, "criterio": current_criterio})
+                current_p = None
+                current_criterio = ""
+        if current_p:
+            perguntas.append({"pergunta": current_p, "criterio": current_criterio})
 
     sessions = (AvaliacaoSession.objects
                 .filter(candidato__vaga=vaga)
@@ -1082,9 +1110,11 @@ def avaliacao_grupo_juri(request, token):
             session.notas = request.POST.get(f"{prefix}notas", "").strip()
             session.data_entrevista = request.POST.get(f"{prefix}data_entrevista") or None
             respostas = []
-            for i, q in enumerate(perguntas):
+            for i, item in enumerate(perguntas):
                 nota = request.POST.get(f"{prefix}resp_{i}", "").strip()
-                respostas.append({"pergunta": q, "nota": nota})
+                score_raw = request.POST.get(f"{prefix}qscore_{i}", "").strip()
+                score = int(score_raw) if score_raw.isdigit() and 1 <= int(score_raw) <= 5 else None
+                respostas.append({"pergunta": item["pergunta"], "criterio": item.get("criterio", ""), "score": score, "nota": nota})
             session.respostas_perguntas = respostas
             session.estado = AvaliacaoSession.ESTADO_SUBMETIDA
             session.save()
@@ -1139,7 +1169,8 @@ def shortlist(request, pk):
     from candidatos.models import Candidato
     candidatos_triagem = (
         Candidato.objects
-        .filter(vaga=vaga, etapa="Em Triagem")
+        .filter(vaga=vaga)
+        .exclude(etapa__in=["Entrevista", "Proposta", "Contratado", "Rejeitado"])
         .order_by("-score_fit", "nome")
     )
     candidatos_entrevista = (
@@ -1159,7 +1190,7 @@ def mover_para_entrevista(request, pk, candidato_pk):
     from candidatos.models import Candidato
     vaga = get_object_or_404(org_vagas(request), pk=pk)
     candidato = get_object_or_404(Candidato, pk=candidato_pk, vaga=vaga, organisation=request.user.organisation)
-    if candidato.etapa == "Em Triagem":
+    if candidato.etapa not in ("Entrevista", "Proposta", "Contratado", "Rejeitado"):
         Candidato.objects.filter(pk=candidato.pk).update(etapa="Entrevista")
         messages.success(request, f"{candidato.nome} movido para Entrevista.")
     return redirect("shortlist", pk=pk)
@@ -1382,128 +1413,3 @@ def download_perguntas(request, pk):
 
     return _build_word_doc(vaga, categorias)
 
-
-
-# ── EMAIL HELPER ──────────────────────────────────────────────────────────────
-
-def _build_convite_email(avaliador_nome, vaga, candidato_nomes, link):
-    cand_items = "".join(
-        f'<li style="font-size:14px;color:#1e293b;padding:3px 0;">{n}</li>'
-        for n in candidato_nomes
-    )
-    cand_block = (
-        f'<div style="background:#f8fafc;border-radius:8px;padding:16px;'
-        f'margin-bottom:20px;border:1px solid #e2e8f0;">'
-        f'<p style="margin:0 0 8px;font-size:11px;font-weight:700;color:#64748b;'
-        f'text-transform:uppercase;letter-spacing:.05em;">Candidatos a avaliar</p>'
-        f'<ul style="margin:0;padding-left:18px;">{cand_items}</ul>'
-        f'</div>'
-    ) if cand_items else ""
-
-    dept = vaga.departamento or ""
-    return f"""<!DOCTYPE html>
-<html><head><meta charset="UTF-8"></head>
-<body style="margin:0;padding:0;background:#f8fafc;font-family:Arial,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;padding:32px 16px;">
-<tr><td align="center">
-<table width="540" cellpadding="0" cellspacing="0"
-  style="background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;max-width:540px;">
-  <tr><td style="background:#1d4ed8;padding:22px 32px;">
-    <span style="font-size:22px;font-weight:900;color:#ffffff;letter-spacing:-.02em;">
-      Talent<span style="color:#93c5fd;">IQ</span>
-    </span>
-  </td></tr>
-  <tr><td style="padding:32px;">
-    <p style="margin:0 0 8px;font-size:16px;color:#1e293b;">
-      Caro/a <strong>{avaliador_nome}</strong>,
-    </p>
-    <p style="margin:0 0 20px;font-size:14px;color:#64748b;line-height:1.6;">
-      Foi convidado/a para participar na avaliação dos candidatos para a vaga de
-      <strong style="color:#1e293b;">{vaga.titulo}</strong>
-      {f"({dept})" if dept else ""}.
-    </p>
-    {cand_block}
-    <table cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
-      <tr><td style="background:#1d4ed8;border-radius:8px;padding:13px 28px;">
-        <a href="{link}"
-           style="color:#ffffff;font-weight:700;font-size:15px;text-decoration:none;">
-          Aceder ao formulario de avaliacao &#8594;
-        </a>
-      </td></tr>
-    </table>
-    <p style="margin:0 0 4px;font-size:12px;color:#94a3b8;">Ou copie este link:</p>
-    <p style="margin:0 0 24px;font-size:11px;color:#3b82f6;word-break:break-all;">{link}</p>
-    <p style="margin:0;font-size:12px;color:#94a3b8;border-top:1px solid #f1f5f9;padding-top:16px;">
-      Este link e pessoal e intransferivel. Apos submeter as suas avaliacoes, o RH sera notificado.
-    </p>
-  </td></tr>
-  <tr><td style="background:#f8fafc;padding:14px 32px;border-top:1px solid #e2e8f0;">
-    <p style="margin:0;font-size:11px;color:#94a3b8;">
-      TalentIQ &middot; Recrutamento Inteligente para Saude
-    </p>
-  </td></tr>
-</table>
-</td></tr>
-</table>
-</body></html>"""
-
-
-@require_POST
-def comite_enviar_convites(request, pk):
-    """Send evaluation invite emails to all pending committee members."""
-    from .models import ComiteSession
-    from candidatos.models import Candidato
-
-    vaga = get_object_or_404(org_vagas(request), pk=pk)
-
-    api_key = os.environ.get("RESEND_API_KEY", "")
-    if not api_key:
-        messages.error(
-            request,
-            "Envio de email nao configurado. Adicione RESEND_API_KEY nas variaveis de ambiente do Railway."
-        )
-        return redirect(f"/vagas/{pk}/?show_comite=1")
-
-    import resend
-    resend.api_key = api_key
-
-    pendentes = ComiteSession.objects.filter(
-        vaga=vaga, estado=ComiteSession.ESTADO_PENDENTE
-    ).exclude(avaliador_email="")
-
-    if not pendentes.exists():
-        messages.warning(request, "Nao ha membros pendentes com email para notificar.")
-        return redirect(f"/vagas/{pk}/?show_comite=1")
-
-    candidato_nomes = list(
-        Candidato.objects.filter(vaga=vaga, etapa="Entrevista")
-        .values_list("nome", flat=True)
-    )
-
-    from_addr = os.environ.get("EMAIL_FROM", "TalentIQ <onboarding@resend.dev>")
-    host = request.get_host()
-    scheme = request.scheme
-    sent = 0
-    failed = 0
-
-    for session in pendentes:
-        link = f"{scheme}://{host}/vagas/comite/{session.token}/"
-        try:
-            resend.Emails.send({
-                "from": from_addr,
-                "to": [session.avaliador_email],
-                "subject": f"Convite para avaliacao de candidatos - {vaga.titulo}",
-                "html": _build_convite_email(session.avaliador_nome, vaga, candidato_nomes, link),
-            })
-            sent += 1
-        except Exception as exc:
-            failed += 1
-
-    if sent:
-        plural = "s" if sent != 1 else ""
-        messages.success(request, f"{sent} convite{plural} enviado{plural} com sucesso.")
-    if failed:
-        plural = "s" if failed != 1 else ""
-        messages.error(request, f"{failed} envio{plural} falhou. Verifique os enderecos de email e a chave RESEND_API_KEY.")
-
-    return redirect(f"/vagas/{pk}/?show_comite=1")

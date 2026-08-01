@@ -73,11 +73,28 @@
         <div class="section-divider"><span>Avaliação por pergunta</span></div>
         <p style="font-size:.8rem;color:#94a3b8;margin-bottom:.75rem;">Para cada pergunta do guião, registe as notas ou observações sobre a resposta do candidato.</p>
 
-        {% for pergunta in perguntas %}
+        {% for item in perguntas %}
         <div class="q-block">
-            <div style="display:flex;align-items:flex-start;gap:.65rem;margin-bottom:.6rem;">
+            <div style="display:flex;align-items:flex-start;gap:.65rem;margin-bottom:.5rem;">
                 <span class="q-num">{{ forloop.counter }}</span>
-                <p class="q-text">{{ pergunta }}</p>
+                <div style="flex:1;">
+                    <p class="q-text">{{ item.pergunta }}</p>
+                    {% if item.criterio %}
+                    <p style="font-size:.73rem;color:#8b5cf6;margin-top:.3rem;line-height:1.4;"><i class="fa-solid fa-magnifying-glass" style="font-size:.65rem;margin-right:.3rem;"></i>O que avaliar: {{ item.criterio }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            <div style="display:flex;gap:.35rem;align-items:center;margin:.4rem 0 .5rem;">
+                {% for i in "12345" %}
+                <button type="button"
+                        id="qstar-{{ forloop.parentloop.counter0 }}-{{ forloop.counter }}"
+                        style="font-size:1.3rem;color:#cbd5e1;cursor:pointer;border:none;background:none;padding:0;transition:transform .1s;"
+                        onclick="setQStar({{ forloop.parentloop.counter0 }}, {{ forloop.counter }})">
+                    <i class="fa-regular fa-star"></i>
+                </button>
+                {% endfor %}
+                <span id="qlbl-{{ forloop.counter0 }}" style="font-size:.78rem;color:#94a3b8;margin-left:.2rem;">— sem classificação</span>
+                <input type="hidden" name="qscore_{{ forloop.counter0 }}" id="qval-{{ forloop.counter0 }}">
             </div>
             <textarea name="resp_{{ forloop.counter0 }}" rows="2"
                       placeholder="Observações sobre a resposta do candidato..."
@@ -162,6 +179,20 @@
 
 <script>
 const starLabels = ['', 'Muito fraco', 'Fraco', 'Adequado', 'Bom', 'Excelente'];
+
+function setQStar(qIdx, n) {
+    document.getElementById('qval-' + qIdx).value = n;
+    for (let i = 1; i <= 5; i++) {
+        const btn = document.getElementById('qstar-' + qIdx + '-' + i);
+        if (btn) {
+            const icon = btn.querySelector('i');
+            icon.className = i <= n ? 'fa-solid fa-star' : 'fa-regular fa-star';
+            icon.style.color = i <= n ? '#f59e0b' : '#cbd5e1';
+        }
+    }
+    const lbl = document.getElementById('qlbl-' + qIdx);
+    if (lbl) { lbl.textContent = starLabels[n]; lbl.style.color = '#f59e0b'; }
+}
 const totalFields = document.querySelectorAll('textarea, input[type=date]').length + 3; // +stars+rec+submit
 let filledCount = 0;
 

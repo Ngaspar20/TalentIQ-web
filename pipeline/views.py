@@ -5,12 +5,10 @@ from django.views.decorators.http import require_POST
 from vagas.models import Vaga
 from candidatos.models import Candidato
 
-ETAPAS = ["Candidatura Recebida", "Em Triagem", "Pré-Seleccionado", "Entrevista", "Proposta", "Contratado", "Rejeitado"]
+ETAPAS = ["Candidatura Recebida", "Entrevista", "Proposta", "Contratado", "Rejeitado"]
 
 ETAPA_COLORS = {
     "Candidatura Recebida": "#3b82f6",
-    "Em Triagem": "#8b5cf6",
-    "Pré-Seleccionado": "#f97316",
     "Entrevista": "#f59e0b",
     "Proposta": "#06b6d4",
     "Contratado": "#10b981",

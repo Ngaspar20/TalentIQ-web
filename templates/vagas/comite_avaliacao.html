@@ -142,7 +142,11 @@
                         <span class="q-num">{{ pergunta.idx|add:1 }}</span>
                         <div>
                             <div class="q-text">{{ pergunta.texto }}</div>
+                            {% if pergunta.criterio %}
+                            <div class="q-sub" style="color:#7c3aed;"><i class="fa-solid fa-magnifying-glass" style="font-size:.65rem;margin-right:.3rem;"></i>O que avaliar: {{ pergunta.criterio }}</div>
+                            {% else %}
                             <div class="q-sub">Classifique a resposta e registe as suas observações</div>
+                            {% endif %}
                         </div>
                     </div>
                     <div class="q-rating" id="qrating-{{ c.pk }}-{{ pergunta.idx }}">
