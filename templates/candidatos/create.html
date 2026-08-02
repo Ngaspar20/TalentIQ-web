@@ -104,6 +104,7 @@
     <form method="post" action="/candidatos/carregar/" id="candidato-form">
         {% csrf_token %}
         <input type="hidden" name="vaga_id" id="vaga_id_hidden">
+        <input type="hidden" name="cv_r2_url" id="cv_r2_url_hidden" value="">
 
         <div id="cv-form-fields">
             <div id="cv-empty-state" class="py-10 text-center text-slate-400">
@@ -135,6 +136,16 @@
             document.getElementById('cv-success').classList.remove('hidden');
             document.getElementById('upload-area').style.borderColor = '#10b981';
             document.getElementById('upload-area').style.backgroundColor = '#f0fdf4';
+        }
+    });
+
+    // Copy R2 URL from the injected preview zone to the main form's hidden field
+    document.body.addEventListener('htmx:afterSwap', function(e) {
+        if (e.detail.target.id === 'cv-preview-zone') {
+            const r2Input = e.detail.target.querySelector('input[name="cv_r2_url"]');
+            if (r2Input) {
+                document.getElementById('cv_r2_url_hidden').value = r2Input.value;
+            }
         }
     });
 

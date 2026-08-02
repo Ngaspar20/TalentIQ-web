@@ -58,6 +58,8 @@ def vaga_create(request):
         responsabilidades = [r.strip().lstrip("•").strip() for r in responsabilidades_raw.splitlines() if r.strip()]
 
         tor_filename = request.POST.get("tor_filename", "").strip()
+        tor_r2_url = request.POST.get("tor_r2_url", "").strip()
+        tor_path = tor_r2_url or tor_filename
 
         vaga = Vaga.objects.create(
             organisation=request.user.organisation,
@@ -76,9 +78,9 @@ def vaga_create(request):
             competencias_requeridas=competencias,
             responsabilidades=responsabilidades,
             descricao=request.POST.get("descricao", "").strip(),
-            tor_file_path=tor_filename,
+            tor_file_path=tor_path,
             tor_aprovado=False,
-            origem="ToR" if tor_filename else "Manual",
+            origem="ToR" if tor_path else "Manual",
             created_by=request.user,
         )
         messages.success(request, f"Vaga '{vaga.titulo}' criada com sucesso!")
@@ -234,11 +236,14 @@ def parse_tor_view(request):
     if not texto.strip():
         return HttpResponse('<div class="alert-error">Não foi possível extrair texto. O ficheiro pode ser uma imagem digitalizada.</div>')
 
-    # Return the text preview + hidden field + AI analysis button
+    from talentiq.storage import upload_to_r2
+    r2_url = upload_to_r2(uploaded, "tor", uploaded.name)
+
     texto_preview = texto[:4000]
     return render(request, "vagas/_tor_preview.html", {
         "texto": texto_preview,
         "texto_completo": texto,
+        "r2_url": r2_url,
     })
 
 

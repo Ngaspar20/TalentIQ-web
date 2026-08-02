@@ -65,6 +65,8 @@ def candidato_create(request):
             messages.error(request, "Os Termos de Referência desta vaga ainda não foram aprovados. Aprove o ToR antes de carregar CVs.")
             return redirect("vaga_detail", pk=vaga.pk)
 
+        cv_r2_url = request.POST.get("cv_r2_url", "").strip()
+
         candidato = Candidato.objects.create(
             organisation=request.user.organisation,
             vaga=vaga,
@@ -77,6 +79,7 @@ def candidato_create(request):
             idiomas=idiomas,
             resumo=request.POST.get("resumo", "").strip(),
             notas=request.POST.get("notas", "").strip(),
+            cv_file_path=cv_r2_url,
             created_by=request.user,
         )
         messages.success(request, f"Candidato '{candidato.nome}' adicionado com sucesso!")
@@ -474,9 +477,13 @@ def parse_cv_view(request):
     if not texto.strip():
         return HttpResponse('<div class="alert-error">Não foi possível extrair texto. O ficheiro pode ser uma imagem digitalizada.</div>')
 
+    from talentiq.storage import upload_to_r2
+    r2_url = upload_to_r2(uploaded, "cv", uploaded.name)
+
     return render(request, "candidatos/_cv_preview.html", {
         "texto": texto[:4000],
         "texto_completo": texto,
+        "r2_url": r2_url,
     })
 
 
