@@ -17,6 +17,8 @@
 
     <!-- Hidden field carries full text to the AI endpoint -->
     <input type="hidden" name="texto_completo" id="texto_completo" value="{{ texto_completo|escape }}">
+    <!-- R2 URL carried to the main form via JS -->
+    <input type="hidden" name="tor_r2_url" value="{{ r2_url }}">
 
     <!-- Step 2 action buttons -->
     <div class="flex items-center gap-3 mt-4 pt-4 border-t border-slate-100">

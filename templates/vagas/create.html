@@ -98,8 +98,9 @@
     <form method="post" action="/vagas/criar/" id="vaga-form">
         {% csrf_token %}
 
-        <!-- Hidden field: populated by JS when file is selected -->
+        <!-- Hidden fields: filename populated on file select, R2 URL populated on htmx:afterSwap -->
         <input type="hidden" name="tor_filename" id="tor_filename_hidden" value="">
+        <input type="hidden" name="tor_r2_url" id="tor_r2_url_hidden" value="">
 
         <div id="form-fields">
             <!-- Empty state: shown before upload or manual entry -->
@@ -131,6 +132,16 @@
             document.getElementById('upload-area').style.borderColor = '#10b981';
             document.getElementById('upload-area').style.backgroundColor = '#f0fdf4';
             document.getElementById('tor_filename_hidden').value = this.files[0].name;
+        }
+    });
+
+    // Copy R2 URL from the injected preview zone to the main form's hidden field
+    document.body.addEventListener('htmx:afterSwap', function(e) {
+        if (e.detail.target.id === 'tor-preview-zone') {
+            const r2Input = e.detail.target.querySelector('input[name="tor_r2_url"]');
+            if (r2Input) {
+                document.getElementById('tor_r2_url_hidden').value = r2Input.value;
+            }
         }
     });
 
