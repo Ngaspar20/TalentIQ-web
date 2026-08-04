@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block title %}Relatório de Seleção — {{ vaga.titulo }}{% endblock %}
 
@@ -11,132 +12,544 @@ Relatório de Seleção
 {% endblock %}
 
 {% block content %}
-<div class="page-header flex items-center justify-between">
-    <div>
-        <h1>Relatório de Seleção</h1>
-        <p>{{ vaga.titulo }}{% if vaga.organizacao %} · {{ vaga.organizacao }}{% endif %}</p>
-    </div>
-    <div class="flex gap-2">
-        <a href="/vagas/{{ vaga.pk }}/relatorio/download/" class="btn-primary">
-            <i class="fa-solid fa-file-word mr-2"></i> Descarregar Word
+<style>
+.rel-header {
+    background: #1b3a5c;
+    border-radius: 14px;
+    padding: 28px 32px 24px;
+    position: relative;
+    margin-bottom: 28px;
+    overflow: hidden;
+}
+.rel-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: #c9973a;
+}
+.rel-header .rel-eyebrow {
+    font-size: 10px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.5);
+    margin-bottom: 6px;
+}
+.rel-header h1 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 0 0 3px;
+    text-wrap: balance;
+}
+.rel-header .rel-org {
+    font-size: .875rem;
+    color: rgba(255,255,255,.7);
+    margin-bottom: 18px;
+}
+.rel-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,.12);
+}
+.rel-meta-item { display: flex; flex-direction: column; gap: 2px; }
+.rel-meta-item .rmk { font-size: 9px; letter-spacing:.1em; text-transform:uppercase; color:rgba(255,255,255,.4); }
+.rel-meta-item .rmv { font-size: .78rem; color: rgba(255,255,255,.85); font-weight: 600; }
+
+.rel-actions { display: flex; gap: .5rem; position: absolute; top: 24px; right: 28px; }
+
+/* Section layout */
+.rel-section {
+    margin-bottom: 24px;
+    padding-left: 18px;
+    border-left: 3px solid #c9973a;
+}
+.rel-section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+.rel-num {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #c9973a;
+    opacity: .45;
+    line-height: 1;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+}
+.rel-title {
+    font-size: .8rem;
+    font-weight: 700;
+    color: #1b3a5c;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+
+/* ToR grid */
+.tor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.tor-cell {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+.tor-cell .tck { font-size: 9px; letter-spacing:.08em; text-transform:uppercase; color:#64748b; font-weight:700; margin-bottom:3px; }
+.tor-cell .tcv { font-size: .8rem; color: #1e293b; font-weight: 600; }
+.tor-desc {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: .82rem;
+    color: #475569;
+    line-height: 1.65;
+}
+.tor-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.tor-tag {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: .75rem;
+    font-weight: 600;
+}
+
+/* Candidate list (section 2) */
+.cand-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 7px;
+    font-size: .82rem;
+}
+.cand-row .cr-num {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: #1b3a5c;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.cand-row .cr-name { font-weight: 700; flex: 1; color: #1e293b; }
+.cand-row .cr-sub { font-size: .73rem; color: #64748b; }
+
+/* Ranking table */
+.rank-tbl { width: 100%; border-collapse: collapse; font-size: .8rem; }
+.rank-tbl th {
+    text-align: left;
+    font-size: 9px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #64748b;
+    font-weight: 700;
+    padding: 7px 10px;
+    border-bottom: 2px solid #e2e8f0;
+    white-space: nowrap;
+}
+.rank-tbl td { padding: 10px 10px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+.rank-tbl tr:last-child td { border-bottom: none; }
+.rank-tbl tr.rw-win td { background: #f0fdf4; }
+.rank-tbl tr.rw-mid td { background: #fffbeb; }
+.rank-tbl tr.rw-rej td { background: #fef2f2; }
+
+.spill {
+    display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 700; font-variant-numeric: tabular-nums;
+    border-radius: 20px; padding: 2px 8px; font-size: .75rem; white-space: nowrap;
+}
+.sp-hi { background:#dcfce7; color:#166534; }
+.sp-md { background:#fef9c3; color:#92400e; }
+.sp-lo { background:#fee2e2; color:#991b1b; }
+.sp-na { background:#f1f5f9; color:#94a3b8; }
+
+.rec-pill {
+    display: inline-block; border-radius: 20px;
+    padding: 2px 8px; font-size: .72rem; font-weight: 700;
+}
+.rp-yes { background:#dcfce7; color:#166534; }
+.rp-no  { background:#fee2e2; color:#991b1b; }
+.rp-mid { background:#fef9c3; color:#92400e; }
+.rp-na  { background:#f1f5f9; color:#64748b; }
+
+/* Committee grid */
+.committee-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+.committee-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1; min-width: 200px;
+}
+.committee-avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: #1b3a5c;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.committee-name { font-weight: 700; font-size: .82rem; color: #1e293b; }
+.committee-email { font-size: .72rem; color: #64748b; }
+.committee-status {
+    margin-left: auto;
+    font-size: .68rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 20px;
+}
+.cs-done { background: #dcfce7; color: #166534; }
+.cs-pend { background: #fef9c3; color: #92400e; }
+
+/* Verdict block */
+.verdict-block {
+    border: 2px solid #166534;
+    border-radius: 12px;
+    overflow: hidden;
+}
+.verdict-head {
+    background: #166534;
+    color: #fff;
+    padding: 10px 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: .8rem;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+}
+.verdict-body { padding: 18px 22px; background: #f0fdf4; }
+.verdict-name { font-size: 1.1rem; font-weight: 800; color: #166534; margin-bottom: 3px; }
+.verdict-scores { font-size: .75rem; color: #475569; margin-bottom: 14px; display: flex; gap: 10px; flex-wrap: wrap; }
+.verdict-narrative {
+    font-size: .82rem;
+    color: #1e293b;
+    line-height: 1.7;
+    white-space: pre-line;
+}
+.verdict-no-selection {
+    background: #fef9c3;
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: .82rem;
+    color: #92400e;
+}
+
+/* Star display */
+.stars { display: inline-flex; gap: 1px; }
+.star-on  { color: #f59e0b; font-size: .8rem; }
+.star-off { color: #cbd5e1; font-size: .8rem; }
+</style>
+
+<!-- ── Document Header ─────────────────────────── -->
+<div class="rel-header">
+    <div class="rel-actions">
+        <a href="/vagas/{{ vaga.pk }}/relatorio/download/" class="btn-primary" style="font-size:.75rem; padding:5px 12px;">
+            <i class="fa-solid fa-file-word mr-1"></i> Word
         </a>
-        <a href="/vagas/{{ vaga.pk }}/" class="btn-secondary">← Vaga</a>
+        <a href="/vagas/{{ vaga.pk }}/" class="btn-secondary" style="font-size:.75rem; padding:5px 12px; background:rgba(255,255,255,.12); color:rgba(255,255,255,.8); border-color:rgba(255,255,255,.2);">← Vaga</a>
+    </div>
+    <div class="rel-eyebrow">Relatório de Seleção · Confidencial</div>
+    <h1>{{ vaga.titulo }}</h1>
+    <div class="rel-org">{% if vaga.organizacao %}{{ vaga.organizacao }}{% endif %}{% if vaga.local %} · {{ vaga.local }}{% endif %}</div>
+
+    <div class="rel-meta">
+        {% if vaga.prazo_data %}
+        <div class="rel-meta-item">
+            <span class="rmk">Prazo de Candidatura</span>
+            <span class="rmv">{{ vaga.prazo_data|date:"d/m/Y" }}</span>
+        </div>
+        {% endif %}
+        <div class="rel-meta-item">
+            <span class="rmk">Total de Candidaturas</span>
+            <span class="rmv">{{ total_candidatos }} recebidas</span>
+        </div>
+        <div class="rel-meta-item">
+            <span class="rmk">Candidatos em Processo</span>
+            <span class="rmv">{{ candidatos|length }}</span>
+        </div>
+        {% if comite_sessions %}
+        <div class="rel-meta-item">
+            <span class="rmk">Membros do Comité</span>
+            <span class="rmv">{{ comite_sessions|length }}</span>
+        </div>
+        {% endif %}
+        <div class="rel-meta-item">
+            <span class="rmk">Data do Relatório</span>
+            <span class="rmv">{% now "d/m/Y" %}</span>
+        </div>
     </div>
 </div>
 
 {% if not candidatos %}
 <div style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:3rem; text-align:center; color:#94a3b8;">
     <i class="fa-solid fa-chart-bar" style="font-size:2.5rem; display:block; margin-bottom:1rem;"></i>
-    <p style="font-size:1rem; font-weight:600; color:#64748b; margin-bottom:0.5rem;">Sem candidatos avaliados</p>
-    <p style="font-size:0.875rem;">O relatório fica disponível depois de pelo menos um candidato completar a fase de entrevista.</p>
+    <p style="font-size:1rem; font-weight:600; color:#64748b; margin-bottom:.5rem;">Sem candidatos avaliados</p>
+    <p style="font-size:.875rem;">O relatório fica disponível depois de pelo menos um candidato avançar para além da candidatura inicial.</p>
 </div>
 {% else %}
 
-{% if narrativa %}
-<!-- AI Narrative -->
-<div class="section-card" style="border-left:4px solid #1e3a5f; margin-bottom:1.5rem;">
-    <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:1rem;">
-        <i class="fa-solid fa-sparkles" style="color:#1e3a5f; font-size:1.1rem;"></i>
-        <p style="font-size:0.75rem; font-weight:700; color:#1e3a5f; text-transform:uppercase; letter-spacing:0.05em; margin:0;">Análise e Recomendação — IA</p>
+<!-- ── Section 1 · ToR Summary ─────────────────── -->
+<div class="rel-section">
+    <div class="rel-section-head">
+        <span class="rel-num">1</span>
+        <span class="rel-title">Resumo da Vaga e Termos de Referência</span>
     </div>
-    <div style="font-size:0.9rem; color:#1e293b; line-height:1.7; white-space:pre-line;">{{ narrativa }}</div>
+
+    <div class="tor-grid">
+        {% if vaga.nivel_formacao %}
+        <div class="tor-cell">
+            <div class="tck">Formação mínima</div>
+            <div class="tcv">{{ vaga.nivel_formacao }}</div>
+        </div>
+        {% endif %}
+        {% if vaga.anos_experiencia_min %}
+        <div class="tor-cell">
+            <div class="tck">Experiência mínima</div>
+            <div class="tcv">{{ vaga.anos_experiencia_min }} anos</div>
+        </div>
+        {% endif %}
+        {% if vaga.tipo_contrato %}
+        <div class="tor-cell">
+            <div class="tck">Tipo de contrato</div>
+            <div class="tcv">{{ vaga.tipo_contrato }}</div>
+        </div>
+        {% endif %}
+        {% if vaga.modalidade %}
+        <div class="tor-cell">
+            <div class="tck">Modalidade</div>
+            <div class="tcv">{{ vaga.modalidade }}</div>
+        </div>
+        {% endif %}
+        {% if vaga.departamento %}
+        <div class="tor-cell">
+            <div class="tck">Departamento</div>
+            <div class="tcv">{{ vaga.departamento }}</div>
+        </div>
+        {% endif %}
+        {% if vaga.numero_vagas %}
+        <div class="tor-cell">
+            <div class="tck">Número de vagas</div>
+            <div class="tcv">{{ vaga.numero_vagas }}</div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if vaga.competencias_requeridas %}
+    <div class="tor-cell" style="margin-bottom:10px;">
+        <div class="tck">Competências requeridas</div>
+        <div class="tor-tags" style="margin-top:6px;">
+            {% for comp in vaga.competencias_requeridas %}
+            <span class="tor-tag">{{ comp }}</span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if vaga.descricao %}
+    <div class="tor-desc">{{ vaga.descricao }}</div>
+    {% elif vaga.responsabilidades %}
+    <div class="tor-cell">
+        <div class="tck">Principais responsabilidades</div>
+        <ul style="margin: 6px 0 0 14px; font-size:.8rem; color:#475569; line-height:1.7;">
+            {% for r in vaga.responsabilidades %}
+            <li>{{ r }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
 </div>
-{% else %}
-<div style="background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:0.75rem 1rem; margin-bottom:1.5rem; font-size:0.85rem; color:#92400e;">
-    <i class="fa-solid fa-triangle-exclamation mr-2"></i>
-    Narrativa de IA não disponível (motor no modo determinístico). O resumo por candidato está disponível abaixo.
+
+<!-- ── Section 2 · Candidates in interview ─────── -->
+<div class="rel-section">
+    <div class="rel-section-head">
+        <span class="rel-num">2</span>
+        <span class="rel-title">Candidatos Submetidos a Entrevista</span>
+    </div>
+
+    {% for c in candidatos %}
+    <div class="cand-row">
+        <span class="cr-num">{{ forloop.counter }}</span>
+        <span class="cr-name">{{ c.nome }}</span>
+        {% if c.experiencia_anos %}
+        <span class="cr-sub">{{ c.experiencia_anos }} anos de experiência</span>
+        {% endif %}
+        <span class="cr-sub" style="margin-left:auto;">
+            {% if c.etapa == "Contratado" %}<span style="color:#166534; font-weight:700;">✓ Contratado</span>
+            {% elif c.etapa == "Rejeitado" %}<span style="color:#991b1b;">Rejeitado</span>
+            {% else %}{{ c.etapa }}{% endif %}
+        </span>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- ── Section 3 · Ranking table ───────────────── -->
+<div class="rel-section">
+    <div class="rel-section-head">
+        <span class="rel-num">3</span>
+        <span class="rel-title">Classificação após Entrevista</span>
+    </div>
+
+    <div style="overflow-x:auto;">
+        <table class="rank-tbl">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Candidato</th>
+                    <th>Fit IA</th>
+                    <th>Avaliação</th>
+                    <th>Pontos Fortes</th>
+                    <th>Pontos Fracos</th>
+                    <th>Recomendação</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in candidatos %}
+                <tr class="{% if c.etapa == 'Contratado' %}rw-win{% elif c.recomendacao == 'nao_recomendado' or c.etapa == 'Rejeitado' %}rw-rej{% elif c.recomendacao == 'a_considerar' %}rw-mid{% endif %}">
+                    <td style="font-size:1rem; font-weight:800; color:#94a3b8; opacity:.6;">{{ forloop.counter }}</td>
+                    <td style="font-weight:700; white-space:nowrap;">
+                        <a href="/candidatos/{{ c.pk }}/" style="color:#1e293b; text-decoration:none;">{{ c.nome }}</a>
+                    </td>
+                    <td>
+                        {% if c.score_fit is not None %}
+                        <span class="spill {% if c.score_fit >= 75 %}sp-hi{% elif c.score_fit >= 50 %}sp-md{% else %}sp-lo{% endif %}">
+                            {{ c.score_fit }}%
+                        </span>
+                        {% else %}
+                        <span class="spill sp-na">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if c.pontuacao_entrevista %}
+                        <div class="stars">
+                            {% for i in "12345" %}
+                            <i class="fa-{% if forloop.counter <= c.pontuacao_entrevista %}solid{% else %}regular{% endif %} fa-star {% if forloop.counter <= c.pontuacao_entrevista %}star-on{% else %}star-off{% endif %}"></i>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <span style="color:#cbd5e1; font-size:.75rem;">—</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:.78rem; color:#166534; max-width:160px;">{{ c.pontos_fortes|default:"—" }}</td>
+                    <td style="font-size:.78rem; color:#92400e; max-width:160px;">{{ c.pontos_fracos|default:"—" }}</td>
+                    <td>
+                        {% if c.recomendacao == 'recomendado' %}
+                        <span class="rec-pill rp-yes">Recomendado</span>
+                        {% elif c.recomendacao == 'nao_recomendado' %}
+                        <span class="rec-pill rp-no">Não recomendado</span>
+                        {% elif c.recomendacao == 'a_considerar' %}
+                        <span class="rec-pill rp-mid">A considerar</span>
+                        {% elif c.etapa == 'Contratado' %}
+                        <span class="rec-pill rp-yes">Selecionado</span>
+                        {% else %}
+                        <span class="rec-pill rp-na">Sem avaliação</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ── Section 4 · Committee members ───────────── -->
+{% if comite_sessions %}
+<div class="rel-section">
+    <div class="rel-section-head">
+        <span class="rel-num">4</span>
+        <span class="rel-title">Membros do Comité de Seleção</span>
+    </div>
+
+    <div class="committee-grid">
+        {% for s in comite_sessions %}
+        <div class="committee-card">
+            <div class="committee-avatar">{{ s.avaliador_nome|slice:":2"|upper }}</div>
+            <div>
+                <div class="committee-name">{{ s.avaliador_nome }}</div>
+                {% if s.avaliador_email %}
+                <div class="committee-email">{{ s.avaliador_email }}</div>
+                {% endif %}
+            </div>
+            <span class="committee-status {% if s.estado == 'submetido' %}cs-done{% else %}cs-pend{% endif %}">
+                {% if s.estado == 'submetido' %}Submetido{% else %}Pendente{% endif %}
+            </span>
+        </div>
+        {% endfor %}
+    </div>
 </div>
 {% endif %}
 
-<!-- Candidate table -->
-<div class="section-card">
-    <p style="font-size:0.75rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:1rem;">
-        <i class="fa-solid fa-users mr-1"></i> Candidatos Avaliados ({{ candidatos|length }})
-    </p>
+<!-- ── Section 5 · Selected candidate ─────────── -->
+<div class="rel-section">
+    <div class="rel-section-head">
+        <span class="rel-num">{% if comite_sessions %}5{% else %}4{% endif %}</span>
+        <span class="rel-title">Candidato Selecionado e Justificação</span>
+    </div>
 
-    <div style="display:flex; flex-direction:column; gap:1rem;">
-        {% for c in candidatos %}
-        {% with rec=c.recomendacao %}
-        <div style="border:1px solid
-            {% if rec == 'recomendado' %}#86efac{% elif rec == 'nao_recomendado' %}#fca5a5{% else %}#e2e8f0{% endif %};
-            border-radius:10px; overflow:hidden;">
-
-            <!-- Header row -->
-            <div style="display:flex; align-items:center; gap:1rem; padding:0.85rem 1rem;
-                background:{% if rec == 'recomendado' %}#f0fdf4{% elif rec == 'nao_recomendado' %}#fef2f2{% else %}#f8fafc{% endif %};">
-
-                <!-- Rank -->
-                <div style="flex-shrink:0; width:28px; height:28px; border-radius:50%; background:#1e3a5f; color:white; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:700;">
-                    {{ forloop.counter }}
-                </div>
-
-                <!-- Name + stage -->
-                <div style="flex:1; min-width:0;">
-                    <a href="/candidatos/{{ c.pk }}/" style="font-weight:700; font-size:0.95rem; color:#1e293b; text-decoration:none;">{{ c.nome }}</a>
-                    <span style="margin-left:0.5rem; font-size:0.75rem; color:#64748b;">{{ c.etapa }}</span>
-                </div>
-
-                <!-- Interview score stars -->
-                {% if c.pontuacao_entrevista %}
-                <div style="flex-shrink:0; display:flex; gap:2px;">
-                    {% for i in "12345" %}
-                    <i class="fa-{% if forloop.counter <= c.pontuacao_entrevista %}solid{% else %}regular{% endif %} fa-star"
-                       style="color:{% if forloop.counter <= c.pontuacao_entrevista %}#f59e0b{% else %}#cbd5e1{% endif %}; font-size:0.85rem;"></i>
-                    {% endfor %}
-                </div>
+    {% if candidato_selecionado %}
+    <div class="verdict-block">
+        <div class="verdict-head">
+            <i class="fa-solid fa-circle-check"></i>
+            Candidato Selecionado
+        </div>
+        <div class="verdict-body">
+            <div class="verdict-name">{{ candidato_selecionado.nome }}</div>
+            <div class="verdict-scores">
+                {% if candidato_selecionado.score_fit is not None %}
+                <span>Fit com a vaga: <strong>{{ candidato_selecionado.score_fit }}%</strong></span>
                 {% endif %}
-
-                <!-- Fit score -->
-                {% if c.score_fit is not None %}
-                <div style="flex-shrink:0; padding:0.25rem 0.6rem; border-radius:6px; font-size:0.75rem; font-weight:700;
-                    {% if c.score_fit >= 75 %}background:#dcfce7; color:#15803d;
-                    {% elif c.score_fit >= 50 %}background:#fef9c3; color:#a16207;
-                    {% else %}background:#fee2e2; color:#dc2626;{% endif %}">
-                    Fit {{ c.score_fit }}%
-                </div>
+                {% if candidato_selecionado.pontuacao_entrevista %}
+                <span>Avaliação em entrevista: <strong>{{ candidato_selecionado.pontuacao_entrevista }}/5</strong></span>
                 {% endif %}
-
-                <!-- Recommendation badge -->
-                <div style="flex-shrink:0; padding:0.25rem 0.7rem; border-radius:6px; font-size:0.75rem; font-weight:600;
-                    {% if rec == 'recomendado' %}background:#dcfce7; color:#15803d;
-                    {% elif rec == 'nao_recomendado' %}background:#fee2e2; color:#dc2626;
-                    {% elif rec == 'a_considerar' %}background:#fef9c3; color:#a16207;
-                    {% else %}background:#f1f5f9; color:#64748b;{% endif %}">
-                    {% if rec == 'recomendado' %}✅ Recomendado
-                    {% elif rec == 'nao_recomendado' %}❌ Não recomendado
-                    {% elif rec == 'a_considerar' %}⚠️ A considerar
-                    {% else %}— Sem avaliação{% endif %}
-                </div>
+                {% if candidato_selecionado.experiencia_anos %}
+                <span>Experiência: <strong>{{ candidato_selecionado.experiencia_anos }} anos</strong></span>
+                {% endif %}
             </div>
-
-            <!-- Detail rows -->
-            {% if c.pontos_fortes or c.pontos_fracos or c.notas %}
-            <div style="padding:0.75rem 1rem; display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; border-top:1px solid #f1f5f9;">
-                {% if c.pontos_fortes %}
-                <div>
-                    <p style="font-size:0.72rem; font-weight:700; color:#15803d; text-transform:uppercase; letter-spacing:0.04em; margin:0 0 0.3rem;">Pontos fortes</p>
-                    <p style="font-size:0.82rem; color:#1e293b; margin:0; line-height:1.5;">{{ c.pontos_fortes }}</p>
-                </div>
-                {% endif %}
-                {% if c.pontos_fracos %}
-                <div>
-                    <p style="font-size:0.72rem; font-weight:700; color:#d97706; text-transform:uppercase; letter-spacing:0.04em; margin:0 0 0.3rem;">Pontos fracos</p>
-                    <p style="font-size:0.82rem; color:#1e293b; margin:0; line-height:1.5;">{{ c.pontos_fracos }}</p>
-                </div>
-                {% endif %}
-                {% if c.notas %}
-                <div style="grid-column:1/-1;">
-                    <p style="font-size:0.72rem; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.04em; margin:0 0 0.3rem;">Notas</p>
-                    <p style="font-size:0.82rem; color:#1e293b; margin:0; line-height:1.5;">{{ c.notas }}</p>
-                </div>
-                {% endif %}
+            {% if narrativa %}
+            <div class="verdict-narrative">{{ narrativa }}</div>
+            {% else %}
+            {% if candidato_selecionado.pontos_fortes %}
+            <div style="margin-bottom: 10px;">
+                <p style="font-size:.72rem; font-weight:700; color:#166534; text-transform:uppercase; letter-spacing:.04em; margin:0 0 6px;">Pontos fortes identificados</p>
+                <p style="font-size:.82rem; color:#1e293b; margin:0; line-height:1.65;">{{ candidato_selecionado.pontos_fortes }}</p>
             </div>
             {% endif %}
-
+            {% if candidato_selecionado.notas %}
+            <div>
+                <p style="font-size:.72rem; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:.04em; margin:0 0 6px;">Notas adicionais</p>
+                <p style="font-size:.82rem; color:#1e293b; margin:0; line-height:1.65;">{{ candidato_selecionado.notas }}</p>
+            </div>
+            {% endif %}
+            {% endif %}
         </div>
-        {% endwith %}
-        {% endfor %}
     </div>
+    {% else %}
+    <div class="verdict-no-selection">
+        <i class="fa-solid fa-triangle-exclamation mr-2"></i>
+        Nenhum candidato marcado como <strong>Contratado</strong> ainda. Mova o candidato selecionado para a etapa "Contratado" no Pipeline para completar este relatório.
+    </div>
+    {% endif %}
 </div>
 
 {% endif %}
