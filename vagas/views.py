@@ -1208,16 +1208,19 @@ def relatorio_selecao(request, pk):
     candidatos_avaliados = (
         Candidato.objects
         .filter(vaga=vaga)
-        .exclude(etapa__in=["Candidatura Recebida", "Em Triagem"])
+        .exclude(etapa="Candidatura Recebida")
         .select_related("nota_entrevista")
         .order_by("-nota_entrevista__pontuacao", "-score_fit", "nome")
     )
 
-    # Build data for LLM + template
+    total_candidatos = Candidato.objects.filter(vaga=vaga).count()
+
     dados_candidatos = []
+    candidato_selecionado = None
     for c in candidatos_avaliados:
         nota = getattr(c, "nota_entrevista", None)
-        dados_candidatos.append({
+        dado = {
+            "pk": str(c.pk),
             "nome": c.nome,
             "etapa": c.etapa,
             "score_fit": c.score_fit,
@@ -1228,14 +1231,21 @@ def relatorio_selecao(request, pk):
             "notas": nota.notas if nota else "",
             "experiencia_anos": c.experiencia_anos,
             "competencias": c.competencias,
-        })
+        }
+        dados_candidatos.append(dado)
+        if c.etapa == "Contratado" and candidato_selecionado is None:
+            candidato_selecionado = dado
 
+    comite_sessions = list(vaga.comite_sessions.order_by("created_at"))
     narrativa = _gerar_narrativa_relatorio(vaga, dados_candidatos)
 
     return render(request, "vagas/relatorio_selecao.html", {
         "vaga": vaga,
         "candidatos": dados_candidatos,
         "narrativa": narrativa,
+        "comite_sessions": comite_sessions,
+        "candidato_selecionado": candidato_selecionado,
+        "total_candidatos": total_candidatos,
     })
 
 
