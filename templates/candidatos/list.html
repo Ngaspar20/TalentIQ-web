@@ -8,11 +8,11 @@
 <div class="page-header flex items-center justify-between">
     <div>
         <h1 class="flex items-center gap-3">
-            <i class="fa-solid fa-users" style="color:#8b5cf6;"></i> Candidatos
+            <i class="fa-solid fa-users" style="color:#2a7a6e;"></i> Candidatos
         </h1>
         <p>Todos os candidatos registados na plataforma</p>
     </div>
-    <a href="/candidatos/carregar/" class="btn-primary" style="background:#7c3aed;">
+    <a href="/candidatos/carregar/" class="btn-primary" style="background:#1a4d47;">
         <i class="fa-solid fa-file-arrow-up"></i> Carregar CV
     </a>
 </div>
@@ -40,7 +40,7 @@
             </td>
             <td style="padding:12px 16px;">
                 {% if c.vaga %}
-                <div style="font-size:0.85rem; color:#1e3a8a; font-weight:500;">{{ c.vaga.titulo|truncatechars:35 }}</div>
+                <div style="font-size:0.85rem; color:var(--ink); font-weight:500;">{{ c.vaga.titulo|truncatechars:35 }}</div>
                 {% if c.vaga.organizacao %}<div class="text-xs text-slate-400">{{ c.vaga.organizacao }}</div>{% endif %}
                 {% else %}
                 <span class="text-slate-300 text-sm">—</span>
@@ -88,7 +88,7 @@
 <div class="section-card py-16 text-center text-slate-400">
     <i class="fa-solid fa-users fa-3x mb-4" style="color:#e9d5ff;"></i>
     <p class="font-medium text-slate-500">Nenhum candidato registado ainda</p>
-    <a href="/candidatos/carregar/" class="btn-primary mt-4" style="background:#7c3aed;">
+    <a href="/candidatos/carregar/" class="btn-primary mt-4" style="background:#1a4d47;">
         <i class="fa-solid fa-file-arrow-up"></i> Carregar primeiro CV
     </a>
 </div>

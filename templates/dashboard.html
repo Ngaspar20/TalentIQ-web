@@ -166,7 +166,7 @@
           <tr style="background:#f8fafc;">
             <th style="padding:9px 14px; text-align:left; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0; white-space:nowrap;">Vaga</th>
             <th style="padding:9px 10px; text-align:center; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">CVs</th>
-            <th style="padding:9px 10px; text-align:center; font-size:10px; color:#3b82f6; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Candidatura</th>
+            <th style="padding:9px 10px; text-align:center; font-size:10px; color:var(--accent); font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Candidatura</th>
             <th style="padding:9px 10px; text-align:center; font-size:10px; color:#f59e0b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Entrevista</th>
             <th style="padding:9px 10px; text-align:center; font-size:10px; color:#06b6d4; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Proposta</th>
             <th style="padding:9px 10px; text-align:center; font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #e2e8f0;">Headcount</th>
@@ -192,7 +192,7 @@
               </div>
             </td>
             <td style="padding:11px 10px; text-align:center; font-weight:700; color:#1e293b;">{{ row.cvs }}</td>
-            <td style="padding:11px 10px; text-align:center; color:#3b82f6; font-weight:600;">{{ row.candidatura }}</td>
+            <td style="padding:11px 10px; text-align:center; color:var(--accent); font-weight:600;">{{ row.candidatura }}</td>
             <td style="padding:11px 10px; text-align:center; {% if row.entrevista == 0 and row.cvs > 0 %}color:#f59e0b; font-weight:700;{% else %}color:#1e293b;{% endif %}">
               {{ row.entrevista }}
             </td>

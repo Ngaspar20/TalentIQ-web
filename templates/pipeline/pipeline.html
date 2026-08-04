@@ -55,7 +55,7 @@
 
         <!-- Column header -->
         <div class="kanban-col-header flex items-center justify-between"
-             style="background: {% if etapa == 'Candidatura Recebida' %}#3b82f6{% elif etapa == 'Em Triagem' %}#8b5cf6{% elif etapa == 'Pré-Seleccionado' %}#f97316{% elif etapa == 'Entrevista' %}#f59e0b{% elif etapa == 'Proposta' %}#06b6d4{% elif etapa == 'Contratado' %}#10b981{% else %}#ef4444{% endif %};">
+             style="background: {% if etapa == 'Candidatura Recebida' %}#3b82f6{% elif etapa == 'Em Triagem' %}#2a7a6e{% elif etapa == 'Pré-Seleccionado' %}#f97316{% elif etapa == 'Entrevista' %}#f59e0b{% elif etapa == 'Proposta' %}#06b6d4{% elif etapa == 'Contratado' %}#10b981{% else %}#ef4444{% endif %};">
             <span>{{ etapa }}</span>
             <span class="bg-white bg-opacity-25 text-white text-xs font-bold px-2 py-0.5 rounded-full col-count">0</span>
         </div>
@@ -64,7 +64,7 @@
         {% for c in candidatos %}
         {% if c.etapa == etapa %}
         <div class="kanban-card"
-             style="border-left-color: {% if etapa == 'Candidatura Recebida' %}#3b82f6{% elif etapa == 'Em Triagem' %}#8b5cf6{% elif etapa == 'Pré-Seleccionado' %}#f97316{% elif etapa == 'Entrevista' %}#f59e0b{% elif etapa == 'Proposta' %}#06b6d4{% elif etapa == 'Contratado' %}#10b981{% else %}#ef4444{% endif %};">
+             style="border-left-color: {% if etapa == 'Candidatura Recebida' %}#3b82f6{% elif etapa == 'Em Triagem' %}#2a7a6e{% elif etapa == 'Pré-Seleccionado' %}#f97316{% elif etapa == 'Entrevista' %}#f59e0b{% elif etapa == 'Proposta' %}#06b6d4{% elif etapa == 'Contratado' %}#10b981{% else %}#ef4444{% endif %};">
 
             <!-- Checkbox (hidden in Rejeitado/Contratado columns) -->
             {% if etapa != 'Rejeitado' and etapa != 'Contratado' %}

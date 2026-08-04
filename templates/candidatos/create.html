@@ -10,7 +10,7 @@
 <div class="page-header flex items-center justify-between">
     <div>
         <h1 class="flex items-center gap-3">
-            <i class="fa-solid fa-file-arrow-up" style="color:#8b5cf6;"></i> Carregar CV
+            <i class="fa-solid fa-file-arrow-up" style="color:#2a7a6e;"></i> Carregar CV
         </h1>
         <p>Carregue o CV do candidato — a IA extrai automaticamente o perfil completo</p>
     </div>
@@ -51,7 +51,7 @@
         </div>
         <div class="flex items-end">
             <p class="text-sm text-slate-500">
-                <i class="fa-solid fa-circle-info mr-1" style="color:#8b5cf6;"></i>
+                <i class="fa-solid fa-circle-info mr-1" style="color:#2a7a6e;"></i>
                 Seleccione a vaga para que o score de fit seja calculado automaticamente após a análise do CV.
             </p>
         </div>
@@ -85,7 +85,7 @@
         </div>
 
         <div id="parsing-indicator" class="htmx-indicator flex items-center justify-center gap-3 mt-4 py-3">
-            <i class="fa-solid fa-circle-notch fa-spin" style="color:#8b5cf6;"></i>
+            <i class="fa-solid fa-circle-notch fa-spin" style="color:#2a7a6e;"></i>
             <span class="text-slate-600 font-medium">A extrair texto do CV...</span>
         </div>
 
@@ -119,7 +119,7 @@
         </div>
 
         <div id="cv-form-actions" class="hidden flex items-center gap-3 pt-4 border-t border-slate-100">
-            <button type="submit" class="btn-primary" style="background:#7c3aed;">
+            <button type="submit" class="btn-primary" style="background:#1a4d47;">
                 <i class="fa-solid fa-floppy-disk"></i> Guardar Candidato
             </button>
             <a href="/candidatos/" class="btn-secondary">
@@ -193,8 +193,8 @@
                 <div class="mb-4"><label>Idiomas <span class="text-slate-400 font-normal">— separados por vírgula</span></label><input type="text" name="idiomas_input" class="form-input" placeholder="Ex: Português, Inglês" value="${(cv.idiomas||[]).join(', ')}"></div>
             </div>
         </div>
-        <div class="mb-4"><label><i class="fa-solid fa-align-left mr-1" style="color:#8b5cf6;"></i> Resumo Profissional</label><textarea name="resumo" class="form-input" rows="3" placeholder="Breve descrição do candidato...">${cv.resumo||''}</textarea></div>
-        <div class="mb-4"><label><i class="fa-solid fa-note-sticky mr-1" style="color:#8b5cf6;"></i> Notas Internas</label><textarea name="notas" class="form-input" rows="2" placeholder="Notas do recrutador (não visíveis ao candidato)..."></textarea></div>
+        <div class="mb-4"><label><i class="fa-solid fa-align-left mr-1" style="color:#2a7a6e;"></i> Resumo Profissional</label><textarea name="resumo" class="form-input" rows="3" placeholder="Breve descrição do candidato...">${cv.resumo||''}</textarea></div>
+        <div class="mb-4"><label><i class="fa-solid fa-note-sticky mr-1" style="color:#2a7a6e;"></i> Notas Internas</label><textarea name="notas" class="form-input" rows="2" placeholder="Notas do recrutador (não visíveis ao candidato)..."></textarea></div>
         `;
     }
 

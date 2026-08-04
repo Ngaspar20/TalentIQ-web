@@ -65,7 +65,7 @@ Shortlist
                 <form method="post" action="/vagas/{{ vaga.pk }}/shortlist/{{ c.pk }}/entrevista/" style="flex-shrink:0;">
                     {% csrf_token %}
                     <button type="submit" title="Mover para Entrevista"
-                        style="background:#8b5cf6; color:white; border:none; border-radius:8px; padding:0.4rem 0.85rem; font-size:0.8rem; font-weight:600; cursor:pointer; white-space:nowrap;">
+                        style="background:#2a7a6e; color:white; border:none; border-radius:8px; padding:0.4rem 0.85rem; font-size:0.8rem; font-weight:600; cursor:pointer; white-space:nowrap;">
                         <i class="fa-solid fa-arrow-right mr-1"></i> Entrevista
                     </button>
                 </form>
@@ -85,14 +85,14 @@ Shortlist
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
             <h2 style="font-size:1rem; font-weight:700; color:#1e293b; margin:0;">
                 Em Entrevista
-                <span style="background:#ede9fe; color:#7c3aed; border-radius:999px; font-size:0.75rem; font-weight:600; padding:0.15rem 0.6rem; margin-left:0.4rem;">{{ candidatos_entrevista|length }}</span>
+                <span style="background:#ede9fe; color:#1a4d47; border-radius:999px; font-size:0.75rem; font-weight:600; padding:0.15rem 0.6rem; margin-left:0.4rem;">{{ candidatos_entrevista|length }}</span>
             </h2>
         </div>
 
         {% if candidatos_entrevista %}
         <div style="display:flex; flex-direction:column; gap:0.75rem;">
             {% for c in candidatos_entrevista %}
-            <div style="background:white; border:1px solid #ddd6fe; border-radius:10px; padding:1rem; display:flex; align-items:center; gap:1rem;">
+            <div style="background:white; border:1px solid var(--line); border-radius:10px; padding:1rem; display:flex; align-items:center; gap:1rem;">
                 <div style="flex-shrink:0; width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.95rem;
                     {% if c.score_fit >= 75 %}background:#dcfce7; color:#15803d;
                     {% elif c.score_fit >= 50 %}background:#fef9c3; color:#a16207;
@@ -109,7 +109,7 @@ Shortlist
                     </div>
                 </div>
 
-                <span style="background:#ede9fe; color:#7c3aed; border-radius:6px; padding:0.25rem 0.6rem; font-size:0.75rem; font-weight:600; flex-shrink:0;">
+                <span style="background:#ede9fe; color:#1a4d47; border-radius:6px; padding:0.25rem 0.6rem; font-size:0.75rem; font-weight:600; flex-shrink:0;">
                     <i class="fa-solid fa-circle-check mr-1"></i> Selecionado
                 </span>
             </div>
