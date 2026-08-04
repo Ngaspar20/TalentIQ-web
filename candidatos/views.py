@@ -29,8 +29,17 @@ def org_candidatos(request):
 
 
 def candidato_list(request):
-    candidatos = org_candidatos(request).select_related("vaga").order_by("-created_at")
-    return render(request, "candidatos/list.html", {"candidatos": candidatos})
+    from vagas.models import Vaga
+    vagas = Vaga.objects.filter(organisation=request.user.organisation).order_by("-created_at")
+    qs = org_candidatos(request).select_related("vaga").order_by("-created_at")
+    vaga_id = request.GET.get("vaga", "").strip()
+    if vaga_id:
+        qs = qs.filter(vaga_id=vaga_id)
+    return render(request, "candidatos/list.html", {
+        "candidatos": qs,
+        "vagas": vagas,
+        "vaga_selecionada": vaga_id,
+    })
 
 
 @recruiter_required
