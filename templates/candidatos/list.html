@@ -17,6 +17,28 @@
     </a>
 </div>
 
+<!-- Vacancy filter -->
+<div class="section-card" style="padding:14px 20px; margin-bottom:12px;">
+    <form method="get" class="flex items-center gap-3 flex-wrap">
+        <label style="font-size:0.8rem; font-weight:500; color:var(--ink-2); white-space:nowrap;">
+            <i class="fa-solid fa-filter" style="color:var(--accent); margin-right:5px;"></i>Filtrar por vaga:
+        </label>
+        <select name="vaga" class="form-input" style="width:auto; min-width:220px; max-width:380px;" onchange="this.form.submit()">
+            <option value="">— Todas as vagas —</option>
+            {% for v in vagas %}
+            <option value="{{ v.pk }}" {% if vaga_selecionada == v.pk|stringformat:"s" %}selected{% endif %}>
+                {{ v.titulo|truncatechars:55 }}{% if v.organizacao %} · {{ v.organizacao }}{% endif %}
+            </option>
+            {% endfor %}
+        </select>
+        {% if vaga_selecionada %}
+        <a href="/candidatos/" class="btn-secondary" style="padding:7px 14px; font-size:0.82rem;">
+            <i class="fa-solid fa-xmark"></i> Limpar filtro
+        </a>
+        {% endif %}
+    </form>
+</div>
+
 {% if candidatos %}
 <div class="section-card" style="padding:0; overflow:hidden;">
     <table style="width:100%; border-collapse:collapse;">
