@@ -7,7 +7,7 @@
 {% block content %}
 <div class="page-header flex items-center justify-between">
     <h1 class="flex items-center gap-3">
-        <i class="fa-solid fa-pen" style="color:#1d4ed8;"></i> Editar Vaga
+        <i class="fa-solid fa-pen" style="color:var(--accent);"></i> Editar Vaga
     </h1>
     <a href="/vagas/{{ vaga.pk }}/" class="btn-secondary"><i class="fa-solid fa-arrow-left"></i> Voltar</a>
 </div>
@@ -79,10 +79,10 @@
                 <div class="mb-4"><label>Prazo (data exacta)</label><input type="date" name="prazo_data" class="form-input" value="{{ vaga.prazo_data|date:'Y-m-d'|default:'' }}"></div>
             </div>
         </div>
-        <div class="mb-4"><label><i class="fa-solid fa-brain mr-1" style="color:#1d4ed8;"></i> Competências Requeridas <span class="text-slate-400 font-normal">— separadas por vírgula</span></label><textarea name="competencias_input" class="form-input" rows="3">{{ vaga.competencias_requeridas|join:", " }}</textarea></div>
-        <div class="mb-4"><label><i class="fa-solid fa-list-check mr-1" style="color:#1d4ed8;"></i> Responsabilidades</label><textarea name="responsabilidades_input" class="form-input" rows="4">{% for r in vaga.responsabilidades %}{{ r }}
+        <div class="mb-4"><label><i class="fa-solid fa-brain mr-1" style="color:var(--accent);"></i> Competências Requeridas <span class="text-slate-400 font-normal">— separadas por vírgula</span></label><textarea name="competencias_input" class="form-input" rows="3">{{ vaga.competencias_requeridas|join:", " }}</textarea></div>
+        <div class="mb-4"><label><i class="fa-solid fa-list-check mr-1" style="color:var(--accent);"></i> Responsabilidades</label><textarea name="responsabilidades_input" class="form-input" rows="4">{% for r in vaga.responsabilidades %}{{ r }}
 {% endfor %}</textarea></div>
-        <div class="mb-6"><label><i class="fa-solid fa-align-left mr-1" style="color:#1d4ed8;"></i> Descrição</label><textarea name="descricao" class="form-input" rows="4">{{ vaga.descricao }}</textarea></div>
+        <div class="mb-6"><label><i class="fa-solid fa-align-left mr-1" style="color:var(--accent);"></i> Descrição</label><textarea name="descricao" class="form-input" rows="4">{{ vaga.descricao }}</textarea></div>
         <div class="flex gap-3 pt-4 border-t border-slate-100">
             <button type="submit" class="btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
             <a href="/vagas/{{ vaga.pk }}/" class="btn-secondary"><i class="fa-solid fa-xmark"></i> Cancelar</a>

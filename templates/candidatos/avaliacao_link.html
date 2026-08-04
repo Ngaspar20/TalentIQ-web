@@ -10,7 +10,7 @@
 
 <div class="page-header">
     <h1 class="flex items-center gap-3">
-        <i class="fa-solid fa-link" style="color:#8b5cf6;"></i> Link de Avaliação gerado
+        <i class="fa-solid fa-link" style="color:#2a7a6e;"></i> Link de Avaliação gerado
     </h1>
     <p>{{ candidato.nome }} — {% if candidato.vaga %}{{ candidato.vaga.titulo }}{% endif %}</p>
 </div>
@@ -20,13 +20,13 @@
     <div class="flex items-center gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
         <input type="text" id="link-field" value="{{ link }}" readonly
                class="flex-1 bg-transparent text-sm text-slate-700 focus:outline-none font-mono">
-        <button onclick="copyLink()" class="btn-primary text-xs" style="padding:6px 14px; background:#8b5cf6;" id="copy-btn">
+        <button onclick="copyLink()" class="btn-primary text-xs" style="padding:6px 14px; background:#2a7a6e;" id="copy-btn">
             <i class="fa-solid fa-copy mr-1"></i> Copiar
         </button>
     </div>
 
-    <div class="mt-4 p-3 rounded-lg text-sm space-y-1" style="background:#f5f3ff; border:1px solid #ddd6fe;">
-        <p><i class="fa-solid fa-circle-info mr-2" style="color:#8b5cf6;"></i><strong>Como funciona:</strong></p>
+    <div class="mt-4 p-3 rounded-lg text-sm space-y-1" style="background:var(--accent-soft); border:1px solid var(--line);">
+        <p><i class="fa-solid fa-circle-info mr-2" style="color:#2a7a6e;"></i><strong>Como funciona:</strong></p>
         <p class="text-slate-600 ml-5">1. O presidente do júri abre o link (sem precisar de conta)</p>
         <p class="text-slate-600 ml-5">2. Preenche a avaliação da entrevista com pontuação e recomendação</p>
         <p class="text-slate-600 ml-5">3. Submete — aparece no perfil do candidato para confirmação</p>
@@ -44,7 +44,7 @@ function copyLink() {
         const btn = document.getElementById('copy-btn');
         btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Copiado!';
         btn.style.background = '#16a34a';
-        setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-copy mr-1"></i> Copiar'; btn.style.background = '#8b5cf6'; }, 2000);
+        setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-copy mr-1"></i> Copiar'; btn.style.background = '#2a7a6e'; }, 2000);
     });
 }
 </script>

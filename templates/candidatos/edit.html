@@ -7,7 +7,7 @@
 {% block content %}
 <div class="page-header flex items-center justify-between">
     <h1 class="flex items-center gap-3">
-        <i class="fa-solid fa-pen" style="color:#8b5cf6;"></i> Editar Candidato
+        <i class="fa-solid fa-pen" style="color:#2a7a6e;"></i> Editar Candidato
     </h1>
     <a href="/candidatos/{{ candidato.pk }}/" class="btn-secondary">
         <i class="fa-solid fa-arrow-left"></i> Voltar
@@ -53,10 +53,10 @@
                 <div class="mb-4"><label>Idiomas <span class="text-slate-400 font-normal">— separados por vírgula</span></label><input type="text" name="idiomas_input" class="form-input" value="{{ candidato.idiomas|join:', ' }}"></div>
             </div>
         </div>
-        <div class="mb-4"><label><i class="fa-solid fa-align-left mr-1" style="color:#8b5cf6;"></i> Resumo Profissional</label><textarea name="resumo" class="form-input" rows="3">{{ candidato.resumo }}</textarea></div>
-        <div class="mb-6"><label><i class="fa-solid fa-note-sticky mr-1" style="color:#8b5cf6;"></i> Notas Internas</label><textarea name="notas" class="form-input" rows="2">{{ candidato.notas }}</textarea></div>
+        <div class="mb-4"><label><i class="fa-solid fa-align-left mr-1" style="color:#2a7a6e;"></i> Resumo Profissional</label><textarea name="resumo" class="form-input" rows="3">{{ candidato.resumo }}</textarea></div>
+        <div class="mb-6"><label><i class="fa-solid fa-note-sticky mr-1" style="color:#2a7a6e;"></i> Notas Internas</label><textarea name="notas" class="form-input" rows="2">{{ candidato.notas }}</textarea></div>
         <div class="flex gap-3 pt-4 border-t border-slate-100">
-            <button type="submit" class="btn-primary" style="background:#7c3aed;"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+            <button type="submit" class="btn-primary" style="background:#1a4d47;"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
             <a href="/candidatos/{{ candidato.pk }}/" class="btn-secondary"><i class="fa-solid fa-xmark"></i> Cancelar</a>
         </div>
     </form>

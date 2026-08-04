@@ -11,7 +11,7 @@
 <div class="page-header flex items-center justify-between">
     <div>
         <h1 class="flex items-center gap-3">
-            <i class="fa-solid fa-envelope" style="color:#8b5cf6;"></i> {{ tipo_label }}
+            <i class="fa-solid fa-envelope" style="color:#2a7a6e;"></i> {{ tipo_label }}
         </h1>
         <p>{{ candidato.nome }} — {% if candidato.vaga %}{{ candidato.vaga.titulo }}{% else %}Sem vaga associada{% endif %}</p>
     </div>
@@ -20,9 +20,9 @@
     </a>
 </div>
 
-<div class="section-card mb-4" style="border-left: 4px solid #8b5cf6;">
+<div class="section-card mb-4" style="border-left: 4px solid #2a7a6e;">
     <div class="flex items-center gap-2 mb-1">
-        <i class="fa-solid fa-circle-info" style="color:#8b5cf6;"></i>
+        <i class="fa-solid fa-circle-info" style="color:#2a7a6e;"></i>
         <span class="text-sm font-semibold text-slate-700">Reveja e edite a carta antes de fazer o download</span>
     </div>
     <p class="text-sm text-slate-500">O texto abaixo foi gerado automaticamente. Pode editá-lo directamente antes de transferir.</p>
@@ -40,7 +40,7 @@
         </button>
         <a href="/candidatos/{{ candidato.pk }}/" class="btn-secondary">Cancelar</a>
         <span class="ml-auto text-xs text-slate-400">
-            <i class="fa-solid fa-sparkles mr-1" style="color:#8b5cf6;"></i> Gerado por IA — reveja sempre antes de enviar
+            <i class="fa-solid fa-sparkles mr-1" style="color:#2a7a6e;"></i> Gerado por IA — reveja sempre antes de enviar
         </span>
     </div>
 </form>

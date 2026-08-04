@@ -1,43 +1,28 @@
 {% extends "base.html" %}
 
 {% block auth_content %}
-<div class="min-h-screen flex items-center justify-center" style="background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 60%, #3b82f6 100%);">
-    <div class="w-full max-w-md px-4">
+<div class="min-h-screen flex items-center justify-center" style="background: var(--ink); position:relative; overflow:hidden;">
 
-        <!-- Logo -->
+    <!-- Watermark V -->
+    <div style="position:absolute;right:-60px;top:50%;transform:translateY(-50%);font-family:var(--serif);font-size:600px;line-height:1;color:rgba(255,255,255,0.025);pointer-events:none;user-select:none;font-style:italic;">V</div>
+
+    <div class="w-full max-w-sm px-4" style="position:relative;">
+
+        <!-- Vitalis mark + wordmark -->
         <div class="text-center mb-8">
-            <!-- Icon -->
-            <div class="inline-flex items-center justify-center w-28 h-28 rounded-3xl mb-5" style="background: rgba(255,255,255,0.15);">
-                <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="40" cy="40" r="14" fill="white" fill-opacity="0.25"/>
-                    <circle cx="40" cy="40" r="6" fill="white"/>
-                    <!-- spokes -->
-                    <line x1="40" y1="40" x2="40" y2="14" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-                    <line x1="40" y1="40" x2="40" y2="66" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-                    <line x1="40" y1="40" x2="14" y2="40" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-                    <line x1="40" y1="40" x2="66" y2="40" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-                    <line x1="40" y1="40" x2="21" y2="21" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-                    <line x1="40" y1="40" x2="59" y2="59" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-                    <line x1="40" y1="40" x2="59" y2="21" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-                    <line x1="40" y1="40" x2="21" y2="59" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-                    <!-- outer nodes -->
-                    <circle cx="40" cy="14" r="4.5" fill="white"/>
-                    <circle cx="40" cy="66" r="4.5" fill="white"/>
-                    <circle cx="14" cy="40" r="4.5" fill="white"/>
-                    <circle cx="66" cy="40" r="4.5" fill="white"/>
-                    <circle cx="21" cy="21" r="4.5" fill="white"/>
-                    <circle cx="59" cy="59" r="4.5" fill="white"/>
-                    <circle cx="59" cy="21" r="4.5" fill="white"/>
-                    <circle cx="21" cy="59" r="4.5" fill="white"/>
-                </svg>
+            <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:20px;">
+                <div style="width:32px;height:32px;border-radius:7px;background:var(--bg);display:grid;place-items:center;color:var(--ink);font-family:var(--serif);font-size:19px;font-style:italic;flex-shrink:0;line-height:1;">V</div>
+                <div style="text-align:left;">
+                    <div style="font-family:var(--serif);font-size:22px;color:var(--bg);letter-spacing:-0.01em;line-height:1.1;">TalentIQ</div>
+                    <div style="font-family:var(--mono);font-size:8px;text-transform:uppercase;letter-spacing:0.07em;color:rgba(250,250,247,0.3);">by Vitalis</div>
+                </div>
             </div>
-            <h1 class="text-5xl font-extrabold text-white tracking-tight">Talent<span style="color: #93c5fd;">IQ</span></h1>
-            <p class="text-blue-200 text-sm mt-2">Recrutamento Inteligente</p>
+            <p style="font-family:var(--serif);font-size:1rem;font-style:italic;color:rgba(250,250,247,0.5);">Recrutamento Inteligente</p>
         </div>
 
         <!-- Card -->
-        <div class="bg-white rounded-2xl shadow-2xl p-8">
-            <h2 class="text-xl font-bold text-slate-800 mb-6">Entrar na sua conta</h2>
+        <div style="background:#fff;border-radius:14px;border:1px solid var(--line);padding:32px;">
+            <h2 style="font-family:var(--serif);font-size:1.4rem;font-weight:400;color:var(--ink);letter-spacing:-0.015em;margin-bottom:24px;">Entrar na sua conta</h2>
 
             {% if form.errors %}
             <div class="alert-error mb-4">
@@ -60,7 +45,7 @@
                                class="form-input" placeholder="••••••••" autocomplete="new-password"
                                style="padding-right:2.75rem;">
                         <button type="button" onclick="togglePassword()" tabindex="-1"
-                                style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94a3b8;padding:0;">
+                                style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--ink-3);padding:0;">
                             <i id="eye-icon" class="fa-solid fa-eye" style="font-size:1rem;"></i>
                         </button>
                     </div>
@@ -70,11 +55,16 @@
                 </button>
             </form>
 
-            <p class="text-center text-sm text-slate-500 mt-6">
+            <p class="text-center text-sm mt-6" style="color:var(--ink-3);">
                 Não tem conta?
-                <a href="/accounts/register/" class="text-blue-600 font-semibold hover:underline">Registar organização</a>
+                <a href="/accounts/register/" style="color:var(--accent);font-weight:500;">Registar organização</a>
             </p>
         </div>
+
+        <!-- Footer note -->
+        <p style="text-align:center;font-family:var(--mono);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.06em;color:rgba(250,250,247,0.2);margin-top:24px;">
+            Vitalis · Soluções de IA &nbsp;·&nbsp; consulting@vitalis-solutions.org
+        </p>
     </div>
 </div>
 <script>

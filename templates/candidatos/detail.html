@@ -8,16 +8,16 @@
 <div class="page-header flex items-center justify-between">
     <div>
         <h1 class="flex items-center gap-3">
-            <i class="fa-solid fa-user" style="color:#8b5cf6;"></i> {{ candidato.nome }}
+            <i class="fa-solid fa-user" style="color:#2a7a6e;"></i> {{ candidato.nome }}
         </h1>
         <p>
-            {% if candidato.vaga %}<a href="/vagas/{{ candidato.vaga.pk }}/" style="color:#1d4ed8;text-decoration:none;">{{ candidato.vaga.titulo }}</a>{% else %}Sem vaga associada{% endif %}
+            {% if candidato.vaga %}<a href="/vagas/{{ candidato.vaga.pk }}/" style="color:var(--accent);text-decoration:none;">{{ candidato.vaga.titulo }}</a>{% else %}Sem vaga associada{% endif %}
             <span style="margin:0 .5rem;color:#e2e8f0;">·</span>
             <span style="font-weight:600;
                 {% if candidato.etapa == 'Contratado' %}color:#15803d;
                 {% elif candidato.etapa == 'Rejeitado' %}color:#dc2626;
-                {% elif candidato.etapa == 'Proposta' %}color:#1d4ed8;
-                {% elif candidato.etapa == 'Entrevista' %}color:#7c3aed;
+                {% elif candidato.etapa == 'Proposta' %}color:var(--accent);
+                {% elif candidato.etapa == 'Entrevista' %}color:#1a4d47;
                 {% else %}color:#64748b;{% endif %}">
                 {{ candidato.etapa }}
             </span>
@@ -43,16 +43,16 @@
     {% endif %}
     {% if candidato.email %}
     <div style="display:flex;align-items:center;gap:0.4rem;background:white;border:1px solid #e2e8f0;border-radius:8px;padding:0.5rem 1rem;font-size:0.85rem;color:#475569;">
-        <i class="fa-solid fa-envelope" style="color:#8b5cf6;"></i> {{ candidato.email }}
+        <i class="fa-solid fa-envelope" style="color:#2a7a6e;"></i> {{ candidato.email }}
     </div>
     {% endif %}
     {% if candidato.telefone %}
     <div style="display:flex;align-items:center;gap:0.4rem;background:white;border:1px solid #e2e8f0;border-radius:8px;padding:0.5rem 1rem;font-size:0.85rem;color:#475569;">
-        <i class="fa-solid fa-phone" style="color:#8b5cf6;"></i> {{ candidato.telefone }}
+        <i class="fa-solid fa-phone" style="color:#2a7a6e;"></i> {{ candidato.telefone }}
     </div>
     {% endif %}
     <div style="display:flex;align-items:center;gap:0.4rem;background:white;border:1px solid #e2e8f0;border-radius:8px;padding:0.5rem 1rem;font-size:0.85rem;color:#475569;">
-        <i class="fa-solid fa-briefcase" style="color:#8b5cf6;"></i> {{ candidato.experiencia_anos }} anos experiência
+        <i class="fa-solid fa-briefcase" style="color:#2a7a6e;"></i> {{ candidato.experiencia_anos }} anos experiência
     </div>
 </div>
 
@@ -65,7 +65,7 @@
     <button onclick="switchTab('avaliacao')" id="tab-btn-avaliacao"
         style="padding:0.65rem 1.25rem;font-size:0.85rem;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;color:#64748b;display:flex;align-items:center;gap:0.4rem;">
         <i class="fa-solid fa-star"></i> Avaliação
-        {% if nota or avaliacao_session %}<span style="width:8px;height:8px;background:#8b5cf6;border-radius:50%;display:inline-block;"></span>{% endif %}
+        {% if nota or avaliacao_session %}<span style="width:8px;height:8px;background:#2a7a6e;border-radius:50%;display:inline-block;"></span>{% endif %}
     </button>
     <button onclick="switchTab('documentos')" id="tab-btn-documentos"
         style="padding:0.65rem 1.25rem;font-size:0.85rem;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;color:#64748b;display:flex;align-items:center;gap:0.4rem;">
@@ -112,7 +112,7 @@
                 <ul class="space-y-1">
                     {% for f in candidato.formacao %}
                     <li class="text-sm text-slate-700 flex items-start gap-2">
-                        <i class="fa-solid fa-circle-dot mt-1" style="color:#8b5cf6;font-size:0.6rem;"></i> {{ f }}
+                        <i class="fa-solid fa-circle-dot mt-1" style="color:#2a7a6e;font-size:0.6rem;"></i> {{ f }}
                     </li>
                     {% endfor %}
                 </ul>
@@ -161,7 +161,7 @@
 
     {% if candidato.etapa == "Entrevista" %}
     <!-- Workflow: send evaluation link -->
-    <div class="section-card mb-4" style="border-left:4px solid #8b5cf6;">
+    <div class="section-card mb-4" style="border-left:4px solid #2a7a6e;">
         <p style="font-size:0.75rem;font-weight:700;color:#6d28d9;text-transform:uppercase;letter-spacing:.05em;margin-bottom:0.75rem;">
             <i class="fa-solid fa-paper-plane mr-1"></i> Avaliação do Presidente do Júri
         </p>
@@ -179,11 +179,11 @@
 
             {% elif avaliacao_session.estado == "submetida" %}
             <!-- Show submitted evaluation summary -->
-            <span style="background:#dbeafe;color:#1d4ed8;border-radius:999px;padding:0.3rem 0.8rem;font-size:0.78rem;font-weight:600;display:inline-flex;align-items:center;gap:0.4rem;margin-bottom:1rem;">
+            <span style="background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:0.3rem 0.8rem;font-size:0.78rem;font-weight:600;display:inline-flex;align-items:center;gap:0.4rem;margin-bottom:1rem;">
                 <i class="fa-solid fa-inbox"></i> Avaliação submetida — aguarda confirmação de RH
             </span>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;margin-bottom:1rem;">
-                <div style="text-align:center;padding:0.75rem;background:#f5f3ff;border-radius:8px;">
+                <div style="text-align:center;padding:0.75rem;background:var(--accent-soft);border-radius:8px;">
                     <div style="display:flex;justify-content:center;gap:2px;margin-bottom:0.25rem;">
                         {% for i in "12345" %}
                         <i class="fa-{% if avaliacao_session.pontuacao and avaliacao_session.pontuacao >= forloop.counter %}solid{% else %}regular{% endif %} fa-star"
@@ -241,7 +241,7 @@
             {% endif %}
             <form method="post" action="/candidatos/{{ candidato.pk }}/avaliacao/{{ avaliacao_session.pk }}/confirmar/">
                 {% csrf_token %}
-                <button type="submit" class="btn-primary" style="background:#8b5cf6;">
+                <button type="submit" class="btn-primary" style="background:#2a7a6e;">
                     <i class="fa-solid fa-circle-check mr-2"></i> Confirmar e avançar candidato
                 </button>
             </form>
@@ -251,7 +251,7 @@
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
             <p style="font-size:0.85rem;color:#94a3b8;margin:0;">Nenhuma avaliação enviada ainda.</p>
             <button onclick="document.getElementById('modal-avaliacao').classList.remove('hidden')"
-                    class="btn-primary" style="background:#8b5cf6;font-size:0.8rem;padding:6px 14px;">
+                    class="btn-primary" style="background:#2a7a6e;font-size:0.8rem;padding:6px 14px;">
                 <i class="fa-solid fa-paper-plane mr-1"></i> Enviar avaliação ao júri
             </button>
         </div>
@@ -261,7 +261,7 @@
 
     <!-- Nota de entrevista (summary / edit form) -->
     {% if nota or candidato.etapa == "Proposta" or candidato.etapa == "Contratado" or candidato.etapa == "Rejeitado" %}
-    <div class="section-card" style="border-left:4px solid #8b5cf6;">
+    <div class="section-card" style="border-left:4px solid #2a7a6e;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
             <p style="font-size:0.75rem;font-weight:700;color:#6d28d9;text-transform:uppercase;letter-spacing:.05em;margin:0;">
                 <i class="fa-solid fa-star mr-1"></i> Registo da Entrevista
@@ -276,7 +276,7 @@
         {% if nota %}
         <div id="nota-resumo">
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;">
-                <div style="text-align:center;padding:0.75rem;background:#f5f3ff;border-radius:8px;">
+                <div style="text-align:center;padding:0.75rem;background:var(--accent-soft);border-radius:8px;">
                     <div style="display:flex;justify-content:center;gap:2px;margin-bottom:0.25rem;">
                         {% for i in "12345" %}
                         <i class="fa-{% if nota.pontuacao and nota.pontuacao >= forloop.counter %}solid{% else %}regular{% endif %} fa-star"
@@ -365,7 +365,7 @@
                     <textarea name="notas" rows="2" class="form-input w-full text-sm" placeholder="Observações adicionais...">{{ nota.notas }}</textarea>
                 </div>
                 <div style="display:flex;gap:0.5rem;">
-                    <button type="submit" class="btn-primary" style="background:#8b5cf6;"><i class="fa-solid fa-floppy-disk mr-2"></i> Guardar</button>
+                    <button type="submit" class="btn-primary" style="background:#2a7a6e;"><i class="fa-solid fa-floppy-disk mr-2"></i> Guardar</button>
                     {% if nota %}<button type="button" onclick="toggleForm()" class="btn-secondary">Cancelar</button>{% endif %}
                 </div>
             </form>
@@ -387,13 +387,13 @@
         <div style="display:flex;flex-direction:column;gap:0.75rem;">
             {% if candidato.etapa == "Entrevista" or candidato.etapa == "Em Triagem" or candidato.etapa == "Candidatura Recebida" %}
             <a href="/candidatos/{{ candidato.pk }}/carta/?tipo=pre_selecao"
-               style="display:flex;align-items:center;gap:0.75rem;padding:0.85rem 1rem;border:1px solid #e0e7ff;border-radius:8px;background:#f5f3ff;text-decoration:none;color:#1e293b;">
-                <i class="fa-solid fa-envelope" style="color:#8b5cf6;font-size:1.1rem;width:24px;text-align:center;"></i>
+               style="display:flex;align-items:center;gap:0.75rem;padding:0.85rem 1rem;border:1px solid #e0e7ff;border-radius:8px;background:var(--accent-soft);text-decoration:none;color:#1e293b;">
+                <i class="fa-solid fa-envelope" style="color:#2a7a6e;font-size:1.1rem;width:24px;text-align:center;"></i>
                 <div>
                     <p style="font-weight:600;font-size:0.875rem;margin:0;">Carta de Pré-Selecção</p>
                     <p style="font-size:0.75rem;color:#64748b;margin:0;">Convite para entrevista</p>
                 </div>
-                <i class="fa-solid fa-arrow-right" style="margin-left:auto;color:#8b5cf6;"></i>
+                <i class="fa-solid fa-arrow-right" style="margin-left:auto;color:#2a7a6e;"></i>
             </a>
             {% endif %}
 
@@ -494,7 +494,7 @@
                 <p class="text-xs text-slate-400 mt-1">Pode copiar e enviar o link manualmente.</p>
             </div>
             <div class="flex gap-2">
-                <button type="submit" class="btn-primary" style="background:#8b5cf6;"><i class="fa-solid fa-link mr-1"></i> Gerar link</button>
+                <button type="submit" class="btn-primary" style="background:#2a7a6e;"><i class="fa-solid fa-link mr-1"></i> Gerar link</button>
                 <button type="button" onclick="document.getElementById('modal-avaliacao').classList.add('hidden')" class="btn-secondary">Cancelar</button>
             </div>
         </form>
@@ -508,7 +508,7 @@ function switchTab(id) {
     TABS.forEach(t => {
         document.getElementById('tab-' + t).style.display = t === id ? '' : 'none';
         const btn = document.getElementById('tab-btn-' + t);
-        if (t === id) { btn.style.borderBottomColor = '#8b5cf6'; btn.style.color = '#8b5cf6'; }
+        if (t === id) { btn.style.borderBottomColor = '#2a7a6e'; btn.style.color = '#2a7a6e'; }
         else { btn.style.borderBottomColor = 'transparent'; btn.style.color = '#64748b'; }
     });
     history.replaceState(null, '', '#tab-' + id);

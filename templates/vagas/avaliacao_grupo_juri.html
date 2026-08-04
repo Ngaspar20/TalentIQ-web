@@ -13,16 +13,16 @@
         .card-title { font-size: .78rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 1rem; display: flex; align-items: center; gap: .5rem; }
         label { font-size: .82rem; font-weight: 600; color: #475569; display: block; margin-bottom: .4rem; }
         textarea, input[type=date] { width: 100%; border: 1px solid #e2e8f0; border-radius: 7px; padding: 8px 12px; font-size: .875rem; font-family: inherit; resize: vertical; }
-        textarea:focus, input[type=date]:focus { outline: none; border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139,92,246,.12); }
+        textarea:focus, input[type=date]:focus { outline: none; border-color: #2a7a6e; box-shadow: 0 0 0 3px rgba(139,92,246,.12); }
         .rec-card { border: 2px solid #e2e8f0; border-radius: 10px; padding: .65rem .5rem; cursor: pointer; text-align: center; transition: all .15s; }
-        .rec-card:hover { border-color: #a78bfa; background: #faf5ff; }
+        .rec-card:hover { border-color: #4a9a8e; background: #faf5ff; }
         .selected-recomendado { border-color: #16a34a !important; background: #f0fdf4 !important; }
         .selected-a_considerar { border-color: #d97706 !important; background: #fffbeb !important; }
         .selected-nao_recomendado { border-color: #dc2626 !important; background: #fef2f2 !important; }
-        .btn-submit { background: #8b5cf6; color: white; padding: 13px 28px; border-radius: 9px; font-weight: 700; font-size: .95rem; border: none; cursor: pointer; width: 100%; margin-top: .5rem; }
-        .btn-submit:hover { background: #7c3aed; }
+        .btn-submit { background: #2a7a6e; color: white; padding: 13px 28px; border-radius: 9px; font-weight: 700; font-size: .95rem; border: none; cursor: pointer; width: 100%; margin-top: .5rem; }
+        .btn-submit:hover { background: #1a4d47; }
         .q-block { border: 1px solid #ede9fe; border-radius: 9px; padding: .85rem 1rem; margin-bottom: .65rem; background: #faf5ff; }
-        .q-num { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #8b5cf6; color: white; font-size: .7rem; font-weight: 800; flex-shrink: 0; }
+        .q-num { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #2a7a6e; color: white; font-size: .7rem; font-weight: 800; flex-shrink: 0; }
         .star-row { display: flex; gap: .5rem; align-items: center; }
         .star-btn { font-size: 1.6rem; color: #cbd5e1; cursor: pointer; border: none; background: none; padding: 0; transition: transform .1s; }
         .star-btn:hover { transform: scale(1.15); }
@@ -40,14 +40,14 @@
     <div style="margin-bottom:1.5rem;">
         <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.35rem;">
             <div style="width:40px;height:40px;border-radius:50%;background:#ede9fe;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                <i class="fa-solid fa-star" style="color:#8b5cf6;font-size:1.15rem;"></i>
+                <i class="fa-solid fa-star" style="color:#2a7a6e;font-size:1.15rem;"></i>
             </div>
             <h1 style="font-size:1.3rem;font-weight:800;color:#1e293b;">Avaliação de Entrevistas</h1>
         </div>
         <p style="font-size:.875rem;color:#64748b;margin-left:3.25rem;">{{ vaga.titulo }}{% if vaga.organizacao %} · {{ vaga.organizacao }}{% endif %}</p>
     </div>
 
-    <div style="background:#f5f3ff;border:1px solid #ddd6fe;border-left:4px solid #8b5cf6;border-radius:8px;padding:.75rem 1rem;margin-bottom:1.5rem;font-size:.83rem;color:#5b21b6;">
+    <div style="background:var(--accent-soft);border:1px solid var(--line);border-left:4px solid #2a7a6e;border-radius:8px;padding:.75rem 1rem;margin-bottom:1.5rem;font-size:.83rem;color:#5b21b6;">
         <i class="fa-solid fa-circle-info" style="margin-right:.4rem;"></i>
         Preencha a avaliação para <strong>cada candidato</strong> e submeta o formulário no final. O RH confirma as decisões.
     </div>
@@ -85,7 +85,7 @@
                         <div style="flex:1;">
                             <p style="font-size:.875rem;font-weight:600;color:#1e293b;line-height:1.5;">{{ item.pergunta }}</p>
                             {% if item.criterio %}
-                            <p style="font-size:.73rem;color:#8b5cf6;margin-top:.3rem;line-height:1.4;"><i class="fa-solid fa-magnifying-glass" style="font-size:.65rem;margin-right:.3rem;"></i>O que avaliar: {{ item.criterio }}</p>
+                            <p style="font-size:.73rem;color:#2a7a6e;margin-top:.3rem;line-height:1.4;"><i class="fa-solid fa-magnifying-glass" style="font-size:.65rem;margin-right:.3rem;"></i>O que avaliar: {{ item.criterio }}</p>
                             {% endif %}
                         </div>
                     </div>
