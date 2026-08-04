@@ -1,18 +1,28 @@
 {% extends "base.html" %}
 
 {% block auth_content %}
-<div class="min-h-screen flex items-center justify-center py-10" style="background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 60%, #3b82f6 100%);">
-    <div class="w-full max-w-lg px-4">
+<div class="min-h-screen flex items-center justify-center py-10" style="background: var(--ink); position:relative; overflow:hidden;">
 
-        <!-- Logo -->
-        <div class="text-center mb-6">
-            <h1 class="text-3xl font-extrabold text-white">Talent<span class="text-blue-300">IQ</span></h1>
-            <p class="text-blue-200 text-sm mt-1">Criar nova organização</p>
+    <!-- Watermark V -->
+    <div style="position:absolute;right:-60px;top:50%;transform:translateY(-50%);font-family:var(--serif);font-size:600px;line-height:1;color:rgba(255,255,255,0.025);pointer-events:none;user-select:none;font-style:italic;">V</div>
+
+    <div class="w-full max-w-lg px-4" style="position:relative;">
+
+        <!-- Vitalis mark + wordmark -->
+        <div class="text-center mb-8">
+            <div style="display:inline-flex;align-items:center;gap:30px;margin-bottom:20px;">
+                <div style="width:96px;height:96px;border-radius:21px;background:var(--bg);display:grid;place-items:center;color:var(--ink);font-family:var(--serif);font-size:57px;font-style:italic;flex-shrink:0;line-height:1;">V</div>
+                <div style="text-align:left;">
+                    <div style="font-family:'Inter',sans-serif;font-size:60px;font-weight:800;color:var(--bg);letter-spacing:-0.03em;line-height:1.1;">TalentIQ</div>
+                    <div style="font-family:var(--mono);font-size:24px;text-transform:uppercase;letter-spacing:0.07em;color:rgba(250,250,247,0.3);">by Vitalis</div>
+                </div>
+            </div>
+            <p style="font-family:var(--serif);font-size:1rem;font-style:italic;color:rgba(250,250,247,0.5);">Criar nova organização</p>
         </div>
 
         <!-- Card -->
-        <div class="bg-white rounded-2xl shadow-2xl p-8">
-            <h2 class="text-xl font-bold text-slate-800 mb-6">Registar Organização</h2>
+        <div style="background:#fff;border-radius:14px;border:1px solid var(--line);padding:32px;">
+            <h2 style="font-family:var(--serif);font-size:1.4rem;font-weight:400;color:var(--ink);letter-spacing:-0.015em;margin-bottom:24px;">Registar Organização</h2>
 
             {% if form.non_field_errors %}
             <div class="alert-error mb-4">
@@ -29,7 +39,7 @@
                            placeholder="Ex: Ministério da Saúde"
                            value="{{ form.organisation_name.value|default:'' }}">
                     {% if form.organisation_name.errors %}
-                    <p class="text-red-500 text-xs mt-1">{{ form.organisation_name.errors.0 }}</p>
+                    <p style="color:#dc2626;font-size:0.75rem;margin-top:4px;">{{ form.organisation_name.errors.0 }}</p>
                     {% endif %}
                 </div>
 
@@ -52,7 +62,7 @@
                            placeholder="ana.silva@org.mz"
                            value="{{ form.email.value|default:'' }}">
                     {% if form.email.errors %}
-                    <p class="text-red-500 text-xs mt-1">{{ form.email.errors.0 }}</p>
+                    <p style="color:#dc2626;font-size:0.75rem;margin-top:4px;">{{ form.email.errors.0 }}</p>
                     {% endif %}
                 </div>
 
@@ -65,7 +75,7 @@
                         <label>Confirmar</label>
                         <input type="password" name="password_confirm" class="form-input" placeholder="Repita">
                         {% if form.password_confirm.errors %}
-                        <p class="text-red-500 text-xs mt-1">{{ form.password_confirm.errors.0 }}</p>
+                        <p style="color:#dc2626;font-size:0.75rem;margin-top:4px;">{{ form.password_confirm.errors.0 }}</p>
                         {% endif %}
                     </div>
                 </div>
@@ -75,11 +85,16 @@
                 </button>
             </form>
 
-            <p class="text-center text-sm text-slate-500 mt-6">
+            <p class="text-center text-sm mt-6" style="color:var(--ink-3);">
                 Já tem conta?
-                <a href="/accounts/login/" class="text-blue-600 font-semibold hover:underline">Entrar</a>
+                <a href="/accounts/login/" style="color:var(--accent);font-weight:500;">Entrar</a>
             </p>
         </div>
+
+        <!-- Footer note -->
+        <p style="text-align:center;font-family:var(--mono);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.06em;color:rgba(250,250,247,0.2);margin-top:24px;">
+            Vitalis · Soluções de IA &nbsp;·&nbsp; consulting@vitalis-solutions.org
+        </p>
     </div>
 </div>
 {% endblock %}
