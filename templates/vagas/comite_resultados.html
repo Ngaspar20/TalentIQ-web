@@ -46,7 +46,7 @@
       <div style="font-size:.78rem;color:#64748b;">
         Média: <strong>{{ item.avg_score }}/5</strong>
         {% for i in "12345" %}
-          <span style="color:{% if forloop.counter <= item.avg_score %}#f59e0b{% else %}#e2e8f0{% endif %};">★</span>
+          <span style="color:{% if forloop.counter <= item.avg_score %}#f59e0b{% else %}#e2e8f0{% endif %};"><i class="fa-solid fa-star"></i></span>
         {% endfor %}
       </div>
       {% endif %}
@@ -69,9 +69,9 @@
       {% endif %}
       {% if item.rec_count %}
       <div style="font-size:.72rem;color:#94a3b8;margin-left:auto;">
-        {% if item.rec_count.recomendado %}<span style="color:#15803d;">✅ {{ item.rec_count.recomendado }}</span>{% endif %}
-        {% if item.rec_count.a_considerar %} <span style="color:#d97706;">⚠️ {{ item.rec_count.a_considerar }}</span>{% endif %}
-        {% if item.rec_count.nao_recomendado %} <span style="color:#dc2626;">❌ {{ item.rec_count.nao_recomendado }}</span>{% endif %}
+        {% if item.rec_count.recomendado %}<span style="color:#15803d;"><i class="fa-solid fa-circle-check" style="color:#15803d;"></i> {{ item.rec_count.recomendado }}</span>{% endif %}
+        {% if item.rec_count.a_considerar %} <span style="color:#d97706;"><i class="fa-solid fa-triangle-exclamation" style="color:#d97706;"></i> {{ item.rec_count.a_considerar }}</span>{% endif %}
+        {% if item.rec_count.nao_recomendado %} <span style="color:#dc2626;"><i class="fa-solid fa-circle-xmark" style="color:#dc2626;"></i> {{ item.rec_count.nao_recomendado }}</span>{% endif %}
       </div>
       {% endif %}
     </div>
@@ -92,15 +92,15 @@
         </div>
         {% if av %}
           {% if av.recomendacao == 'recomendado' %}
-            <span style="font-size:.75rem;font-weight:700;padding:.25rem .65rem;border-radius:999px;background:#dcfce7;color:#15803d;">✅ Recomendado</span>
+            <span style="font-size:.75rem;font-weight:700;padding:.25rem .65rem;border-radius:999px;background:#dcfce7;color:#15803d;"><i class="fa-solid fa-circle-check" style="color:#15803d;"></i> Recomendado</span>
           {% elif av.recomendacao == 'a_considerar' %}
-            <span style="font-size:.75rem;font-weight:700;padding:.25rem .65rem;border-radius:999px;background:#fef9c3;color:#92400e;">⚠️ A considerar</span>
+            <span style="font-size:.75rem;font-weight:700;padding:.25rem .65rem;border-radius:999px;background:#fef9c3;color:#92400e;"><i class="fa-solid fa-triangle-exclamation" style="color:#d97706;"></i> A considerar</span>
           {% elif av.recomendacao == 'nao_recomendado' %}
-            <span style="font-size:.75rem;font-weight:700;padding:.25rem .65rem;border-radius:999px;background:#fee2e2;color:#dc2626;">❌ Não recomendado</span>
+            <span style="font-size:.75rem;font-weight:700;padding:.25rem .65rem;border-radius:999px;background:#fee2e2;color:#dc2626;"><i class="fa-solid fa-circle-xmark" style="color:#dc2626;"></i> Não recomendado</span>
           {% endif %}
           {% if av.pontuacao %}
           <span style="font-size:.75rem;font-weight:700;padding:.25rem .65rem;border-radius:999px;background:#fef3c7;color:#92400e;">
-            {% for i in "12345" %}{% if forloop.counter <= av.pontuacao %}★{% else %}☆{% endif %}{% endfor %} {{ av.pontuacao }}/5
+            {% for i in "12345" %}{% if forloop.counter <= av.pontuacao %}<i class="fa-solid fa-star"></i>{% else %}<i class="fa-regular fa-star"></i>{% endif %}{% endfor %} {{ av.pontuacao }}/5
           </span>
           {% endif %}
         {% else %}
@@ -125,7 +125,7 @@
             {% if r.score %}
             <div style="margin-bottom:.35rem;">
               {% for i in "12345" %}
-                <span style="color:{% if forloop.counter <= r.score|add:'0' %}#f59e0b{% else %}#cbd5e1{% endif %};">★</span>
+                <span style="color:{% if forloop.counter <= r.score|add:'0' %}#f59e0b{% else %}#cbd5e1{% endif %};"><i class="fa-solid fa-star"></i></span>
               {% endfor %}
               <span style="font-size:.72rem;color:#94a3b8;margin-left:.25rem;">{{ r.score }}/5</span>
             </div>

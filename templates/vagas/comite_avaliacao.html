@@ -211,17 +211,17 @@
                 <div class="section-label"><i class="fa-solid fa-gavel"></i> Recomendação final</div>
                 <div class="rec-grid">
                     <div class="rec-card" onclick="setRec('{{ c.pk }}','recomendado',this)" id="rec-{{ c.pk }}-recomendado">
-                        <div class="rec-emoji">✅</div>
+                        <div class="rec-emoji"><i class="fa-solid fa-circle-check" style="color:#15803d;"></i></div>
                         <div class="rec-label">Recomendado</div>
                         <div style="font-size:.72rem;color:#64748b;margin-top:.2rem;">Apto para a função</div>
                     </div>
                     <div class="rec-card" onclick="setRec('{{ c.pk }}','a_considerar',this)" id="rec-{{ c.pk }}-a_considerar">
-                        <div class="rec-emoji">⚠️</div>
+                        <div class="rec-emoji"><i class="fa-solid fa-triangle-exclamation" style="color:#d97706;"></i></div>
                         <div class="rec-label">A considerar</div>
                         <div style="font-size:.72rem;color:#64748b;margin-top:.2rem;">Com reservas</div>
                     </div>
                     <div class="rec-card" onclick="setRec('{{ c.pk }}','nao_recomendado',this)" id="rec-{{ c.pk }}-nao_recomendado">
-                        <div class="rec-emoji">❌</div>
+                        <div class="rec-emoji"><i class="fa-solid fa-circle-xmark" style="color:#dc2626;"></i></div>
                         <div class="rec-label">Não recomendado</div>
                         <div style="font-size:.72rem;color:#64748b;margin-top:.2rem;">Não adequado</div>
                     </div>

@@ -193,9 +193,9 @@
                     <div style="font-size:0.75rem;color:#64748b;">{{ avaliacao_session.pontuacao|default:"—" }}/5</div>
                 </div>
                 <div style="text-align:center;padding:0.75rem;background:#f8fafc;border-radius:8px;">
-                    {% if avaliacao_session.recomendacao == "recomendado" %}<div style="font-size:1.1rem;">✅</div><div style="font-size:0.75rem;font-weight:600;color:#15803d;">Recomendado</div>
-                    {% elif avaliacao_session.recomendacao == "a_considerar" %}<div style="font-size:1.1rem;">⚠️</div><div style="font-size:0.75rem;font-weight:600;color:#d97706;">A considerar</div>
-                    {% elif avaliacao_session.recomendacao == "nao_recomendado" %}<div style="font-size:1.1rem;">❌</div><div style="font-size:0.75rem;font-weight:600;color:#dc2626;">Não recomendado</div>
+                    {% if avaliacao_session.recomendacao == "recomendado" %}<div style="font-size:1.1rem;"><i class="fa-solid fa-circle-check" style="color:#15803d;"></i></div><div style="font-size:0.75rem;font-weight:600;color:#15803d;">Recomendado</div>
+                    {% elif avaliacao_session.recomendacao == "a_considerar" %}<div style="font-size:1.1rem;"><i class="fa-solid fa-triangle-exclamation" style="color:#d97706;"></i></div><div style="font-size:0.75rem;font-weight:600;color:#d97706;">A considerar</div>
+                    {% elif avaliacao_session.recomendacao == "nao_recomendado" %}<div style="font-size:1.1rem;"><i class="fa-solid fa-circle-xmark" style="color:#dc2626;"></i></div><div style="font-size:0.75rem;font-weight:600;color:#dc2626;">Não recomendado</div>
                     {% endif %}
                 </div>
                 <div style="text-align:center;padding:0.75rem;background:#f8fafc;border-radius:8px;">
@@ -286,9 +286,9 @@
                     <div style="font-size:0.75rem;color:#64748b;">{{ nota.pontuacao|default:"—" }}/5</div>
                 </div>
                 <div style="text-align:center;padding:0.75rem;background:#f8fafc;border-radius:8px;">
-                    {% if nota.recomendacao == "recomendado" %}<div style="font-size:1.1rem;">✅</div><div style="font-size:0.75rem;font-weight:600;color:#15803d;">Recomendado</div>
-                    {% elif nota.recomendacao == "a_considerar" %}<div style="font-size:1.1rem;">⚠️</div><div style="font-size:0.75rem;font-weight:600;color:#d97706;">A considerar</div>
-                    {% elif nota.recomendacao == "nao_recomendado" %}<div style="font-size:1.1rem;">❌</div><div style="font-size:0.75rem;font-weight:600;color:#dc2626;">Não recomendado</div>
+                    {% if nota.recomendacao == "recomendado" %}<div style="font-size:1.1rem;"><i class="fa-solid fa-circle-check" style="color:#15803d;"></i></div><div style="font-size:0.75rem;font-weight:600;color:#15803d;">Recomendado</div>
+                    {% elif nota.recomendacao == "a_considerar" %}<div style="font-size:1.1rem;"><i class="fa-solid fa-triangle-exclamation" style="color:#d97706;"></i></div><div style="font-size:0.75rem;font-weight:600;color:#d97706;">A considerar</div>
+                    {% elif nota.recomendacao == "nao_recomendado" %}<div style="font-size:1.1rem;"><i class="fa-solid fa-circle-xmark" style="color:#dc2626;"></i></div><div style="font-size:0.75rem;font-weight:600;color:#dc2626;">Não recomendado</div>
                     {% else %}<div style="font-size:0.75rem;color:#94a3b8;">Sem recomendação</div>{% endif %}
                 </div>
                 <div style="text-align:center;padding:0.75rem;background:#f8fafc;border-radius:8px;">
@@ -344,9 +344,9 @@
                         <label style="font-size:0.75rem;color:#64748b;display:block;margin-bottom:0.3rem;">Recomendação</label>
                         <select name="recomendacao" class="form-input w-full text-sm">
                             <option value="">— Seleccionar —</option>
-                            <option value="recomendado" {% if nota.recomendacao == "recomendado" %}selected{% endif %}>✅ Recomendado</option>
-                            <option value="a_considerar" {% if nota.recomendacao == "a_considerar" %}selected{% endif %}>⚠️ A considerar</option>
-                            <option value="nao_recomendado" {% if nota.recomendacao == "nao_recomendado" %}selected{% endif %}>❌ Não recomendado</option>
+                            <option value="recomendado" {% if nota.recomendacao == "recomendado" %}selected{% endif %}>Recomendado</option>
+                            <option value="a_considerar" {% if nota.recomendacao == "a_considerar" %}selected{% endif %}>A considerar</option>
+                            <option value="nao_recomendado" {% if nota.recomendacao == "nao_recomendado" %}selected{% endif %}>Não recomendado</option>
                         </select>
                     </div>
                 </div>
