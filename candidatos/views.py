@@ -72,6 +72,8 @@ def candidato_create(request):
 
         if vaga and not vaga.tor_aprovado:
             messages.error(request, "Os Termos de Referência desta vaga ainda não foram aprovados. Aprove o ToR antes de carregar CVs.")
+            if vaga.modo_rapido:
+                return redirect("avaliacao_rapida_detail", pk=vaga.pk)
             return redirect("vaga_detail", pk=vaga.pk)
 
         cv_r2_url = request.POST.get("cv_r2_url", "").strip()
@@ -93,6 +95,8 @@ def candidato_create(request):
         )
         messages.success(request, f"Candidato '{candidato.nome}' adicionado com sucesso!")
         if vaga:
+            if vaga.modo_rapido:
+                return redirect("avaliacao_rapida_detail", pk=vaga.pk)
             return redirect("vaga_detail", pk=vaga.pk)
         return redirect("candidato_list")
 

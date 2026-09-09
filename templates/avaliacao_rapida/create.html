@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Nova Avaliação Rápida{% endblock %}
+{% block breadcrumb %}Avaliação Rápida · Nova{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fa-solid fa-bolt" style="color:#7c3aed;"></i> Nova Avaliação Rápida</h1>
+    <p>Indique a posição a avaliar. Irá carregar o ToR e os CVs no passo seguinte.</p>
+</div>
+
+{% if messages %}
+{% for msg in messages %}
+<div class="alert-{{ msg.tags }} mb-4">{{ msg }}</div>
+{% endfor %}
+{% endif %}
+
+<div class="section-card" style="max-width:560px;">
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-4">
+            <label class="form-label">Título da posição *</label>
+            <input type="text" name="titulo" class="form-input" placeholder="Ex: Coordenador de Saúde Materno-Infantil" required autofocus>
+        </div>
+        <div class="mb-6">
+            <label class="form-label">Organização <span style="color:#94a3b8;font-weight:400;">(opcional)</span></label>
+            <input type="text" name="organizacao" class="form-input" placeholder="Ex: Millennium BIM">
+        </div>
+        <div class="flex gap-3">
+            <button type="submit" class="btn-primary flex-1">
+                <i class="fa-solid fa-arrow-right mr-1"></i> Continuar
+            </button>
+            <a href="/vagas/rapida/" class="btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

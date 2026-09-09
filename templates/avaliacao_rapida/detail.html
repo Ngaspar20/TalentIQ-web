@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% block title %}{{ vaga.titulo }} · Avaliação Rápida{% endblock %}
+{% block breadcrumb %}Avaliação Rápida · {{ vaga.titulo }}{% endblock %}
+
+{% block content %}
+<div class="page-header flex items-center justify-between">
+    <div>
+        <h1><i class="fa-solid fa-bolt" style="color:#7c3aed;"></i> {{ vaga.titulo }}</h1>
+        {% if vaga.organizacao %}<p>{{ vaga.organizacao }}</p>{% endif %}
+    </div>
+    {% if vaga.tor_aprovado and candidatos %}
+    <a href="/vagas/rapida/{{ vaga.pk }}/relatorio/" class="btn-primary">
+        <i class="fa-solid fa-file-lines mr-1"></i> Ver Relatório
+    </a>
+    {% endif %}
+</div>
+
+{% if messages %}
+{% for msg in messages %}
+<div class="alert-{{ msg.tags }} mb-4">{{ msg }}</div>
+{% endfor %}
+{% endif %}
+
+<!-- Step indicator -->
+<div class="flex items-center gap-0 mb-6" style="max-width:560px;">
+    {% for label in "ToR,CVs e Scoring,Relatório"|split:"," %}
+    {% endfor %}
+    <div class="flex items-center gap-2 flex-1">
+        <div style="width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:.8rem;font-weight:700;flex-shrink:0;
+             background:{% if step >= 1 %}#7c3aed{% else %}#e2e8f0{% endif %};
+             color:{% if step >= 1 %}white{% else %}#94a3b8{% endif %};">1</div>
+        <span style="font-size:.82rem;font-weight:{% if step == 1 %}700{% else %}400{% endif %};
+              color:{% if step == 1 %}#7c3aed{% elif step > 1 %}#15803d{% else %}#94a3b8{% endif %};">
+            {% if step > 1 %}<i class="fa-solid fa-check mr-1"></i>{% endif %}ToR
+        </span>
+    </div>
+    <div style="flex:1;height:2px;background:{% if step > 1 %}#7c3aed{% else %}#e2e8f0{% endif %};margin:0 8px;"></div>
+    <div class="flex items-center gap-2 flex-1">
+        <div style="width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:.8rem;font-weight:700;flex-shrink:0;
+             background:{% if step >= 2 %}#7c3aed{% else %}#e2e8f0{% endif %};
+             color:{% if step >= 2 %}white{% else %}#94a3b8{% endif %};">2</div>
+        <span style="font-size:.82rem;font-weight:{% if step == 2 %}700{% else %}400{% endif %};
+              color:{% if step == 2 %}#7c3aed{% elif step > 2 %}#15803d{% else %}#94a3b8{% endif %};">CVs</span>
+    </div>
+    <div style="flex:1;height:2px;background:{% if step > 2 %}#7c3aed{% else %}#e2e8f0{% endif %};margin:0 8px;"></div>
+    <div class="flex items-center gap-2">
+        <div style="width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:.8rem;font-weight:700;flex-shrink:0;
+             background:{% if step >= 3 %}#7c3aed{% else %}#e2e8f0{% endif %};
+             color:{% if step >= 3 %}white{% else %}#94a3b8{% endif %};">3</div>
+        <span style="font-size:.82rem;font-weight:{% if step == 3 %}700{% else %}400{% endif %};
+              color:{% if step == 3 %}#7c3aed{% else %}#94a3b8{% endif %};">Relatório</span>
+    </div>
+</div>
+
+<!-- ── STEP 1: ToR ── -->
+{% if step == 1 %}
+<div class="section-card">
+    <div class="card-title"><i class="fa-solid fa-file-lines" style="color:#7c3aed;"></i> Passo 1 — Termos de Referência</div>
+    <p class="text-sm text-slate-500 mb-4">Carregue o documento ToR ou JD (PDF ou Word). O sistema vai extrair automaticamente as competências, formação e experiência necessárias.</p>
+
+    {% if not vaga.tor_file_path %}
+    <!-- Upload -->
+    <div id="upload-zone" style="border:2px dashed #c4b5fd;border-radius:12px;padding:2rem;text-align:center;background:#faf5ff;cursor:pointer;margin-bottom:1rem;" onclick="document.getElementById('tor-file').click()">
+        <i class="fa-solid fa-cloud-arrow-up fa-2x mb-2" style="color:#7c3aed;"></i>
+        <p style="font-size:.9rem;font-weight:600;color:#6d28d9;">Clique para seleccionar o ficheiro</p>
+        <p style="font-size:.78rem;color:#94a3b8;">PDF, DOCX ou TXT</p>
+    </div>
+    <input type="file" id="tor-file" accept=".pdf,.docx,.doc,.txt" style="display:none" onchange="uploadTor(this)">
+    <div id="upload-status" style="display:none;" class="text-sm text-slate-500 mb-3"></div>
+
+    {% elif not vaga.tor_analisado %}
+    <!-- Uploaded, not yet analysed -->
+    <div class="alert-success mb-4"><i class="fa-solid fa-check mr-2"></i>Ficheiro carregado. Clique em Analisar para extrair os requisitos.</div>
+    <button onclick="analisarTor()" class="btn-primary">
+        <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Analisar ToR com IA
+    </button>
+    <div id="analyse-status" class="text-sm text-slate-500 mt-3" style="display:none;"></div>
+
+    {% elif not vaga.tor_aprovado %}
+    <!-- Analysed, awaiting approval -->
+    <div class="alert-success mb-4"><i class="fa-solid fa-check mr-2"></i>Análise concluída. Reveja os requisitos extraídos e aprove.</div>
+    {% if vaga.competencias_requeridas %}
+    <div class="mb-3">
+        <label style="font-size:.78rem;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;">Competências</label>
+        <div class="flex flex-wrap gap-2 mt-1">
+            {% for c in vaga.competencias_requeridas %}<span style="font-size:.78rem;background:#ede9fe;color:#6d28d9;padding:.2rem .6rem;border-radius:999px;">{{ c }}</span>{% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    {% if vaga.nivel_formacao %}<p class="text-sm text-slate-600 mb-1"><strong>Formação:</strong> {{ vaga.nivel_formacao|title }}</p>{% endif %}
+    {% if vaga.anos_experiencia_min %}<p class="text-sm text-slate-600 mb-3"><strong>Experiência mínima:</strong> {{ vaga.anos_experiencia_min }} anos</p>{% endif %}
+
+    <div class="flex gap-3 mt-4">
+        <form method="post" action="/vagas/{{ vaga.pk }}/aprovar-tor/">
+            {% csrf_token %}
+            <button type="submit" class="btn-primary">
+                <i class="fa-solid fa-circle-check mr-1"></i> Aprovar e continuar para CVs
+            </button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+const CSRF = '{{ csrf_token }}';
+const VAGA_ID = '{{ vaga.pk }}';
+
+function uploadTor(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const zone = document.getElementById('upload-zone');
+    const status = document.getElementById('upload-status');
+    zone.style.display = 'none';
+    status.style.display = 'block';
+    status.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> A carregar…';
+
+    const fd = new FormData();
+    fd.append('tor_file', file);
+    fd.append('vaga_id', VAGA_ID);
+    fetch('/vagas/parse-tor/', { method: 'POST', headers: { 'X-CSRFToken': CSRF }, body: fd })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) { location.reload(); }
+            else { status.innerHTML = '<span style="color:#dc2626;">' + (data.error || 'Erro no upload.') + '</span>'; zone.style.display = 'block'; }
+        });
+}
+
+function analisarTor() {
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> A analisar…';
+    const status = document.getElementById('analyse-status');
+    if (status) { status.style.display = 'block'; status.textContent = 'A processar com IA…'; }
+    const fd = new FormData();
+    fd.append('vaga_id', VAGA_ID);
+    fetch('/vagas/analyse-tor/', { method: 'POST', headers: { 'X-CSRFToken': CSRF }, body: fd })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) {
+                fetch('/vagas/' + VAGA_ID + '/confirmar-analise/', { method: 'POST', headers: { 'X-CSRFToken': CSRF } })
+                    .then(() => location.reload());
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Analisar ToR com IA';
+                if (status) status.innerHTML = '<span style="color:#dc2626;">' + (data.error || 'Erro na análise.') + '</span>';
+            }
+        });
+}
+</script>
+{% endif %}
+
+<!-- ── STEP 2 & 3: CVs ── -->
+{% if step >= 2 %}
+<div class="section-card">
+    <div class="flex items-center justify-between mb-3">
+        <div class="card-title mb-0"><i class="fa-solid fa-users" style="color:#7c3aed;"></i> Candidatos ({{ candidatos|length }})</div>
+        <a href="/candidatos/carregar/?vaga={{ vaga.pk }}" class="btn-primary text-sm">
+            <i class="fa-solid fa-plus mr-1"></i> Adicionar CV
+        </a>
+    </div>
+
+    {% if candidatos %}
+    <table style="width:100%;border-collapse:collapse;font-size:.85rem;">
+        <thead>
+            <tr style="border-bottom:2px solid #e2e8f0;text-align:left;">
+                <th style="padding:.5rem .75rem;color:#64748b;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;">#</th>
+                <th style="padding:.5rem .75rem;color:#64748b;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;">Nome</th>
+                <th style="padding:.5rem .75rem;color:#64748b;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;">Score</th>
+                <th style="padding:.5rem .75rem;color:#64748b;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;">Exp.</th>
+                <th style="padding:.5rem .75rem;color:#64748b;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;">Formação</th>
+                <th style="padding:.5rem .75rem;"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in candidatos %}
+            <tr style="border-bottom:1px solid #f1f5f9;" id="row-{{ c.pk }}">
+                <td style="padding:.6rem .75rem;color:#94a3b8;font-weight:600;">{{ forloop.counter }}</td>
+                <td style="padding:.6rem .75rem;font-weight:600;color:#1e293b;">{{ c.nome }}</td>
+                <td style="padding:.6rem .75rem;">
+                    {% if c.score_fit is not None %}
+                    <span class="score-badge {{ c.score_label }}">{{ c.score_fit }}%</span>
+                    {% else %}
+                    <button onclick="scoreCandidato('{{ c.pk }}', this)" class="btn-secondary text-xs" style="padding:3px 10px;">
+                        <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Calcular
+                    </button>
+                    {% endif %}
+                </td>
+                <td style="padding:.6rem .75rem;color:#64748b;">{{ c.experiencia_anos }}a</td>
+                <td style="padding:.6rem .75rem;color:#64748b;font-size:.8rem;">
+                    {% if c.formacao %}{{ c.formacao|last }}{% else %}—{% endif %}
+                </td>
+                <td style="padding:.6rem .75rem;">
+                    <a href="/candidatos/{{ c.pk }}/" style="font-size:.75rem;color:#94a3b8;" title="Ver perfil">
+                        <i class="fa-solid fa-eye"></i>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if step == 3 %}
+    <div class="mt-4 pt-4" style="border-top:1px solid #e2e8f0;">
+        <a href="/vagas/rapida/{{ vaga.pk }}/relatorio/" class="btn-primary">
+            <i class="fa-solid fa-file-lines mr-1"></i> Gerar Relatório de Avaliação
+        </a>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div style="text-align:center;padding:2rem 0;color:#94a3b8;">
+        <i class="fa-solid fa-user-plus fa-2x mb-3"></i>
+        <p class="text-sm">Ainda não há candidatos. Carregue o primeiro CV.</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+const CSRF2 = '{{ csrf_token }}';
+function scoreCandidato(pk, btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    const fd = new FormData();
+    fd.append('candidato_id', pk);
+    fetch('/candidatos/analyse-cv/', { method: 'POST', headers: { 'X-CSRFToken': CSRF2 }, body: fd })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) { location.reload(); }
+            else { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Calcular'; }
+        });
+}
+</script>
+{% endif %}
+
+{% endblock %}
