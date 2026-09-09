@@ -32,4 +32,9 @@ urlpatterns = [
     path("<uuid:pk>/relatorio/", views.relatorio_selecao, name="relatorio_selecao"),
     path("<uuid:pk>/relatorio/download/", views.relatorio_selecao_download, name="relatorio_selecao_download"),
     path("<uuid:pk>/confirmar-notificacoes/", views.vaga_marcar_notificacoes, name="vaga_marcar_notificacoes"),
+    # Avaliação Rápida
+    path("rapida/", views.avaliacao_rapida_list, name="avaliacao_rapida_list"),
+    path("rapida/criar/", views.avaliacao_rapida_create, name="avaliacao_rapida_create"),
+    path("rapida/<uuid:pk>/", views.avaliacao_rapida_detail, name="avaliacao_rapida_detail"),
+    path("rapida/<uuid:pk>/relatorio/", views.avaliacao_rapida_relatorio, name="avaliacao_rapida_relatorio"),
 ]

@@ -59,6 +59,7 @@ class Vaga(models.Model):
     tor_file_path = models.CharField(max_length=500, blank=True)
     tor_analisado = models.BooleanField(default=False)
     tor_aprovado = models.BooleanField(default=False)
+    modo_rapido = models.BooleanField(default=False)
     avaliacao_group_token = models.UUIDField(null=True, blank=True)
     avaliacao_encerrada = models.BooleanField(default=False)
     notificacoes_enviadas = models.BooleanField(default=False)

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Avaliação Rápida{% endblock %}
+{% block breadcrumb %}Avaliação Rápida{% endblock %}
+
+{% block content %}
+<div class="page-header flex items-center justify-between">
+    <div>
+        <h1><i class="fa-solid fa-bolt" style="color:#7c3aed;"></i> Avaliação Rápida</h1>
+        <p>Carregue um ToR e CVs — obtenha um ranking de candidatos sem percorrer o processo completo.</p>
+    </div>
+    <a href="/vagas/rapida/criar/" class="btn-primary">
+        <i class="fa-solid fa-plus mr-1"></i> Nova Avaliação
+    </a>
+</div>
+
+{% if messages %}
+{% for msg in messages %}
+<div class="alert-{{ msg.tags }} mb-4">{{ msg }}</div>
+{% endfor %}
+{% endif %}
+
+{% if vagas %}
+<div class="flex flex-col gap-3">
+    {% for vaga in vagas %}
+    <div class="section-card flex items-center justify-between gap-4">
+        <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-3 mb-1">
+                <span class="font-bold text-slate-800">{{ vaga.titulo }}</span>
+                {% if vaga.tor_aprovado %}
+                <span style="font-size:.7rem;font-weight:700;padding:.15rem .55rem;border-radius:999px;background:#dcfce7;color:#15803d;">
+                    <i class="fa-solid fa-check mr-1"></i>ToR Aprovado
+                </span>
+                {% else %}
+                <span style="font-size:.7rem;font-weight:700;padding:.15rem .55rem;border-radius:999px;background:#fef9c3;color:#92400e;">
+                    <i class="fa-solid fa-clock mr-1"></i>Aguarda ToR
+                </span>
+                {% endif %}
+            </div>
+            {% if vaga.organizacao %}<p class="text-sm text-slate-500">{{ vaga.organizacao }}</p>{% endif %}
+            <p class="text-xs text-slate-400 mt-1">Criada em {{ vaga.created_at|date:"d/m/Y" }}</p>
+        </div>
+        <div class="flex gap-2 flex-shrink-0">
+            <a href="/vagas/rapida/{{ vaga.pk }}/" class="btn-primary text-sm">
+                <i class="fa-solid fa-arrow-right mr-1"></i> Abrir
+            </a>
+            <a href="/vagas/rapida/{{ vaga.pk }}/relatorio/" class="btn-secondary text-sm">
+                <i class="fa-solid fa-file-lines mr-1"></i> Relatório
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="section-card text-center py-12">
+    <i class="fa-solid fa-bolt fa-3x mb-4" style="color:#e2e8f0;"></i>
+    <p class="text-slate-500 mb-4">Ainda não tem nenhuma avaliação rápida.</p>
+    <a href="/vagas/rapida/criar/" class="btn-primary">
+        <i class="fa-solid fa-plus mr-1"></i> Criar primeira avaliação
+    </a>
+</div>
+{% endif %}
+{% endblock %}

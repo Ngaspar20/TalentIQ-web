@@ -152,6 +152,8 @@ def vaga_confirmar_analise(request, pk):
     vaga.tor_analisado = True
     vaga.save(update_fields=["tor_analisado"])
     messages.success(request, "Análise IA confirmada. Pode agora aprovar os Termos de Referência.")
+    if vaga.modo_rapido:
+        return redirect("avaliacao_rapida_detail", pk=pk)
     return redirect("vaga_detail", pk=pk)
 
 
@@ -161,6 +163,8 @@ def vaga_aprovar_tor(request, pk):
     vaga.tor_aprovado = True
     vaga.save(update_fields=["tor_aprovado"])
     messages.success(request, f"Termos de Referência de '{vaga.titulo}' aprovados.")
+    if vaga.modo_rapido:
+        return redirect("avaliacao_rapida_detail", pk=pk)
     return redirect("vaga_detail", pk=pk)
 
 
@@ -1428,3 +1432,63 @@ def download_perguntas(request, pk):
 
     return _build_word_doc(vaga, categorias)
 
+
+
+# ---------------------------------------------------------------------------
+# Avaliação Rápida
+# ---------------------------------------------------------------------------
+
+def avaliacao_rapida_list(request):
+    from django.utils import timezone
+    vagas = org_vagas(request).filter(modo_rapido=True).order_by("-created_at")
+    return render(request, "avaliacao_rapida/list.html", {"vagas": vagas, "today": timezone.now().date()})
+
+
+@recruiter_required
+def avaliacao_rapida_create(request):
+    if request.method == "POST":
+        titulo = request.POST.get("titulo", "").strip()
+        if not titulo:
+            from django.contrib import messages as _msgs
+            _msgs.error(request, "O título é obrigatório.")
+            return render(request, "avaliacao_rapida/create.html")
+        vaga = Vaga.objects.create(
+            organisation=request.user.organisation,
+            titulo=titulo,
+            organizacao=request.POST.get("organizacao", "").strip(),
+            modo_rapido=True,
+            created_by=request.user,
+        )
+        return redirect("avaliacao_rapida_detail", pk=vaga.pk)
+    return render(request, "avaliacao_rapida/create.html")
+
+
+def avaliacao_rapida_detail(request, pk):
+    vaga = get_object_or_404(org_vagas(request).filter(modo_rapido=True), pk=pk)
+    from candidatos.models import Candidato
+    candidatos = Candidato.objects.filter(vaga=vaga).order_by("-score_fit", "nome")
+    n_scored = sum(1 for c in candidatos if c.score_fit is not None)
+    if not vaga.tor_aprovado:
+        step = 1
+    elif not candidatos.exists():
+        step = 2
+    else:
+        step = 2 if n_scored < candidatos.count() else 3
+    return render(request, "avaliacao_rapida/detail.html", {
+        "vaga": vaga,
+        "candidatos": candidatos,
+        "n_scored": n_scored,
+        "step": step,
+    })
+
+
+def avaliacao_rapida_relatorio(request, pk):
+    vaga = get_object_or_404(org_vagas(request).filter(modo_rapido=True), pk=pk)
+    from candidatos.models import Candidato
+    from django.utils import timezone
+    candidatos = list(Candidato.objects.filter(vaga=vaga).order_by("-score_fit", "nome"))
+    return render(request, "avaliacao_rapida/relatorio.html", {
+        "vaga": vaga,
+        "candidatos": candidatos,
+        "today": timezone.now().date(),
+    })
