@@ -149,17 +149,17 @@
             <div class="card-title"><i class="fa-solid fa-gavel"></i> Decisão de recomendação</div>
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;">
                 <div class="rec-card" onclick="setRec('recomendado',this)" id="rec-recomendado">
-                    <div style="font-size:1.6rem;margin-bottom:.3rem;">✅</div>
+                    <div style="font-size:1.6rem;margin-bottom:.3rem;"><i class="fa-solid fa-circle-check" style="color:#15803d;"></i></div>
                     <div style="font-size:.82rem;font-weight:700;color:#15803d;">Recomendado</div>
                     <div style="font-size:.7rem;color:#64748b;margin-top:.2rem;">Avançar para proposta</div>
                 </div>
                 <div class="rec-card" onclick="setRec('a_considerar',this)" id="rec-a_considerar">
-                    <div style="font-size:1.6rem;margin-bottom:.3rem;">⚠️</div>
+                    <div style="font-size:1.6rem;margin-bottom:.3rem;"><i class="fa-solid fa-triangle-exclamation" style="color:#d97706;"></i></div>
                     <div style="font-size:.82rem;font-weight:700;color:#d97706;">A considerar</div>
                     <div style="font-size:.7rem;color:#64748b;margin-top:.2rem;">Manter em avaliação</div>
                 </div>
                 <div class="rec-card" onclick="setRec('nao_recomendado',this)" id="rec-nao_recomendado">
-                    <div style="font-size:1.6rem;margin-bottom:.3rem;">❌</div>
+                    <div style="font-size:1.6rem;margin-bottom:.3rem;"><i class="fa-solid fa-circle-xmark" style="color:#dc2626;"></i></div>
                     <div style="font-size:.82rem;font-weight:700;color:#dc2626;">Não recomendado</div>
                     <div style="font-size:.7rem;color:#64748b;margin-top:.2rem;">Encerrar candidatura</div>
                 </div>

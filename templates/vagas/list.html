@@ -2,12 +2,12 @@
 
 {% block title %}Vagas{% endblock %}
 
-{% block breadcrumb %}📋 Vagas{% endblock %}
+{% block breadcrumb %}Vagas{% endblock %}
 
 {% block content %}
 <div class="page-header flex items-center justify-between">
     <div>
-        <h1>📋 Vagas</h1>
+        <h1>Vagas</h1>
         <p>Crie e gira as posições em aberto da sua organização</p>
     </div>
     <a href="/vagas/criar/" class="btn-primary">+ Nova Vaga</a>
@@ -30,17 +30,17 @@
                 </div>
 
                 {% if vaga.organizacao %}
-                <p class="text-sm text-slate-500 mb-3">🏛️ {{ vaga.organizacao }} &nbsp;·&nbsp; {{ vaga.departamento }}</p>
+                <p class="text-sm text-slate-500 mb-3"><i class="fa-solid fa-building fa-fw"></i> {{ vaga.organizacao }} &nbsp;·&nbsp; {{ vaga.departamento }}</p>
                 {% else %}
                 <p class="text-sm text-slate-500 mb-3">{{ vaga.departamento }}</p>
                 {% endif %}
 
                 <div class="flex flex-wrap gap-4 text-sm text-slate-600 mb-3">
-                    {% if vaga.local %}<span>📍 {{ vaga.local }}</span>{% endif %}
-                    <span>🏢 {{ vaga.modalidade }}</span>
-                    <span>📄 {{ vaga.tipo_contrato }}</span>
-                    <span>⏳ {{ vaga.anos_experiencia_min }} anos exp.</span>
-                    {% if vaga.nivel_formacao %}<span>🎓 {{ vaga.nivel_formacao|title }}</span>{% endif %}
+                    {% if vaga.local %}<span><i class="fa-solid fa-location-dot fa-fw"></i> {{ vaga.local }}</span>{% endif %}
+                    <span><i class="fa-solid fa-display fa-fw"></i> {{ vaga.modalidade }}</span>
+                    <span><i class="fa-solid fa-file-lines fa-fw"></i> {{ vaga.tipo_contrato }}</span>
+                    <span><i class="fa-solid fa-briefcase fa-fw"></i> {{ vaga.anos_experiencia_min }} anos exp.</span>
+                    {% if vaga.nivel_formacao %}<span><i class="fa-solid fa-graduation-cap fa-fw"></i> {{ vaga.nivel_formacao|title }}</span>{% endif %}
                 </div>
 
                 {% if vaga.competencias_requeridas %}
@@ -57,12 +57,12 @@
 
             <div class="flex flex-col gap-2 flex-shrink-0">
                 <a href="/vagas/{{ vaga.id }}/" class="btn-secondary text-sm py-2 px-3">Ver</a>
-                <a href="/vagas/{{ vaga.id }}/editar/" class="btn-secondary text-sm py-2 px-3">✏️ Editar</a>
+                <a href="/vagas/{{ vaga.id }}/editar/" class="btn-secondary text-sm py-2 px-3"><i class="fa-solid fa-pen"></i> Editar</a>
                 <form method="post" action="/vagas/{{ vaga.id }}/eliminar/">
                     {% csrf_token %}
                     <button type="submit" class="btn-danger text-sm w-full"
                             onclick="return confirm('Eliminar esta vaga e todos os seus candidatos?')">
-                        🗑️ Remover
+                        <i class="fa-solid fa-trash"></i> Remover
                     </button>
                 </form>
             </div>

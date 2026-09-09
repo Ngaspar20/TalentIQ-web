@@ -396,7 +396,7 @@ Relatório de Seleção
         <span class="cr-sub">{{ c.experiencia_anos }} anos de experiência</span>
         {% endif %}
         <span class="cr-sub" style="margin-left:auto;">
-            {% if c.etapa == "Contratado" %}<span style="color:#166534; font-weight:700;">✓ Contratado</span>
+            {% if c.etapa == "Contratado" %}<span style="color:#166534; font-weight:700;"><i class="fa-solid fa-check"></i> Contratado</span>
             {% elif c.etapa == "Rejeitado" %}<span style="color:#991b1b;">Rejeitado</span>
             {% else %}{{ c.etapa }}{% endif %}
         </span>
