@@ -1,6 +1,6 @@
 import os
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from accounts.decorators import recruiter_required
@@ -541,3 +541,136 @@ def adicionar_nota(request, pk):
             criado_por=request.user,
         )
     return redirect(f"/candidatos/{pk}/")
+
+
+@require_POST
+def bulk_upload_one_cv(request):
+    """Upload, parse and score a single CV for a modo_rapido vaga. Returns JSON."""
+    from django.conf import settings
+    from vagas.models import Vaga
+
+    vaga_id = request.POST.get("vaga_id", "").strip()
+    uploaded = request.FILES.get("cv_file")
+
+    if not uploaded:
+        return JsonResponse({"ok": False, "error": "Nenhum ficheiro recebido."})
+
+    err = _validate_upload(uploaded)
+    if err:
+        return JsonResponse({"ok": False, "error": err})
+
+    try:
+        vaga = Vaga.objects.get(pk=vaga_id, organisation=request.user.organisation)
+    except Vaga.DoesNotExist:
+        return JsonResponse({"ok": False, "error": "Vaga não encontrada."})
+
+    try:
+        from core.parser import extract_text_from_file
+        texto = extract_text_from_file(uploaded)
+    except Exception as e:
+        return JsonResponse({"ok": False, "error": f"Erro ao extrair texto: {e}"})
+
+    if not texto.strip():
+        return JsonResponse({"ok": False, "error": "Não foi possível extrair texto do ficheiro."})
+
+    from talentiq.storage import upload_to_r2
+    r2_url = upload_to_r2(uploaded, "cv", uploaded.name) or ""
+
+    os.environ["GROK_API_KEY"] = settings.GROK_API_KEY
+    os.environ["LLM_ENGINE"] = settings.LLM_ENGINE
+
+    try:
+        from core.parser import parse_cv
+        extraido = parse_cv(texto)
+    except Exception:
+        extraido = {}
+
+    nome = (extraido.get("nome") or "").strip() or uploaded.name.rsplit(".", 1)[0]
+
+    candidato = Candidato.objects.create(
+        organisation=request.user.organisation,
+        vaga=vaga,
+        nome=nome,
+        email=extraido.get("email", ""),
+        telefone=extraido.get("telefone", ""),
+        experiencia_anos=int(extraido.get("experiencia_anos") or 0),
+        competencias=[c.strip().lower() for c in (extraido.get("competencias") or []) if c.strip()],
+        formacao=[f.strip() for f in (extraido.get("formacao") or []) if f.strip()],
+        idiomas=[i.strip() for i in (extraido.get("idiomas") or []) if i.strip()],
+        resumo=extraido.get("resumo", ""),
+        cv_file_path=r2_url,
+        created_by=request.user,
+    )
+
+    score_fit = None
+    try:
+        from core.scorer import calcular_fit
+        vaga_dict = {
+            "titulo": vaga.titulo,
+            "competencias_requeridas": vaga.competencias_requeridas or [],
+            "anos_experiencia_min": vaga.anos_experiencia_min,
+            "nivel_formacao": vaga.nivel_formacao,
+            "responsabilidades": vaga.responsabilidades or [],
+        }
+        cand_dict = {
+            "nome": candidato.nome,
+            "competencias": candidato.competencias or [],
+            "experiencia_anos": candidato.experiencia_anos or 0,
+            "formacao": candidato.formacao or [],
+            "idiomas": candidato.idiomas or [],
+            "resumo": candidato.resumo or "",
+        }
+        resultado = calcular_fit(cand_dict, vaga_dict)
+        score_fit = resultado.get("score_total", 0)
+        candidato.score_fit = score_fit
+        candidato.perfil_completo = resultado
+        candidato.save(update_fields=["score_fit", "perfil_completo"])
+    except Exception:
+        pass
+
+    return JsonResponse({"ok": True, "nome": nome, "pk": str(candidato.pk), "score_fit": score_fit})
+
+
+@require_POST
+def score_candidato_json(request):
+    """Score a single existing candidato. Returns JSON {ok, score_fit}."""
+    from django.conf import settings
+
+    candidato_id = request.POST.get("candidato_id", "")
+    try:
+        candidato = Candidato.objects.get(pk=candidato_id, organisation=request.user.organisation)
+    except Candidato.DoesNotExist:
+        return JsonResponse({"ok": False, "error": "Candidato não encontrado."})
+
+    if not candidato.vaga:
+        return JsonResponse({"ok": False, "error": "Candidato sem vaga associada."})
+
+    os.environ["GROK_API_KEY"] = settings.GROK_API_KEY
+    os.environ["LLM_ENGINE"] = settings.LLM_ENGINE
+
+    try:
+        from core.scorer import calcular_fit
+        vaga = candidato.vaga
+        vaga_dict = {
+            "titulo": vaga.titulo,
+            "competencias_requeridas": vaga.competencias_requeridas or [],
+            "anos_experiencia_min": vaga.anos_experiencia_min,
+            "nivel_formacao": vaga.nivel_formacao,
+            "responsabilidades": vaga.responsabilidades or [],
+        }
+        cand_dict = {
+            "nome": candidato.nome,
+            "competencias": candidato.competencias or [],
+            "experiencia_anos": candidato.experiencia_anos or 0,
+            "formacao": candidato.formacao or [],
+            "idiomas": candidato.idiomas or [],
+            "resumo": candidato.resumo or "",
+        }
+        resultado = calcular_fit(cand_dict, vaga_dict)
+        score = resultado.get("score_total", 0)
+        candidato.score_fit = score
+        candidato.perfil_completo = resultado
+        candidato.save(update_fields=["score_fit", "perfil_completo"])
+        return JsonResponse({"ok": True, "score_fit": score})
+    except Exception as e:
+        return JsonResponse({"ok": False, "error": str(e)})

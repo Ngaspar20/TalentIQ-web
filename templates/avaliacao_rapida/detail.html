@@ -23,8 +23,6 @@
 
 <!-- Step indicator -->
 <div class="flex items-center gap-0 mb-6" style="max-width:560px;">
-    {% for label in "ToR,CVs e Scoring,Relatório"|split:"," %}
-    {% endfor %}
     <div class="flex items-center gap-2 flex-1">
         <div style="width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:.8rem;font-weight:700;flex-shrink:0;
              background:{% if step >= 1 %}#7c3aed{% else %}#e2e8f0{% endif %};
@@ -151,15 +149,72 @@ function analisarTor() {
 
 <!-- ── STEP 2 & 3: CVs ── -->
 {% if step >= 2 %}
+
+<!-- Bulk upload zone -->
+<div class="section-card mb-4" id="upload-card">
+    <div class="flex items-center justify-between mb-3">
+        <div class="card-title mb-0"><i class="fa-solid fa-cloud-arrow-up" style="color:#7c3aed;"></i> Carregar CVs</div>
+        <span style="font-size:.75rem;color:#94a3b8;">PDF ou DOCX · múltiplos ficheiros</span>
+    </div>
+
+    <!-- Drop zone (hidden while uploading or when done) -->
+    <div id="drop-zone"
+         style="border:2px dashed #c4b5fd;border-radius:12px;padding:2rem;text-align:center;background:#faf5ff;transition:background .15s;"
+         ondragover="event.preventDefault();this.style.background='#ede9fe';"
+         ondragleave="this.style.background='#faf5ff';"
+         ondrop="handleDrop(event)">
+        <i class="fa-solid fa-files fa-2x mb-2" style="color:#7c3aed;"></i>
+        <p style="font-size:.9rem;font-weight:600;color:#6d28d9;">Arraste os CVs aqui ou clique para seleccionar</p>
+        <p style="font-size:.78rem;color:#94a3b8;">Pode seleccionar centenas de ficheiros de uma vez</p>
+        <input type="file" id="cv-files-input" accept=".pdf,.docx,.doc,.txt" multiple style="display:none" onchange="handleFilesSelected(this.files)">
+        <button onclick="document.getElementById('cv-files-input').click()" class="btn-secondary mt-3" style="font-size:.82rem;">
+            <i class="fa-solid fa-folder-open mr-1"></i> Seleccionar ficheiros
+        </button>
+    </div>
+
+    <!-- File preview (shown after selection, before upload) -->
+    <div id="file-preview" style="display:none;margin-top:1rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;">
+            <span id="file-count-label" style="font-size:.88rem;font-weight:600;color:#1e293b;"></span>
+            <button onclick="clearFiles()" style="font-size:.75rem;color:#94a3b8;background:none;border:none;cursor:pointer;">
+                <i class="fa-solid fa-xmark mr-1"></i>Limpar
+            </button>
+        </div>
+        <div id="file-list" style="max-height:160px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;font-size:.8rem;color:#475569;"></div>
+        <button id="start-upload-btn" onclick="startBulkUpload()" class="btn-primary mt-3" style="width:100%;">
+            <i class="fa-solid fa-rocket mr-1"></i> <span id="start-upload-label">Carregar CVs</span>
+        </button>
+    </div>
+
+    <!-- Progress (shown during upload) -->
+    <div id="progress-area" style="display:none;margin-top:1rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
+            <span id="progress-label" style="font-size:.88rem;font-weight:600;color:#1e293b;">A processar…</span>
+            <span id="progress-counter" style="font-size:.78rem;color:#64748b;font-family:var(--mono);"></span>
+        </div>
+        <div style="height:8px;background:#e2e8f0;border-radius:999px;overflow:hidden;">
+            <div id="progress-bar" style="height:100%;width:0;background:#7c3aed;border-radius:999px;transition:width .3s;"></div>
+        </div>
+        <p id="progress-current" style="font-size:.78rem;color:#64748b;margin-top:.4rem;"></p>
+    </div>
+
+    <!-- Done summary -->
+    <div id="done-area" style="display:none;margin-top:1rem;">
+        <div id="done-msg" class="alert-success"></div>
+        <button onclick="location.reload()" class="btn-primary mt-2">
+            <i class="fa-solid fa-rotate-right mr-1"></i> Actualizar lista
+        </button>
+    </div>
+</div>
+
+<!-- Candidates table -->
 <div class="section-card">
     <div class="flex items-center justify-between mb-3">
         <div class="card-title mb-0"><i class="fa-solid fa-users" style="color:#7c3aed;"></i> Candidatos ({{ candidatos|length }})</div>
-        <a href="/candidatos/carregar/?vaga={{ vaga.pk }}" class="btn-primary text-sm">
-            <i class="fa-solid fa-plus mr-1"></i> Adicionar CV
-        </a>
     </div>
 
     {% if candidatos %}
+    <div style="overflow-x:auto;">
     <table style="width:100%;border-collapse:collapse;font-size:.85rem;">
         <thead>
             <tr style="border-bottom:2px solid #e2e8f0;text-align:left;">
@@ -176,7 +231,7 @@ function analisarTor() {
             <tr style="border-bottom:1px solid #f1f5f9;" id="row-{{ c.pk }}">
                 <td style="padding:.6rem .75rem;color:#94a3b8;font-weight:600;">{{ forloop.counter }}</td>
                 <td style="padding:.6rem .75rem;font-weight:600;color:#1e293b;">{{ c.nome }}</td>
-                <td style="padding:.6rem .75rem;">
+                <td style="padding:.6rem .75rem;" id="score-cell-{{ c.pk }}">
                     {% if c.score_fit is not None %}
                     <span class="score-badge {{ c.score_label }}">{{ c.score_fit }}%</span>
                     {% else %}
@@ -198,6 +253,7 @@ function analisarTor() {
             {% endfor %}
         </tbody>
     </table>
+    </div>
 
     {% if step == 3 %}
     <div class="mt-4 pt-4" style="border-top:1px solid #e2e8f0;">
@@ -210,24 +266,103 @@ function analisarTor() {
     {% else %}
     <div style="text-align:center;padding:2rem 0;color:#94a3b8;">
         <i class="fa-solid fa-user-plus fa-2x mb-3"></i>
-        <p class="text-sm">Ainda não há candidatos. Carregue o primeiro CV.</p>
+        <p class="text-sm">Ainda não há candidatos. Carregue os primeiros CVs acima.</p>
     </div>
     {% endif %}
 </div>
 
 <script>
 const CSRF2 = '{{ csrf_token }}';
+const VAGA_ID2 = '{{ vaga.pk }}';
+let selectedFiles = [];
+
+function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('drop-zone').style.background = '#faf5ff';
+    const files = Array.from(e.dataTransfer.files).filter(f => /\.(pdf|docx|doc|txt)$/i.test(f.name));
+    if (files.length) handleFilesSelected(files);
+}
+
+function handleFilesSelected(files) {
+    selectedFiles = Array.from(files).filter(f => /\.(pdf|docx|doc|txt)$/i.test(f.name));
+    if (!selectedFiles.length) return;
+    document.getElementById('drop-zone').style.display = 'none';
+    const preview = document.getElementById('file-preview');
+    preview.style.display = 'block';
+    document.getElementById('file-count-label').textContent = selectedFiles.length + ' ficheiro(s) seleccionado(s)';
+    document.getElementById('start-upload-label').textContent = 'Carregar ' + selectedFiles.length + ' CV(s)';
+    const list = document.getElementById('file-list');
+    list.innerHTML = selectedFiles.map((f, i) =>
+        '<div style="padding:.3rem .75rem;' + (i % 2 === 0 ? 'background:#f8fafc;' : '') + '">' +
+        '<i class="fa-regular fa-file-pdf mr-1" style="color:#94a3b8;"></i>' + f.name +
+        '</div>'
+    ).join('');
+}
+
+function clearFiles() {
+    selectedFiles = [];
+    document.getElementById('file-preview').style.display = 'none';
+    document.getElementById('drop-zone').style.display = 'block';
+    document.getElementById('cv-files-input').value = '';
+}
+
+async function startBulkUpload() {
+    if (!selectedFiles.length) return;
+    document.getElementById('file-preview').style.display = 'none';
+    document.getElementById('progress-area').style.display = 'block';
+
+    const total = selectedFiles.length;
+    let done = 0, errors = 0;
+
+    for (const file of selectedFiles) {
+        document.getElementById('progress-label').textContent = 'A processar ficheiro ' + (done + 1) + ' de ' + total + '…';
+        document.getElementById('progress-counter').textContent = done + '/' + total;
+        document.getElementById('progress-current').textContent = file.name;
+        document.getElementById('progress-bar').style.width = Math.round((done / total) * 100) + '%';
+
+        const fd = new FormData();
+        fd.append('cv_file', file);
+        fd.append('vaga_id', VAGA_ID2);
+
+        try {
+            const r = await fetch('/candidatos/bulk-upload-cv/', { method: 'POST', headers: { 'X-CSRFToken': CSRF2 }, body: fd });
+            const data = await r.json();
+            if (!data.ok) errors++;
+        } catch (e) {
+            errors++;
+        }
+        done++;
+    }
+
+    document.getElementById('progress-bar').style.width = '100%';
+    document.getElementById('progress-area').style.display = 'none';
+    document.getElementById('done-area').style.display = 'block';
+    const ok = done - errors;
+    let msg = '<i class="fa-solid fa-circle-check mr-2"></i>' + ok + ' CV(s) carregado(s) com sucesso.';
+    if (errors > 0) msg += ' <strong>' + errors + ' erro(s)</strong>.';
+    document.getElementById('done-msg').innerHTML = msg;
+    if (errors > 0) document.getElementById('done-msg').className = 'alert-warning';
+}
+
 function scoreCandidato(pk, btn) {
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
     const fd = new FormData();
     fd.append('candidato_id', pk);
-    fetch('/candidatos/analyse-cv/', { method: 'POST', headers: { 'X-CSRFToken': CSRF2 }, body: fd })
+    fetch('/candidatos/score-json/', { method: 'POST', headers: { 'X-CSRFToken': CSRF2 }, body: fd })
         .then(r => r.json())
         .then(data => {
-            if (data.ok) { location.reload(); }
-            else { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Calcular'; }
-        });
+            if (data.ok) {
+                const cell = document.getElementById('score-cell-' + pk);
+                const pct = data.score_fit;
+                let cls = pct >= 70 ? 'alto' : pct >= 40 ? 'medio' : 'baixo';
+                cell.innerHTML = '<span class="score-badge ' + cls + '">' + pct + '%</span>';
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Calcular';
+            }
+        })
+        .catch(() => { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Calcular'; });
 }
 </script>
 {% endif %}
