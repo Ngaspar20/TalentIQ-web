@@ -1482,6 +1482,60 @@ def avaliacao_rapida_detail(request, pk):
     })
 
 
+@require_POST
+def upload_tor_rapida(request, pk):
+    """JSON endpoint: upload + parse + auto-approve ToR for a modo_rapido vaga."""
+    from django.http import JsonResponse
+    from django.conf import settings
+    vaga = get_object_or_404(org_vagas(request).filter(modo_rapido=True), pk=pk)
+    uploaded = request.FILES.get("tor_file")
+    if not uploaded:
+        return JsonResponse({"ok": False, "error": "Nenhum ficheiro recebido."})
+    allowed = [".pdf", ".docx", ".doc", ".txt"]
+    ext = os.path.splitext(uploaded.name)[1].lower()
+    if ext not in allowed:
+        return JsonResponse({"ok": False, "error": f"Formato não suportado: {ext}"})
+    if uploaded.size > 20 * 1024 * 1024:
+        return JsonResponse({"ok": False, "error": "Ficheiro demasiado grande (máx 20 MB)."})
+    try:
+        from core.parser import extract_text_from_file
+        texto = extract_text_from_file(uploaded)
+    except Exception as e:
+        return JsonResponse({"ok": False, "error": f"Erro ao extrair texto: {e}"})
+    if not texto.strip():
+        return JsonResponse({"ok": False, "error": "Não foi possível extrair texto do ficheiro."})
+    from talentiq.storage import upload_to_r2
+    r2_url = upload_to_r2(uploaded, "tor", uploaded.name) or ""
+    os.environ["GROK_API_KEY"] = settings.GROK_API_KEY
+    os.environ["LLM_ENGINE"] = settings.LLM_ENGINE
+    try:
+        from core.parser import parse_tor
+        extraido = parse_tor(texto)
+    except Exception:
+        extraido = {}
+    update_fields = ["tor_file_path", "tor_analisado", "tor_aprovado"]
+    vaga.tor_file_path = r2_url or uploaded.name
+    vaga.tor_analisado = True
+    vaga.tor_aprovado = True
+    if extraido.get("competencias_requeridas"):
+        vaga.competencias_requeridas = extraido["competencias_requeridas"]
+        update_fields.append("competencias_requeridas")
+    if extraido.get("anos_experiencia_min") is not None:
+        try:
+            vaga.anos_experiencia_min = int(extraido["anos_experiencia_min"])
+            update_fields.append("anos_experiencia_min")
+        except (TypeError, ValueError):
+            pass
+    if extraido.get("nivel_formacao"):
+        vaga.nivel_formacao = extraido["nivel_formacao"]
+        update_fields.append("nivel_formacao")
+    if extraido.get("responsabilidades"):
+        vaga.responsabilidades = extraido["responsabilidades"]
+        update_fields.append("responsabilidades")
+    vaga.save(update_fields=update_fields)
+    return JsonResponse({"ok": True})
+
+
 def avaliacao_rapida_relatorio(request, pk):
     vaga = get_object_or_404(org_vagas(request).filter(modo_rapido=True), pk=pk)
     from candidatos.models import Candidato
