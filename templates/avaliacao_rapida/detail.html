@@ -56,8 +56,35 @@
     <div class="card-title"><i class="fa-solid fa-file-lines" style="color:#7c3aed;"></i> Passo 1 — Termos de Referência</div>
     <p class="text-sm text-slate-500 mb-4">Carregue o documento ToR ou JD (PDF ou Word). O sistema vai extrair automaticamente as competências, formação e experiência necessárias.</p>
 
-    {% if not vaga.tor_aprovado %}
-    <!-- Upload zone (shown until ToR is uploaded and approved) -->
+    {% if vaga.tor_aprovado %}
+    <!-- ToR summary shown after upload -->
+    <div class="alert-success mb-4"><i class="fa-solid fa-circle-check mr-2"></i>ToR analisado e aprovado. Requisitos extraídos:</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+        {% if vaga.competencias_requeridas %}
+        <div>
+            <div style="font-size:.75rem;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem;">Competências</div>
+            <div class="flex flex-wrap gap-1">
+                {% for c in vaga.competencias_requeridas %}
+                <span style="font-size:.76rem;background:#ede9fe;color:#6d28d9;padding:.15rem .5rem;border-radius:999px;">{{ c }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        <div>
+            {% if vaga.nivel_formacao %}<p style="font-size:.85rem;color:#475569;margin-bottom:.4rem;"><strong>Formação:</strong> {{ vaga.nivel_formacao|title }}</p>{% endif %}
+            {% if vaga.anos_experiencia_min %}<p style="font-size:.85rem;color:#475569;margin-bottom:.4rem;"><strong>Experiência mínima:</strong> {{ vaga.anos_experiencia_min }} ano(s)</p>{% endif %}
+        </div>
+    </div>
+    {% if vaga.responsabilidades %}
+    <div>
+        <div style="font-size:.75rem;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem;">Responsabilidades principais</div>
+        <ul style="font-size:.83rem;color:#475569;padding-left:1.2rem;margin:0;">
+            {% for r in vaga.responsabilidades|slice:":5" %}<li>{{ r }}</li>{% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    {% else %}
+    <!-- Upload zone -->
     <div id="upload-zone" style="border:2px dashed #c4b5fd;border-radius:12px;padding:2rem;text-align:center;background:#faf5ff;cursor:pointer;margin-bottom:1rem;" onclick="document.getElementById('tor-file').click()">
         <i class="fa-solid fa-cloud-arrow-up fa-2x mb-2" style="color:#7c3aed;"></i>
         <p style="font-size:.9rem;font-weight:600;color:#6d28d9;">Clique para seleccionar o ficheiro</p>
@@ -259,7 +286,7 @@ async function startBulkUpload() {
     document.getElementById('progress-area').style.display = 'block';
 
     const total = selectedFiles.length;
-    let done = 0, errors = 0;
+    let done = 0, errors = 0, errorDetails = [];
 
     for (const file of selectedFiles) {
         document.getElementById('progress-label').textContent = 'A processar ficheiro ' + (done + 1) + ' de ' + total + '…';
@@ -274,9 +301,10 @@ async function startBulkUpload() {
         try {
             const r = await fetch('/candidatos/bulk-upload-cv/', { method: 'POST', headers: { 'X-CSRFToken': CSRF2 }, body: fd });
             const data = await r.json();
-            if (!data.ok) errors++;
+            if (!data.ok) { errors++; errorDetails.push(file.name + ': ' + (data.error || 'erro desconhecido')); }
         } catch (e) {
             errors++;
+            errorDetails.push(file.name + ': erro de ligação');
         }
         done++;
     }
@@ -286,7 +314,10 @@ async function startBulkUpload() {
     document.getElementById('done-area').style.display = 'block';
     const ok = done - errors;
     let msg = '<i class="fa-solid fa-circle-check mr-2"></i>' + ok + ' CV(s) carregado(s) com sucesso.';
-    if (errors > 0) msg += ' <strong>' + errors + ' erro(s)</strong>.';
+    if (errors > 0) {
+        msg += ' <strong>' + errors + ' erro(s)</strong>.';
+        if (errorDetails.length) msg += '<ul style="margin:.5rem 0 0 1rem;font-size:.8rem;">' + errorDetails.map(e => '<li>' + e + '</li>').join('') + '</ul>';
+    }
     document.getElementById('done-msg').innerHTML = msg;
     if (errors > 0) document.getElementById('done-msg').className = 'alert-warning';
 }
