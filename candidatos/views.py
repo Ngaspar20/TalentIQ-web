@@ -581,26 +581,39 @@ def bulk_upload_one_cv(request):
 
     try:
         from core.parser import parse_cv
-        extraido = parse_cv(texto)
+        extraido = parse_cv(texto) or {}
     except Exception:
         extraido = {}
 
     nome = (extraido.get("nome") or "").strip() or uploaded.name.rsplit(".", 1)[0]
 
-    candidato = Candidato.objects.create(
-        organisation=request.user.organisation,
-        vaga=vaga,
-        nome=nome,
-        email=extraido.get("email", ""),
-        telefone=extraido.get("telefone", ""),
-        experiencia_anos=int(extraido.get("experiencia_anos") or 0),
-        competencias=[c.strip().lower() for c in (extraido.get("competencias") or []) if c.strip()],
-        formacao=[f.strip() for f in (extraido.get("formacao") or []) if f.strip()],
-        idiomas=[i.strip() for i in (extraido.get("idiomas") or []) if i.strip()],
-        resumo=extraido.get("resumo", ""),
-        cv_file_path=r2_url,
-        created_by=request.user,
-    )
+    try:
+        exp_anos = int(float(str(extraido.get("experiencia_anos") or 0).split()[0].rstrip("+").rstrip("-") or 0))
+    except (ValueError, TypeError, IndexError):
+        exp_anos = 0
+
+    def _safe_list(val):
+        if not val:
+            return []
+        return [str(x).strip() for x in val if x and str(x).strip()]
+
+    try:
+        candidato = Candidato.objects.create(
+            organisation=request.user.organisation,
+            vaga=vaga,
+            nome=nome,
+            email=extraido.get("email", ""),
+            telefone=extraido.get("telefone", ""),
+            experiencia_anos=exp_anos,
+            competencias=[c.lower() for c in _safe_list(extraido.get("competencias"))],
+            formacao=_safe_list(extraido.get("formacao")),
+            idiomas=_safe_list(extraido.get("idiomas")),
+            resumo=extraido.get("resumo", ""),
+            cv_file_path=r2_url,
+            created_by=request.user,
+        )
+    except Exception as e:
+        return JsonResponse({"ok": False, "error": f"Erro ao criar candidato: {e}"})
 
     score_fit = None
     try:
