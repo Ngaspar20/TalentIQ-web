@@ -16,4 +16,6 @@ urlpatterns = [
     path("<uuid:pk>/carta/", views.gerar_carta, name="gerar_carta"),
     path("<uuid:pk>/carta/download/", views.download_carta, name="download_carta"),
     path("<uuid:pk>/adicionar-nota/", views.adicionar_nota, name="adicionar_nota"),
+    path("bulk-upload-cv/", views.bulk_upload_one_cv, name="bulk_upload_one_cv"),
+    path("score-json/", views.score_candidato_json, name="score_candidato_json"),
 ]
