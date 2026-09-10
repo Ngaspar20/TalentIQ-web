@@ -486,6 +486,7 @@ def parse_cv_view(request):
         texto = extract_text_from_file(uploaded)
     except Exception as e:
         return HttpResponse(f'<div class="alert-error">Erro ao extrair texto: {e}</div>')
+    texto = texto.replace('\x00', '')
 
     if not texto.strip():
         return HttpResponse('<div class="alert-error">Não foi possível extrair texto. O ficheiro pode ser uma imagem digitalizada.</div>')
@@ -569,6 +570,7 @@ def bulk_upload_one_cv(request):
         texto = extract_text_from_file(uploaded)
     except Exception as e:
         return JsonResponse({"ok": False, "error": f"Erro ao extrair texto: {e}"})
+    texto = texto.replace('\x00', '')
 
     if not texto.strip():
         return JsonResponse({"ok": False, "error": "Não foi possível extrair texto do ficheiro."})

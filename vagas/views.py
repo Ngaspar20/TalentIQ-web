@@ -1502,6 +1502,7 @@ def upload_tor_rapida(request, pk):
         texto = extract_text_from_file(uploaded)
     except Exception as e:
         return JsonResponse({"ok": False, "error": f"Erro ao extrair texto: {e}"})
+    texto = texto.replace('\x00', '')
     if not texto.strip():
         return JsonResponse({"ok": False, "error": "Não foi possível extrair texto do ficheiro."})
     from talentiq.storage import upload_to_r2
