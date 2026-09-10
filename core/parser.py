@@ -35,16 +35,22 @@ def _clean_text(text: str) -> str:
     import re
     # Remove non-printable control chars (keep \t \n \r)
     text = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', text)
-    # Drop lines where fewer than 25% of characters are readable
     cleaned = []
     for line in text.split('\n'):
         stripped = line.strip()
         if not stripped:
             cleaned.append(line)
             continue
+        n = len(stripped)
+        # Discard lines with >8% PDF-binary noise chars (+~|^`\_={})
+        noise = sum(1 for c in stripped if c in '+~|^`\\_={}')
+        if noise / n > 0.08:
+            continue
+        # Discard lines where <30% of chars are readable
         readable = sum(1 for c in stripped if c.isalpha() or c.isdigit() or c in ' .,;:!?()-/"\'@%')
-        if readable / len(stripped) >= 0.25:
-            cleaned.append(line)
+        if readable / n < 0.30:
+            continue
+        cleaned.append(line)
     return '\n'.join(cleaned)
 
 
