@@ -17,23 +17,43 @@ from core.llm import get_llm_response
 logger = logging.getLogger(__name__)
 
 
+_OLE_MAGIC = b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1"
+
+_DOC_NOT_SUPPORTED = (
+    "Ficheiros .doc (Word 97-2003) não são suportados. "
+    "Abra o documento no Word e guarde como .docx ou PDF."
+)
+
+
 def extract_text_from_file(uploaded_file) -> str:
-    """Extract raw text from PDF or DOCX uploaded file."""
+    """Extract raw text from a PDF, DOCX or TXT upload.
+
+    Raises ValueError for legacy .doc files: they are OLE binaries with no
+    extractor here, and decoding them as text yields document internals.
+    """
     filename = uploaded_file.name.lower()
+
+    uploaded_file.seek(0)
+    if uploaded_file.read(8).startswith(_OLE_MAGIC):
+        uploaded_file.seek(0)
+        raise ValueError(_DOC_NOT_SUPPORTED)
+    uploaded_file.seek(0)
 
     if filename.endswith(".pdf"):
         raw = _extract_pdf(uploaded_file)
     elif filename.endswith(".docx"):
         raw = _extract_docx(uploaded_file)
+    elif filename.endswith(".doc"):
+        raise ValueError(_DOC_NOT_SUPPORTED)
     else:
         raw = uploaded_file.read().decode("utf-8", errors="ignore")
     return _clean_text(raw)
 
 
 def _clean_text(text: str) -> str:
-    """Strip control characters and binary-garbage lines from extracted text."""
+    """Strip control characters and unreadable lines from extracted text."""
     import re
-    # Remove non-printable control chars (keep \t \n \r)
+    # NUL and friends are rejected by PostgreSQL text columns
     text = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', text)
     cleaned = []
     for line in text.split('\n'):
@@ -41,17 +61,8 @@ def _clean_text(text: str) -> str:
         if not stripped:
             cleaned.append(line)
             continue
-        n = len(stripped)
-        # Drop lines with runs of 4+ consecutive dashes (PDF binary artifact)
-        if re.search(r'-{4,}', stripped):
-            continue
-        # Drop lines with >8% PDF-binary noise chars (+~|^`\_={})
-        noise = sum(1 for c in stripped if c in '+~|^`\\_={}')
-        if noise / n > 0.08:
-            continue
-        # Drop lines where <30% of chars are readable
         readable = sum(1 for c in stripped if c.isalpha() or c.isdigit() or c in ' .,;:!?()-/"\'@%')
-        if readable / n < 0.30:
+        if readable / len(stripped) < 0.30:
             continue
         cleaned.append(line)
     return '\n'.join(cleaned)

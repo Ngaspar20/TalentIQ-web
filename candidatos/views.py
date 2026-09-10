@@ -7,7 +7,7 @@ from accounts.decorators import recruiter_required
 from .models import Candidato
 
 
-_ALLOWED_EXTENSIONS = (".pdf", ".docx", ".doc", ".txt")
+_ALLOWED_EXTENSIONS = (".pdf", ".docx", ".txt")
 
 
 def _validate_upload(uploaded_file):
@@ -19,8 +19,8 @@ def _validate_upload(uploaded_file):
     uploaded_file.seek(0)
     if name.endswith(".pdf") and not header.startswith(b"%PDF"):
         return "O ficheiro não é um PDF válido."
-    if name.endswith((".docx", ".doc")) and not header.startswith(b"PK\x03\x04"):
-        return "O ficheiro não é um DOCX válido."
+    if name.endswith(".docx") and not header.startswith(b"PK\x03\x04"):
+        return "O ficheiro não é um DOCX válido. Ficheiros .doc antigos devem ser guardados como .docx."
     return None
 
 

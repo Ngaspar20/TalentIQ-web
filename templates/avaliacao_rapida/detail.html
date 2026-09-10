@@ -110,7 +110,7 @@
         <p style="font-size:.9rem;font-weight:600;color:#6d28d9;">Clique para seleccionar o ficheiro</p>
         <p style="font-size:.78rem;color:#94a3b8;">PDF, DOCX ou TXT — o sistema extrai e analisa automaticamente</p>
     </div>
-    <input type="file" id="tor-file" accept=".pdf,.docx,.doc,.txt" style="display:none" onchange="uploadTor(this)">
+    <input type="file" id="tor-file" accept=".pdf,.docx,.txt" style="display:none" onchange="uploadTor(this)">
     <div id="upload-status" style="display:none;" class="text-sm text-slate-500 mb-3"></div>
     {% endif %}
 </div>
@@ -182,7 +182,7 @@ function uploadTor(input) {
         <i class="fa-solid fa-files fa-2x mb-2" style="color:#7c3aed;"></i>
         <p style="font-size:.9rem;font-weight:600;color:#6d28d9;">Arraste os CVs aqui ou clique para seleccionar</p>
         <p style="font-size:.78rem;color:#94a3b8;">Pode seleccionar centenas de ficheiros de uma vez</p>
-        <input type="file" id="cv-files-input" accept=".pdf,.docx,.doc,.txt" multiple style="display:none" onchange="handleFilesSelected(this.files)">
+        <input type="file" id="cv-files-input" accept=".pdf,.docx,.txt" multiple style="display:none" onchange="handleFilesSelected(this.files)">
         <button onclick="document.getElementById('cv-files-input').click()" class="btn-secondary mt-3" style="font-size:.82rem;">
             <i class="fa-solid fa-folder-open mr-1"></i> Seleccionar ficheiros
         </button>
