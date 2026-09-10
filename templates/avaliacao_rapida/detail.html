@@ -144,6 +144,28 @@ function uploadTor(input) {
 <!-- ── STEP 2 & 3: CVs ── -->
 {% if step >= 2 %}
 
+<!-- ToR reference (collapsed by default) -->
+{% if vaga.tor_texto %}
+<details class="section-card mb-4" style="padding:0;">
+    <summary style="cursor:pointer;padding:1rem 1.25rem;display:flex;align-items:center;gap:.6rem;font-size:.85rem;font-weight:600;color:#6d28d9;list-style:none;user-select:none;">
+        <i class="fa-solid fa-file-lines"></i> Ver Termos de Referência
+        <span style="font-size:.75rem;font-weight:400;color:#94a3b8;margin-left:auto;">clique para expandir</span>
+    </summary>
+    <div style="padding:0 1.25rem 1.25rem;">
+        {% if vaga.competencias_requeridas %}
+        <div class="flex flex-wrap gap-1 mb-3">
+            {% for c in vaga.competencias_requeridas %}
+            <span style="font-size:.76rem;background:#ede9fe;color:#6d28d9;padding:.15rem .5rem;border-radius:999px;">{{ c }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <div style="max-height:360px;overflow-y:auto;background:#fafaf7;border:1px solid #e2e8f0;border-radius:8px;padding:.75rem;">
+            <pre style="white-space:pre-wrap;font-family:inherit;font-size:.78rem;color:#3a4340;margin:0;line-height:1.6;">{{ vaga.tor_texto }}</pre>
+        </div>
+    </div>
+</details>
+{% endif %}
+
 <!-- Bulk upload zone -->
 <div class="section-card mb-4" id="upload-card">
     <div class="flex items-center justify-between mb-3">
