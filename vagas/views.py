@@ -1584,17 +1584,22 @@ def _gerar_narrativa_rapida(vaga, candidatos):
         return ""
     os.environ["GROK_API_KEY"] = settings.GROK_API_KEY
     os.environ["LLM_ENGINE"] = settings.LLM_ENGINE
-    tor_excerpt = (vaga.tor_texto or "")[:3000]
+    tor_excerpt = (vaga.tor_texto or "")[:8000]
     cands_text = ""
     for i, c in enumerate(candidatos[:15], 1):
         score_str = f"{c.score_fit}%" if c.score_fit is not None else "não calculado"
-        comps = ", ".join((c.competencias or [])[:6]) or "não especificadas"
-        form = (c.formacao or ["não especificada"])[-1]
+        comps = ", ".join(str(x) for x in (c.competencias or [])[:12]) or "não especificadas"
+        form = "; ".join(str(x) for x in (c.formacao or [])) or "não especificada"
+        idiomas = ", ".join(str(x) for x in (c.idiomas or [])) or "não especificados"
         cands_text += (
             f"{i}. {c.nome} | Score: {score_str} | "
-            f"Experiência: {c.experiencia_anos or 0} anos | "
-            f"Formação: {form} | Competências: {comps}\n"
+            f"Experiência: {c.experiencia_anos or 0} anos\n"
+            f"   Formação: {form}\n"
+            f"   Competências: {comps}\n"
+            f"   Idiomas: {idiomas}\n"
         )
+        if c.resumo:
+            cands_text += f"   Resumo: {c.resumo[:500]}\n"
     prompt = f"""És um especialista em recursos humanos. Analisa os candidatos abaixo face aos Termos de Referência e redige um relatório narrativo em português europeu/moçambicano.
 
 POSIÇÃO: {vaga.titulo}{f' — {vaga.organizacao}' if vaga.organizacao else ''}
@@ -1616,7 +1621,9 @@ Redige um relatório narrativo com as seguintes secções (usa headings em Markd
 ## Candidatos Recomendados
 ## Conclusão
 
-Escreve de forma objectiva, profissional e concisa. Não repitas os scores — integra-os na narrativa."""
+Escreve de forma objectiva, profissional e concisa. Não repitas os scores — integra-os na narrativa.
+
+IMPORTANTE: baseia-te apenas nos dados acima. Se um campo estiver marcado como "não especificada"/"não especificados", isso significa que não foi extraído do CV — descreve-o como "não consta do CV" e nunca como uma falha ou lacuna do candidato. Não afirmes que falta informação sobre campos que estão preenchidos."""
     try:
         from core.llm import get_llm_response
         resultado = get_llm_response(prompt)

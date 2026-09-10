@@ -137,7 +137,7 @@ Analise este CV e extraia as seguintes informações em JSON:
 }}
 
 CV:
-{text[:4000]}
+{text[:20000]}
 """
     try:
         response = get_llm_response(prompt, system)
@@ -190,7 +190,7 @@ Analise este Termo de Referência e extraia as seguintes informações em JSON:
 }}
 
 Termo de Referência:
-{text[:5000]}
+{text[:20000]}
 """
     try:
         response = get_llm_response(prompt, system)
