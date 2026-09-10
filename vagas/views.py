@@ -1533,7 +1533,10 @@ def upload_tor_rapida(request, pk):
     if extraido.get("responsabilidades"):
         vaga.responsabilidades = extraido["responsabilidades"]
         update_fields.append("responsabilidades")
-    vaga.save(update_fields=update_fields)
+    try:
+        vaga.save(update_fields=update_fields)
+    except Exception as e:
+        return JsonResponse({"ok": False, "error": f"Erro ao guardar: {e}"})
     return JsonResponse({"ok": True})
 
 
