@@ -22,11 +22,30 @@ def extract_text_from_file(uploaded_file) -> str:
     filename = uploaded_file.name.lower()
 
     if filename.endswith(".pdf"):
-        return _extract_pdf(uploaded_file)
+        raw = _extract_pdf(uploaded_file)
     elif filename.endswith(".docx"):
-        return _extract_docx(uploaded_file)
+        raw = _extract_docx(uploaded_file)
     else:
-        return uploaded_file.read().decode("utf-8", errors="ignore")
+        raw = uploaded_file.read().decode("utf-8", errors="ignore")
+    return _clean_text(raw)
+
+
+def _clean_text(text: str) -> str:
+    """Strip control characters and binary-garbage lines from extracted text."""
+    import re
+    # Remove non-printable control chars (keep \t \n \r)
+    text = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', text)
+    # Drop lines where fewer than 25% of characters are readable
+    cleaned = []
+    for line in text.split('\n'):
+        stripped = line.strip()
+        if not stripped:
+            cleaned.append(line)
+            continue
+        readable = sum(1 for c in stripped if c.isalpha() or c.isdigit() or c in ' .,;:!?()-/"\'@%')
+        if readable / len(stripped) >= 0.25:
+            cleaned.append(line)
+    return '\n'.join(cleaned)
 
 
 def _extract_pdf(uploaded_file) -> str:
