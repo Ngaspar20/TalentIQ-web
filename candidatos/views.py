@@ -595,9 +595,26 @@ def bulk_upload_one_cv(request):
         exp_anos = 0
 
     def _safe_list(val):
+        """Normalise an LLM-supplied field to a list of strings.
+
+        The model may return a bare string, or entries as dicts
+        (e.g. {"grau": "Licenciatura", "instituicao": "UEM"}).
+        """
         if not val:
             return []
-        return [str(x).strip() for x in val if x and str(x).strip()]
+        if isinstance(val, (str, dict)):
+            val = [val]
+        out = []
+        for x in val:
+            if not x:
+                continue
+            if isinstance(x, dict):
+                s = " — ".join(str(v).strip() for v in x.values() if v)
+            else:
+                s = str(x).strip()
+            if s:
+                out.append(s)
+        return out
 
     try:
         candidato = Candidato.objects.create(
