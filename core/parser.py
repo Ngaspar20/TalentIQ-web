@@ -42,11 +42,14 @@ def _clean_text(text: str) -> str:
             cleaned.append(line)
             continue
         n = len(stripped)
-        # Discard lines with >8% PDF-binary noise chars (+~|^`\_={})
+        # Drop lines with runs of 4+ consecutive dashes (PDF binary artifact)
+        if re.search(r'-{4,}', stripped):
+            continue
+        # Drop lines with >8% PDF-binary noise chars (+~|^`\_={})
         noise = sum(1 for c in stripped if c in '+~|^`\\_={}')
         if noise / n > 0.08:
             continue
-        # Discard lines where <30% of chars are readable
+        # Drop lines where <30% of chars are readable
         readable = sum(1 for c in stripped if c.isalpha() or c.isdigit() or c in ' .,;:!?()-/"\'@%')
         if readable / n < 0.30:
             continue
