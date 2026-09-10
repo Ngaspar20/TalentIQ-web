@@ -1438,6 +1438,10 @@ def download_perguntas(request, pk):
 # Avaliação Rápida
 # ---------------------------------------------------------------------------
 
+# Candidates at or above this score advance to the next phase
+SCORE_APURADO_MIN = 80
+
+
 def avaliacao_rapida_list(request):
     from django.utils import timezone
     vagas = org_vagas(request).filter(modo_rapido=True).order_by("-created_at")
@@ -1477,6 +1481,8 @@ def avaliacao_rapida_detail(request, pk):
     return render(request, "avaliacao_rapida/detail.html", {
         "vaga": vaga,
         "candidatos": candidatos,
+        "apurados": [c for c in candidatos if (c.score_fit or 0) >= SCORE_APURADO_MIN],
+        "score_minimo": SCORE_APURADO_MIN,
         "n_scored": n_scored,
         "step": step,
     })
@@ -1560,9 +1566,6 @@ def reiniciar_avaliacao_rapida(request, pk):
         "competencias_requeridas", "responsabilidades", "nivel_formacao", "anos_experiencia_min",
     ])
     return redirect("avaliacao_rapida_detail", pk=pk)
-
-
-SCORE_APURADO_MIN = 80
 
 
 def avaliacao_rapida_relatorio(request, pk):

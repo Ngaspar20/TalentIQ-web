@@ -223,6 +223,70 @@ function uploadTor(input) {
     </div>
 </div>
 
+<!-- Apurados para a fase seguinte -->
+{% if n_scored %}
+<div class="section-card mb-4" style="border-left:4px solid #15803d;">
+    <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+            <div class="card-title mb-0" style="color:#15803d;">
+                <i class="fa-solid fa-user-check" style="color:#15803d;"></i> Apurados para a Fase Seguinte
+            </div>
+            <span style="font-size:.7rem;background:#dcfce7;color:#15803d;padding:.15rem .5rem;border-radius:999px;font-weight:600;">
+                score &ge; {{ score_minimo }}%
+            </span>
+        </div>
+        <span style="font-size:.8rem;font-weight:700;color:#15803d;">{{ apurados|length }} de {{ candidatos|length }}</span>
+    </div>
+
+    {% if apurados %}
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:.85rem;">
+        <thead>
+            <tr style="border-bottom:2px solid #bbf7d0;text-align:left;">
+                <th style="padding:.5rem .75rem;color:#64748b;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;width:40px;">#</th>
+                <th style="padding:.5rem .75rem;color:#64748b;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;">Nome</th>
+                <th style="padding:.5rem .75rem;color:#64748b;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;text-align:center;">Score</th>
+                <th style="padding:.5rem .75rem;color:#64748b;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;">Formação</th>
+                <th style="padding:.5rem .75rem;color:#64748b;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;text-align:center;">Exp.</th>
+                <th style="padding:.5rem .75rem;color:#64748b;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;">Contacto</th>
+                <th style="padding:.5rem .75rem;"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in apurados %}
+            <tr style="border-bottom:1px solid #f1f5f9;background:#f6fdf8;">
+                <td style="padding:.6rem .75rem;font-weight:800;color:#15803d;">{{ forloop.counter }}</td>
+                <td style="padding:.6rem .75rem;font-weight:700;color:#1e293b;">{{ c.nome }}</td>
+                <td style="padding:.6rem .75rem;text-align:center;">
+                    <span class="score-badge {{ c.score_label }}">{{ c.score_fit }}%</span>
+                </td>
+                <td style="padding:.6rem .75rem;color:#64748b;font-size:.8rem;">
+                    {% if c.formacao %}{{ c.formacao|last }}{% else %}—{% endif %}
+                </td>
+                <td style="padding:.6rem .75rem;text-align:center;color:#64748b;">{{ c.experiencia_anos }}a</td>
+                <td style="padding:.6rem .75rem;font-size:.78rem;color:#64748b;">
+                    {% if c.email %}{{ c.email }}{% endif %}
+                    {% if c.telefone %}<div>{{ c.telefone }}</div>{% endif %}
+                    {% if not c.email and not c.telefone %}—{% endif %}
+                </td>
+                <td style="padding:.6rem .75rem;">
+                    <a href="/candidatos/{{ c.pk }}/" style="font-size:.75rem;color:#94a3b8;" title="Ver perfil">
+                        <i class="fa-solid fa-eye"></i>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% else %}
+    <p style="color:#94a3b8;font-size:.85rem;margin:0;">
+        Nenhum candidato atingiu o score mínimo de {{ score_minimo }}%.
+    </p>
+    {% endif %}
+</div>
+{% endif %}
+
 <!-- Candidates table -->
 <div class="section-card">
     <div class="flex items-center justify-between mb-3">
