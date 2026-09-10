@@ -12,7 +12,7 @@ from .models import Vaga
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-_ALLOWED_EXTENSIONS = (".pdf", ".docx", ".doc", ".txt")
+_ALLOWED_EXTENSIONS = (".pdf", ".docx", ".txt")
 _MAGIC_SIGNATURES = {
     b"%PDF": "PDF",
     b"PK\x03\x04": "DOCX/ZIP",
@@ -28,8 +28,8 @@ def _validate_upload(uploaded_file):
     uploaded_file.seek(0)
     if name.endswith(".pdf") and not header.startswith(b"%PDF"):
         return "O ficheiro não é um PDF válido."
-    if name.endswith((".docx", ".doc")) and not header.startswith(b"PK\x03\x04"):
-        return "O ficheiro não é um DOCX válido."
+    if name.endswith(".docx") and not header.startswith(b"PK\x03\x04"):
+        return "O ficheiro não é um DOCX válido. Ficheiros .doc antigos devem ser guardados como .docx."
     return None
 
 
@@ -1491,7 +1491,7 @@ def upload_tor_rapida(request, pk):
     uploaded = request.FILES.get("tor_file")
     if not uploaded:
         return JsonResponse({"ok": False, "error": "Nenhum ficheiro recebido."})
-    allowed = [".pdf", ".docx", ".doc", ".txt"]
+    allowed = [".pdf", ".docx", ".txt"]
     ext = os.path.splitext(uploaded.name)[1].lower()
     if ext not in allowed:
         return JsonResponse({"ok": False, "error": f"Formato não suportado: {ext}"})
