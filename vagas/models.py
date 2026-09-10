@@ -57,6 +57,7 @@ class Vaga(models.Model):
     descricao = models.TextField(blank=True)
     estado = models.CharField(max_length=50, choices=ESTADO_CHOICES, default=ESTADO_ABERTA)
     tor_file_path = models.CharField(max_length=500, blank=True)
+    tor_texto = models.TextField(blank=True, default="")
     tor_analisado = models.BooleanField(default=False)
     tor_aprovado = models.BooleanField(default=False)
     modo_rapido = models.BooleanField(default=False)
