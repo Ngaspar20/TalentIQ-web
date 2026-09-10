@@ -1562,16 +1562,22 @@ def reiniciar_avaliacao_rapida(request, pk):
     return redirect("avaliacao_rapida_detail", pk=pk)
 
 
+SCORE_APURADO_MIN = 80
+
+
 def avaliacao_rapida_relatorio(request, pk):
     vaga = get_object_or_404(org_vagas(request).filter(modo_rapido=True), pk=pk)
     from candidatos.models import Candidato
     from django.utils import timezone
     from django.conf import settings
     candidatos = list(Candidato.objects.filter(vaga=vaga).order_by("-score_fit", "nome"))
+    apurados = [c for c in candidatos if (c.score_fit or 0) >= SCORE_APURADO_MIN]
     narrativa = _gerar_narrativa_rapida(vaga, candidatos)
     return render(request, "avaliacao_rapida/relatorio.html", {
         "vaga": vaga,
         "candidatos": candidatos,
+        "apurados": apurados,
+        "score_minimo": SCORE_APURADO_MIN,
         "today": timezone.now().date(),
         "narrativa": narrativa,
     })
@@ -1614,11 +1620,14 @@ EXPERIÊNCIA MÍNIMA: {vaga.anos_experiencia_min or 0} anos
 CANDIDATOS AVALIADOS:
 {cands_text}
 
+CRITÉRIO DE APURAMENTO: são apurados para a fase seguinte os candidatos com score igual ou superior a {SCORE_APURADO_MIN}%.
+
 Redige um relatório narrativo com as seguintes secções (usa headings em Markdown):
 ## Resumo do Processo
 ## Análise dos Candidatos
 (para cada candidato: 2-3 frases sobre adequação ao ToR, pontos fortes e limitações)
-## Candidatos Recomendados
+## Candidatos Apurados
+(lista apenas os candidatos com score >= {SCORE_APURADO_MIN}%. Se nenhum atingir o mínimo, indica-o explicitamente.)
 ## Conclusão
 
 Escreve de forma objectiva, profissional e concisa. Não repitas os scores — integra-os na narrativa.
@@ -1632,16 +1641,33 @@ IMPORTANTE: baseia-te apenas nos dados acima. Se um campo estiver marcado como "
     except Exception:
         pass
     # Deterministic fallback
-    top = candidatos[0]
+    apurados = [c for c in candidatos if (c.score_fit or 0) >= SCORE_APURADO_MIN]
     linhas = [
         f"## Resumo do Processo\n\nForam avaliados {len(candidatos)} candidato(s) para a posição de **{vaga.titulo}**.",
         f"\n## Análise dos Candidatos\n",
     ]
     for c in candidatos:
         score_str = f"{c.score_fit}%" if c.score_fit is not None else "score não calculado"
+        form = "; ".join(str(x) for x in (c.formacao or [])) or "não consta do CV"
         linhas.append(
-            f"**{c.nome}** obteve um score de {score_str}, com {c.experiencia_anos or 0} anos de experiência."
+            f"**{c.nome}** obteve um score de {score_str}, com {c.experiencia_anos or 0} anos "
+            f"de experiência. Formação: {form}."
         )
-    linhas.append(f"\n## Candidatos Recomendados\n\n**{top.nome}** é o candidato com melhor score.")
-    linhas.append(f"\n## Conclusão\n\nRecomenda-se a progressão de **{top.nome}** para a fase seguinte do processo de selecção.")
+    if apurados:
+        nomes = ", ".join(f"**{c.nome}** ({c.score_fit}%)" for c in apurados)
+        linhas.append(
+            f"\n## Candidatos Apurados\n\nCom score igual ou superior a {SCORE_APURADO_MIN}%: {nomes}."
+        )
+        linhas.append(
+            f"\n## Conclusão\n\nRecomenda-se a progressão de {len(apurados)} candidato(s) "
+            f"para a fase seguinte do processo de selecção."
+        )
+    else:
+        linhas.append(
+            f"\n## Candidatos Apurados\n\nNenhum candidato atingiu o score mínimo de {SCORE_APURADO_MIN}%."
+        )
+        linhas.append(
+            "\n## Conclusão\n\nNão há candidatos apurados para a fase seguinte. "
+            "Recomenda-se alargar a pesquisa ou rever os critérios da posição."
+        )
     return "\n\n".join(linhas)
