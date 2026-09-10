@@ -1513,8 +1513,9 @@ def upload_tor_rapida(request, pk):
         extraido = parse_tor(texto)
     except Exception:
         extraido = {}
-    update_fields = ["tor_file_path", "tor_analisado", "tor_aprovado"]
+    update_fields = ["tor_file_path", "tor_texto", "tor_analisado", "tor_aprovado"]
     vaga.tor_file_path = r2_url or uploaded.name
+    vaga.tor_texto = texto
     vaga.tor_analisado = True
     vaga.tor_aprovado = True
     if extraido.get("competencias_requeridas"):
@@ -1536,13 +1537,100 @@ def upload_tor_rapida(request, pk):
     return JsonResponse({"ok": True})
 
 
+@require_POST
+def reiniciar_avaliacao_rapida(request, pk):
+    """Delete all candidatos and clear ToR fields, resetting the session to Step 1."""
+    from candidatos.models import Candidato
+    vaga = get_object_or_404(org_vagas(request).filter(modo_rapido=True), pk=pk)
+    Candidato.objects.filter(vaga=vaga).delete()
+    vaga.tor_file_path = ""
+    vaga.tor_texto = ""
+    vaga.tor_analisado = False
+    vaga.tor_aprovado = False
+    vaga.competencias_requeridas = []
+    vaga.responsabilidades = []
+    vaga.nivel_formacao = ""
+    vaga.anos_experiencia_min = 0
+    vaga.save(update_fields=[
+        "tor_file_path", "tor_texto", "tor_analisado", "tor_aprovado",
+        "competencias_requeridas", "responsabilidades", "nivel_formacao", "anos_experiencia_min",
+    ])
+    return redirect("avaliacao_rapida_detail", pk=pk)
+
+
 def avaliacao_rapida_relatorio(request, pk):
     vaga = get_object_or_404(org_vagas(request).filter(modo_rapido=True), pk=pk)
     from candidatos.models import Candidato
     from django.utils import timezone
+    from django.conf import settings
     candidatos = list(Candidato.objects.filter(vaga=vaga).order_by("-score_fit", "nome"))
+    narrativa = _gerar_narrativa_rapida(vaga, candidatos)
     return render(request, "avaliacao_rapida/relatorio.html", {
         "vaga": vaga,
         "candidatos": candidatos,
         "today": timezone.now().date(),
+        "narrativa": narrativa,
     })
+
+
+def _gerar_narrativa_rapida(vaga, candidatos):
+    """Generate a Portuguese narrative assessment report using the LLM, with deterministic fallback."""
+    from django.conf import settings
+    if not candidatos:
+        return ""
+    os.environ["GROK_API_KEY"] = settings.GROK_API_KEY
+    os.environ["LLM_ENGINE"] = settings.LLM_ENGINE
+    tor_excerpt = (vaga.tor_texto or "")[:3000]
+    cands_text = ""
+    for i, c in enumerate(candidatos[:15], 1):
+        score_str = f"{c.score_fit}%" if c.score_fit is not None else "não calculado"
+        comps = ", ".join((c.competencias or [])[:6]) or "não especificadas"
+        form = (c.formacao or ["não especificada"])[-1]
+        cands_text += (
+            f"{i}. {c.nome} | Score: {score_str} | "
+            f"Experiência: {c.experiencia_anos or 0} anos | "
+            f"Formação: {form} | Competências: {comps}\n"
+        )
+    prompt = f"""És um especialista em recursos humanos. Analisa os candidatos abaixo face aos Termos de Referência e redige um relatório narrativo em português europeu/moçambicano.
+
+POSIÇÃO: {vaga.titulo}{f' — {vaga.organizacao}' if vaga.organizacao else ''}
+
+TERMOS DE REFERÊNCIA (extracto):
+{tor_excerpt if tor_excerpt else 'Ver campos estruturados abaixo.'}
+
+COMPETÊNCIAS REQUERIDAS: {', '.join(vaga.competencias_requeridas or [])}
+FORMAÇÃO MÍNIMA: {vaga.nivel_formacao or 'não especificada'}
+EXPERIÊNCIA MÍNIMA: {vaga.anos_experiencia_min or 0} anos
+
+CANDIDATOS AVALIADOS:
+{cands_text}
+
+Redige um relatório narrativo com as seguintes secções (usa headings em Markdown):
+## Resumo do Processo
+## Análise dos Candidatos
+(para cada candidato: 2-3 frases sobre adequação ao ToR, pontos fortes e limitações)
+## Candidatos Recomendados
+## Conclusão
+
+Escreve de forma objectiva, profissional e concisa. Não repitas os scores — integra-os na narrativa."""
+    try:
+        from core.llm import get_llm_response
+        resultado = get_llm_response(prompt)
+        if resultado and len(resultado.strip()) > 100:
+            return resultado.strip()
+    except Exception:
+        pass
+    # Deterministic fallback
+    top = candidatos[0]
+    linhas = [
+        f"## Resumo do Processo\n\nForam avaliados {len(candidatos)} candidato(s) para a posição de **{vaga.titulo}**.",
+        f"\n## Análise dos Candidatos\n",
+    ]
+    for c in candidatos:
+        score_str = f"{c.score_fit}%" if c.score_fit is not None else "score não calculado"
+        linhas.append(
+            f"**{c.nome}** obteve um score de {score_str}, com {c.experiencia_anos or 0} anos de experiência."
+        )
+    linhas.append(f"\n## Candidatos Recomendados\n\n**{top.nome}** é o candidato com melhor score.")
+    linhas.append(f"\n## Conclusão\n\nRecomenda-se a progressão de **{top.nome}** para a fase seguinte do processo de selecção.")
+    return "\n\n".join(linhas)

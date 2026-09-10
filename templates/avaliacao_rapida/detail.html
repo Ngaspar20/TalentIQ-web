@@ -8,11 +8,21 @@
         <h1><i class="fa-solid fa-bolt" style="color:#7c3aed;"></i> {{ vaga.titulo }}</h1>
         {% if vaga.organizacao %}<p>{{ vaga.organizacao }}</p>{% endif %}
     </div>
-    {% if vaga.tor_aprovado and candidatos %}
-    <a href="/vagas/rapida/{{ vaga.pk }}/relatorio/" class="btn-primary">
-        <i class="fa-solid fa-file-lines mr-1"></i> Ver Relatório
-    </a>
-    {% endif %}
+    <div class="flex gap-2">
+        {% if vaga.tor_aprovado and candidatos %}
+        <a href="/vagas/rapida/{{ vaga.pk }}/relatorio/" class="btn-primary">
+            <i class="fa-solid fa-file-lines mr-1"></i> Ver Relatório
+        </a>
+        {% endif %}
+        {% if vaga.tor_aprovado or candidatos %}
+        <form method="post" action="/vagas/rapida/{{ vaga.pk }}/reiniciar/" onsubmit="return confirm('Tem a certeza? Isto vai apagar o ToR e todos os candidatos desta avaliação.');">
+            {% csrf_token %}
+            <button type="submit" class="btn-secondary" style="color:#dc2626;border-color:#fca5a5;">
+                <i class="fa-solid fa-rotate-left mr-1"></i> Reiniciar
+            </button>
+        </form>
+        {% endif %}
+    </div>
 </div>
 
 {% if messages %}
@@ -57,8 +67,8 @@
     <p class="text-sm text-slate-500 mb-4">Carregue o documento ToR ou JD (PDF ou Word). O sistema vai extrair automaticamente as competências, formação e experiência necessárias.</p>
 
     {% if vaga.tor_aprovado %}
-    <!-- ToR summary shown after upload -->
-    <div class="alert-success mb-4"><i class="fa-solid fa-circle-check mr-2"></i>ToR analisado e aprovado. Requisitos extraídos:</div>
+    <!-- ToR summary + full text -->
+    <div class="alert-success mb-4"><i class="fa-solid fa-circle-check mr-2"></i>ToR analisado. Requisitos extraídos:</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
         {% if vaga.competencias_requeridas %}
         <div>
@@ -76,12 +86,22 @@
         </div>
     </div>
     {% if vaga.responsabilidades %}
-    <div>
+    <div class="mb-4">
         <div style="font-size:.75rem;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem;">Responsabilidades principais</div>
         <ul style="font-size:.83rem;color:#475569;padding-left:1.2rem;margin:0;">
             {% for r in vaga.responsabilidades|slice:":5" %}<li>{{ r }}</li>{% endfor %}
         </ul>
     </div>
+    {% endif %}
+    {% if vaga.tor_texto %}
+    <details style="margin-top:.5rem;">
+        <summary style="cursor:pointer;font-size:.82rem;font-weight:600;color:#6d28d9;user-select:none;padding:.4rem 0;">
+            <i class="fa-solid fa-file-lines mr-1"></i> Ver ToR completo
+        </summary>
+        <div style="margin-top:.75rem;padding:1rem;background:#fafaf7;border:1px solid #e2e8f0;border-radius:8px;max-height:400px;overflow-y:auto;">
+            <pre style="white-space:pre-wrap;font-family:inherit;font-size:.8rem;color:#3a4340;margin:0;line-height:1.6;">{{ vaga.tor_texto }}</pre>
+        </div>
+    </details>
     {% endif %}
     {% else %}
     <!-- Upload zone -->
