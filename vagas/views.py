@@ -91,6 +91,8 @@ def vaga_create(request):
 
 def vaga_detail(request, pk):
     vaga = get_object_or_404(org_vagas(request), pk=pk)
+    if vaga.modo_rapido:
+        return redirect("avaliacao_rapida_detail", pk=pk)
     from candidatos.models import Candidato, AvaliacaoSession
     guiao_session = vaga.guiao_sessions.order_by("-created_at").first()
 
