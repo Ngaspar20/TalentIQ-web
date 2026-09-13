@@ -14,9 +14,18 @@
             <i class="fa-solid fa-file-lines mr-1"></i> Ver Relatório
         </a>
         {% endif %}
-        {% if vaga.tor_aprovado or candidatos %}
-        <form method="post" action="/vagas/rapida/{{ vaga.pk }}/reiniciar/" onsubmit="return confirm('Tem a certeza? Isto vai apagar o ToR e todos os candidatos desta avaliação.');">
+        {% if vaga.ultimo_snapshot %}
+        <form method="post" action="/vagas/rapida/{{ vaga.pk }}/restaurar/" onsubmit="return confirm('Restaurar a última avaliação? O ToR, a grelha e {{ vaga.ultimo_snapshot.candidatos|length }} candidato(s) serão repostos. Candidatos carregados depois do reinício são mantidos.');">
             {% csrf_token %}
+            <button type="submit" class="btn-secondary" style="color:#15803d;border-color:#86efac;">
+                <i class="fa-solid fa-clock-rotate-left mr-1"></i> Restaurar última avaliação
+            </button>
+        </form>
+        {% endif %}
+        {% if vaga.tor_aprovado or candidatos %}
+        <form method="post" action="/vagas/rapida/{{ vaga.pk }}/reiniciar/" onsubmit="return confirmarReinicio()">
+            {% csrf_token %}
+            <input type="hidden" name="confirm_titulo" id="confirm-titulo" value="">
             <button type="submit" class="btn-secondary" style="color:#dc2626;border-color:#fca5a5;">
                 <i class="fa-solid fa-rotate-left mr-1"></i> Reiniciar
             </button>
@@ -25,10 +34,41 @@
     </div>
 </div>
 
+<script>
+function confirmarReinicio() {
+    const titulo = "{{ vaga.titulo|escapejs }}";
+    const nCvs = {{ candidatos|length }};
+    const temTor = {{ vaga.tor_aprovado|yesno:"true,false" }};
+    const partes = [];
+    if (temTor) partes.push("o ToR e a grelha de avaliação");
+    if (nCvs) partes.push(nCvs + " CV(s), com os respectivos scores e notas");
+    const msg = "ATENÇÃO — isto vai apagar " + partes.join(" e ") + " da posição \"" + titulo + "\".\n\n"
+              + "Poderá desfazer com \"Restaurar última avaliação\" até ao próximo reinício.\n\n"
+              + "Para confirmar, escreva o nome da posição:";
+    const resposta = window.prompt(msg, "");
+    if (resposta === null) return false;
+    if (resposta.trim().toLowerCase() !== titulo.trim().toLowerCase()) {
+        alert("O nome não coincide. Reinício cancelado.");
+        return false;
+    }
+    document.getElementById("confirm-titulo").value = resposta;
+    return true;
+}
+</script>
+
 {% if messages %}
 {% for msg in messages %}
 <div class="alert-{{ msg.tags }} mb-4">{{ msg }}</div>
 {% endfor %}
+{% endif %}
+
+{% if vaga.ultimo_snapshot and step == 1 %}
+<div class="alert-warning mb-4">
+    <i class="fa-solid fa-clock-rotate-left mr-2"></i>
+    Esta avaliação foi reiniciada em {{ vaga.ultimo_snapshot.criado_em_display }}.
+    A avaliação anterior ({{ vaga.ultimo_snapshot.candidatos|length }} candidato(s)) pode ser reposta com
+    <strong>Restaurar última avaliação</strong>, no canto superior direito.
+</div>
 {% endif %}
 
 <!-- Step indicator -->
