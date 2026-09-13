@@ -166,6 +166,98 @@ function uploadTor(input) {
 </details>
 {% endif %}
 
+<!-- Grelha de avaliação: derived from the ToR, editable by the recruiter -->
+<div class="section-card mb-4" id="grelha-card">
+    <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2">
+            <div class="card-title mb-0"><i class="fa-solid fa-list-check" style="color:#7c3aed;"></i> Grelha de Avaliação</div>
+            <span style="font-size:.7rem;background:#ede9fe;color:#6d28d9;padding:.15rem .5rem;border-radius:999px;font-weight:600;">{{ vaga.criterios|length }} critérios</span>
+        </div>
+        <form method="post" action="/vagas/rapida/{{ vaga.pk }}/criterios/" onsubmit="return confirm('Reextrair a grelha a partir do ToR? As alterações manuais serão perdidas.');">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="reextrair">
+            <button type="submit" class="btn-secondary" style="font-size:.78rem;padding:4px 10px;">
+                <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Reextrair do ToR
+            </button>
+        </form>
+    </div>
+    <p class="text-sm text-slate-500 mb-3">Critérios derivados do ToR. Reveja o texto, ajuste os pesos e marque os essenciais antes de carregar os CVs — cada candidato será pontuado contra esta grelha.</p>
+
+    <form method="post" action="/vagas/rapida/{{ vaga.pk }}/criterios/">
+        {% csrf_token %}
+        {% if not vaga.criterios %}
+        <p style="font-size:.85rem;color:#94a3b8;margin-bottom:.75rem;">Ainda não há critérios. Adicione manualmente ou use "Reextrair do ToR".</p>
+        {% endif %}
+        <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:.85rem;">
+            <thead>
+                <tr style="border-bottom:2px solid #e2e8f0;text-align:left;">
+                    <th style="padding:.5rem;color:#64748b;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;">Critério</th>
+                    <th style="padding:.5rem;color:#64748b;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;width:150px;">Categoria</th>
+                    <th style="padding:.5rem;color:#64748b;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;width:110px;">Essencial</th>
+                    <th style="padding:.5rem;color:#64748b;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;width:90px;">Peso (1–5)</th>
+                    <th style="width:36px;"></th>
+                </tr>
+            </thead>
+            <tbody id="grelha-body">
+                {% for c in vaga.criterios %}
+                <tr style="border-bottom:1px solid #f1f5f9;">
+                    <td style="padding:.4rem .5rem;"><input type="text" name="criterio" value="{{ c.criterio }}" class="form-input" style="width:100%;font-size:.83rem;"></td>
+                    <td style="padding:.4rem .5rem;">
+                        <select name="categoria" class="form-input" style="font-size:.83rem;">
+                            {% for key, label in categorias_criterio %}
+                            <option value="{{ key }}" {% if c.categoria == key %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td style="padding:.4rem .5rem;">
+                        <select name="essencial" class="form-input" style="font-size:.83rem;">
+                            <option value="1" {% if c.essencial %}selected{% endif %}>Sim</option>
+                            <option value="0" {% if not c.essencial %}selected{% endif %}>Não</option>
+                        </select>
+                    </td>
+                    <td style="padding:.4rem .5rem;"><input type="number" name="peso" value="{{ c.peso }}" min="1" max="5" class="form-input" style="width:64px;font-size:.83rem;"></td>
+                    <td style="padding:.4rem .5rem;text-align:center;">
+                        <button type="button" onclick="this.closest('tr').remove()" title="Remover critério" style="background:none;border:none;color:#94a3b8;cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        <template id="grelha-row-template">
+            <tr style="border-bottom:1px solid #f1f5f9;">
+                <td style="padding:.4rem .5rem;"><input type="text" name="criterio" value="" placeholder="Novo critério" class="form-input" style="width:100%;font-size:.83rem;"></td>
+                <td style="padding:.4rem .5rem;">
+                    <select name="categoria" class="form-input" style="font-size:.83rem;">
+                        {% for key, label in categorias_criterio %}
+                        <option value="{{ key }}" {% if key == "competencia" %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td style="padding:.4rem .5rem;">
+                    <select name="essencial" class="form-input" style="font-size:.83rem;">
+                        <option value="1">Sim</option>
+                        <option value="0" selected>Não</option>
+                    </select>
+                </td>
+                <td style="padding:.4rem .5rem;"><input type="number" name="peso" value="3" min="1" max="5" class="form-input" style="width:64px;font-size:.83rem;"></td>
+                <td style="padding:.4rem .5rem;text-align:center;">
+                    <button type="button" onclick="this.closest('tr').remove()" title="Remover critério" style="background:none;border:none;color:#94a3b8;cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+                </td>
+            </tr>
+        </template>
+        <div class="flex items-center gap-2 mt-3">
+            <button type="button" class="btn-secondary" style="font-size:.82rem;" onclick="document.getElementById('grelha-body').appendChild(document.getElementById('grelha-row-template').content.cloneNode(true))">
+                <i class="fa-solid fa-plus mr-1"></i> Adicionar critério
+            </button>
+            <button type="submit" class="btn-primary" style="font-size:.82rem;">
+                <i class="fa-solid fa-floppy-disk mr-1"></i> Guardar grelha
+            </button>
+        </div>
+    </form>
+</div>
+
 <!-- Bulk upload zone -->
 <div class="section-card mb-4" id="upload-card">
     <div class="flex items-center justify-between mb-3">

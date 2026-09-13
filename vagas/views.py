@@ -1485,9 +1485,63 @@ def avaliacao_rapida_detail(request, pk):
         "candidatos": candidatos,
         "apurados": [c for c in candidatos if (c.score_fit or 0) >= SCORE_APURADO_MIN],
         "score_minimo": SCORE_APURADO_MIN,
+        "categorias_criterio": CATEGORIAS_CRITERIO,
         "n_scored": n_scored,
         "step": step,
     })
+
+
+CATEGORIAS_CRITERIO = [
+    ("formacao", "Formação"),
+    ("experiencia", "Experiência"),
+    ("competencia", "Competência"),
+    ("idioma", "Idioma"),
+    ("outro", "Outro"),
+]
+
+
+@require_POST
+def criterios_rapida(request, pk):
+    """Save the recruiter-edited grelha de avaliação, or re-derive it from the ToR."""
+    from django.conf import settings
+    vaga = get_object_or_404(org_vagas(request).filter(modo_rapido=True), pk=pk)
+
+    if request.POST.get("action") == "reextrair":
+        from core.parser import extract_criterios
+        os.environ["GROK_API_KEY"] = settings.GROK_API_KEY
+        os.environ["LLM_ENGINE"] = settings.LLM_ENGINE
+        vaga.criterios = extract_criterios(vaga.tor_texto or "", {
+            "nivel_formacao": vaga.nivel_formacao,
+            "anos_experiencia_min": vaga.anos_experiencia_min,
+            "competencias_requeridas": vaga.competencias_requeridas,
+        })
+        vaga.save(update_fields=["criterios"])
+        messages.success(request, f"Grelha reextraída do ToR ({len(vaga.criterios)} critérios).")
+        return redirect("avaliacao_rapida_detail", pk=pk)
+
+    validos = {k for k, _ in CATEGORIAS_CRITERIO}
+    criterios = []
+    for texto, cat, ess, peso in zip(
+        request.POST.getlist("criterio"), request.POST.getlist("categoria"),
+        request.POST.getlist("essencial"), request.POST.getlist("peso"),
+    ):
+        texto = texto.strip()
+        if not texto:
+            continue
+        try:
+            peso_int = max(1, min(5, int(peso)))
+        except (TypeError, ValueError):
+            peso_int = 3
+        criterios.append({
+            "criterio": texto[:300],
+            "categoria": cat if cat in validos else "outro",
+            "essencial": ess == "1",
+            "peso": peso_int,
+        })
+    vaga.criterios = criterios[:20]
+    vaga.save(update_fields=["criterios"])
+    messages.success(request, f"Grelha de avaliação guardada ({len(vaga.criterios)} critérios).")
+    return redirect("avaliacao_rapida_detail", pk=pk)
 
 
 @require_POST
@@ -1519,12 +1573,18 @@ def upload_tor_rapida(request, pk):
     os.environ["LLM_ENGINE"] = settings.LLM_ENGINE
     try:
         from core.parser import parse_tor
-        extraido = parse_tor(texto)
+        extraido = parse_tor(texto) or {}
     except Exception:
         extraido = {}
-    update_fields = ["tor_file_path", "tor_texto", "tor_analisado", "tor_aprovado"]
+    try:
+        from core.parser import extract_criterios
+        criterios = extract_criterios(texto, extraido)
+    except Exception:
+        criterios = []
+    update_fields = ["tor_file_path", "tor_texto", "criterios", "tor_analisado", "tor_aprovado"]
     vaga.tor_file_path = r2_url or uploaded.name
     vaga.tor_texto = texto
+    vaga.criterios = criterios
     vaga.tor_analisado = True
     vaga.tor_aprovado = True
     if extraido.get("competencias_requeridas"):
@@ -1557,6 +1617,7 @@ def reiniciar_avaliacao_rapida(request, pk):
     Candidato.objects.filter(vaga=vaga).delete()
     vaga.tor_file_path = ""
     vaga.tor_texto = ""
+    vaga.criterios = []
     vaga.tor_analisado = False
     vaga.tor_aprovado = False
     vaga.competencias_requeridas = []
@@ -1564,7 +1625,7 @@ def reiniciar_avaliacao_rapida(request, pk):
     vaga.nivel_formacao = ""
     vaga.anos_experiencia_min = 0
     vaga.save(update_fields=[
-        "tor_file_path", "tor_texto", "tor_analisado", "tor_aprovado",
+        "tor_file_path", "tor_texto", "criterios", "tor_analisado", "tor_aprovado",
         "competencias_requeridas", "responsabilidades", "nivel_formacao", "anos_experiencia_min",
     ])
     return redirect("avaliacao_rapida_detail", pk=pk)
