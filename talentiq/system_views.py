@@ -17,6 +17,21 @@ def sistema_view(request):
         from django.http import HttpResponseForbidden
         return HttpResponseForbidden()
 
+    if request.method == "POST" and "org_name" in request.POST:
+        from django.contrib import messages
+        from django.shortcuts import redirect
+        novo = request.POST.get("org_name", "").strip()[:255]
+        org = request.user.organisation
+        if org is None:
+            messages.error(request, "O utilizador não tem organização associada.")
+        elif not novo:
+            messages.error(request, "O nome da organização não pode ficar vazio.")
+        else:
+            org.name = novo
+            org.save(update_fields=["name"])
+            messages.success(request, f"Nome da organização actualizado para \"{org.name}\".")
+        return redirect(request.path)
+
     # DB health
     try:
         connection.ensure_connection()
