@@ -1658,25 +1658,136 @@ def upload_tor_rapida(request, pk):
     return JsonResponse({"ok": True})
 
 
+_SNAPSHOT_VAGA_FIELDS = [
+    "tor_file_path", "tor_texto", "criterios", "tor_analisado", "tor_aprovado",
+    "competencias_requeridas", "responsabilidades", "nivel_formacao", "anos_experiencia_min",
+]
+_SNAPSHOT_CANDIDATO_FIELDS = [
+    "id", "nome", "email", "telefone", "experiencia_anos", "competencias", "formacao",
+    "idiomas", "resumo", "etapa", "score_fit", "notas", "motivo_rejeicao", "cv_file_path",
+    "cv_texto", "avaliacao_criterios", "perfil_completo", "created_by_id", "created_at",
+]
+
+
+def _titulo_confirmado(request, vaga):
+    return request.POST.get("confirm_titulo", "").strip().casefold() == vaga.titulo.strip().casefold()
+
+
 @require_POST
 def reiniciar_avaliacao_rapida(request, pk):
-    """Delete all candidatos and clear ToR fields, resetting the session to Step 1."""
-    from candidatos.models import Candidato
+    """Snapshot the whole session, then clear it back to Step 1.
+
+    The snapshot stays on the vaga until the next Reiniciar or a Restaurar,
+    so a mistaken reset can be undone. Requires the position title typed
+    back as confirmation.
+    """
+    import json
+    from django.core.serializers.json import DjangoJSONEncoder
+    from django.db import transaction
+    from django.utils import timezone
+    from candidatos.models import Candidato, CandidatoNota
+
     vaga = get_object_or_404(org_vagas(request).filter(modo_rapido=True), pk=pk)
-    Candidato.objects.filter(vaga=vaga).delete()
-    vaga.tor_file_path = ""
-    vaga.tor_texto = ""
-    vaga.criterios = []
-    vaga.tor_analisado = False
-    vaga.tor_aprovado = False
-    vaga.competencias_requeridas = []
-    vaga.responsabilidades = []
-    vaga.nivel_formacao = ""
-    vaga.anos_experiencia_min = 0
-    vaga.save(update_fields=[
-        "tor_file_path", "tor_texto", "criterios", "tor_analisado", "tor_aprovado",
-        "competencias_requeridas", "responsabilidades", "nivel_formacao", "anos_experiencia_min",
-    ])
+    if not _titulo_confirmado(request, vaga):
+        messages.error(request, "Reinício cancelado: o nome da posição não coincide.")
+        return redirect("avaliacao_rapida_detail", pk=pk)
+
+    candidatos = list(Candidato.objects.filter(vaga=vaga))
+    notas = list(
+        CandidatoNota.objects.filter(candidato__in=candidatos)
+        .values("candidato_id", "texto", "criado_por_id", "criado_em")
+    )
+    agora = timezone.localtime()
+    snapshot = {
+        "criado_em": agora.isoformat(),
+        "criado_em_display": agora.strftime("%d/%m/%Y %H:%M"),
+        "vaga": {f: getattr(vaga, f) for f in _SNAPSHOT_VAGA_FIELDS},
+        "candidatos": [{f: getattr(c, f) for f in _SNAPSHOT_CANDIDATO_FIELDS} for c in candidatos],
+        "notas": notas,
+    }
+    # Round-trip so UUIDs and datetimes become JSON-safe before hitting the JSONField
+    snapshot = json.loads(json.dumps(snapshot, cls=DjangoJSONEncoder))
+
+    with transaction.atomic():
+        Candidato.objects.filter(vaga=vaga).delete()
+        vaga.ultimo_snapshot = snapshot
+        vaga.tor_file_path = ""
+        vaga.tor_texto = ""
+        vaga.criterios = []
+        vaga.tor_analisado = False
+        vaga.tor_aprovado = False
+        vaga.competencias_requeridas = []
+        vaga.responsabilidades = []
+        vaga.nivel_formacao = ""
+        vaga.anos_experiencia_min = 0
+        vaga.save(update_fields=_SNAPSHOT_VAGA_FIELDS + ["ultimo_snapshot"])
+
+    messages.success(
+        request,
+        f"Avaliação reiniciada ({len(candidatos)} candidato(s) removidos). "
+        "Se foi engano, use \"Restaurar última avaliação\".",
+    )
+    return redirect("avaliacao_rapida_detail", pk=pk)
+
+
+@require_POST
+def restaurar_avaliacao_rapida(request, pk):
+    """Undo the last Reiniciar: bring back the ToR, grelha, candidates and their notes."""
+    from django.contrib.auth import get_user_model
+    from django.db import transaction
+    from candidatos.models import Candidato, CandidatoNota
+
+    vaga = get_object_or_404(org_vagas(request).filter(modo_rapido=True), pk=pk)
+    snap = vaga.ultimo_snapshot or {}
+    if not snap:
+        messages.error(request, "Não há avaliação anterior para restaurar.")
+        return redirect("avaliacao_rapida_detail", pk=pk)
+
+    # Authors may have been deleted since the snapshot; only keep FKs that still resolve.
+    wanted = {c.get("created_by_id") for c in snap.get("candidatos", [])}
+    wanted |= {n.get("criado_por_id") for n in snap.get("notas", [])}
+    wanted.discard(None)
+    existentes = {str(u) for u in get_user_model().objects.filter(pk__in=wanted).values_list("pk", flat=True)}
+
+    def uid(v):
+        return v if v is not None and str(v) in existentes else None
+
+    restaurados, ja_existiam = 0, 0
+    with transaction.atomic():
+        for f, v in snap.get("vaga", {}).items():
+            if f in _SNAPSHOT_VAGA_FIELDS:
+                setattr(vaga, f, v)
+        vaga.ultimo_snapshot = {}
+        vaga.save(update_fields=_SNAPSHOT_VAGA_FIELDS + ["ultimo_snapshot"])
+
+        skip = {"id", "created_by_id", "created_at"}
+        for c in snap.get("candidatos", []):
+            if Candidato.objects.filter(pk=c["id"]).exists():
+                ja_existiam += 1
+                continue
+            data = {f: c.get(f) for f in _SNAPSHOT_CANDIDATO_FIELDS if f not in skip}
+            obj = Candidato.objects.create(
+                id=c["id"], organisation=vaga.organisation, vaga=vaga,
+                created_by_id=uid(c.get("created_by_id")), **data,
+            )
+            if c.get("created_at"):
+                Candidato.objects.filter(pk=obj.pk).update(created_at=c["created_at"])
+            restaurados += 1
+
+        for n in snap.get("notas", []):
+            if not Candidato.objects.filter(pk=n["candidato_id"], vaga=vaga).exists():
+                continue
+            nota = CandidatoNota.objects.create(
+                candidato_id=n["candidato_id"], texto=n["texto"],
+                criado_por_id=uid(n.get("criado_por_id")),
+            )
+            if n.get("criado_em"):
+                CandidatoNota.objects.filter(pk=nota.pk).update(criado_em=n["criado_em"])
+
+    msg = f"Avaliação restaurada: ToR, grelha e {restaurados} candidato(s) repostos."
+    if ja_existiam:
+        msg += f" {ja_existiam} já existia(m) e foi/foram mantido(s)."
+    messages.success(request, msg)
     return redirect("avaliacao_rapida_detail", pk=pk)
 
 

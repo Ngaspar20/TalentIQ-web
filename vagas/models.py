@@ -60,6 +60,8 @@ class Vaga(models.Model):
     tor_texto = models.TextField(blank=True, default="")
     # Grelha de avaliação derived from the ToR: [{criterio, categoria, essencial, peso}]
     criterios = models.JSONField(default=list, blank=True)
+    # Undo buffer for Reiniciar: {criado_em, vaga: {...}, candidatos: [...], notas: [...]}
+    ultimo_snapshot = models.JSONField(default=dict, blank=True)
     tor_analisado = models.BooleanField(default=False)
     tor_aprovado = models.BooleanField(default=False)
     modo_rapido = models.BooleanField(default=False)
