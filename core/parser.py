@@ -303,6 +303,124 @@ def _parse_tor_deterministic(text: str) -> Dict[str, Any]:
     }
 
 
+CATEGORIAS_CRITERIO = ("formacao", "experiencia", "competencia", "idioma", "outro")
+_MAX_CRITERIOS = 20
+
+
+def extract_criterios(text: str, parsed: Dict[str, Any] = None) -> list:
+    """Derive an evaluation rubric (grelha de avaliação) from ToR text.
+
+    Each criterion: {"criterio", "categoria", "essencial", "peso"}.
+    LLM first; falls back to the structured fields already parsed from the ToR.
+    """
+    if config.LLM_ENGINE != "deterministic":
+        result = _normalizar_criterios(_extract_criterios_with_llm(text))
+        if result:
+            return result
+    return _criterios_deterministic(text, parsed or {})
+
+
+def _extract_criterios_with_llm(text: str) -> list:
+    system = (
+        "Você é um especialista em recrutamento. A partir de Termos de Referência, "
+        "constrói grelhas de avaliação de candidatos. Responda APENAS com JSON válido."
+    )
+    prompt = f"""
+Lê estes Termos de Referência e constrói a grelha de avaliação que um painel de recrutamento usaria para pontuar CVs.
+
+Devolve uma lista JSON de 6 a 15 critérios, cada um com:
+{{
+  "criterio": "requisito concreto e verificável num CV, em português, numa frase curta (mantém os termos técnicos originais)",
+  "categoria": "formacao" | "experiencia" | "competencia" | "idioma" | "outro",
+  "essencial": true se o ToR o apresenta como obrigatório (required, must, essential, obrigatório, mínimo); false se desejável (desirable, preferred, advantage, vantagem, preferível),
+  "peso": inteiro de 1 a 5 conforme a ênfase que o ToR lhe dá
+}}
+
+Regras:
+- Separa requisitos compostos em critérios distintos.
+- Não inventes requisitos que não estejam no ToR.
+- Formação mínima e anos de experiência mínimos devem ser critérios próprios quando indicados.
+- Ordena por importância decrescente.
+
+Termos de Referência:
+{text[:20000]}
+"""
+    try:
+        response = get_llm_response(prompt, system)
+        if response:
+            clean = re.sub(r"^```(?:json)?\s*|\s*```$", "", response.strip())
+            data = json.loads(clean)
+            if isinstance(data, dict):
+                data = data.get("criterios") or data.get("grelha") or []
+            return data if isinstance(data, list) else []
+    except Exception as e:
+        logger.warning(f"LLM extração de critérios falhou, usando fallback: {e}")
+    return []
+
+
+def _normalizar_criterios(raw) -> list:
+    out = []
+    for item in raw or []:
+        if not isinstance(item, dict):
+            continue
+        criterio = str(item.get("criterio") or item.get("descricao") or "").strip()
+        if not criterio:
+            continue
+        cat = str(item.get("categoria") or "").strip().lower()
+        if cat.startswith("form"):
+            categoria = "formacao"
+        elif cat.startswith("exp"):
+            categoria = "experiencia"
+        elif cat.startswith("comp"):
+            categoria = "competencia"
+        elif cat.startswith(("idi", "lang", "líng", "ling")):
+            categoria = "idioma"
+        else:
+            categoria = "outro"
+        essencial = item.get("essencial")
+        if isinstance(essencial, str):
+            essencial = essencial.strip().lower() in ("true", "sim", "yes", "1", "essencial")
+        try:
+            peso = int(item.get("peso"))
+        except (TypeError, ValueError):
+            peso = 3
+        out.append({
+            "criterio": criterio[:300],
+            "categoria": categoria,
+            "essencial": bool(essencial),
+            "peso": max(1, min(5, peso)),
+        })
+    return out[:_MAX_CRITERIOS]
+
+
+def _criterios_deterministic(text: str, parsed: Dict[str, Any]) -> list:
+    text_lower = text.lower()
+    out = []
+    nivel = str(parsed.get("nivel_formacao") or "").strip()
+    if nivel:
+        out.append({"criterio": f"Formação mínima: {nivel}", "categoria": "formacao",
+                    "essencial": True, "peso": 3})
+    try:
+        anos = int(parsed.get("anos_experiencia_min") or 0)
+    except (TypeError, ValueError):
+        anos = 0
+    if anos > 0:
+        out.append({"criterio": f"Mínimo de {anos} anos de experiência profissional relevante",
+                    "categoria": "experiencia", "essencial": True, "peso": 4})
+    for comp in (parsed.get("competencias_requeridas") or []):
+        comp = str(comp).strip()
+        if comp:
+            out.append({"criterio": comp, "categoria": "competencia",
+                        "essencial": False, "peso": 2})
+    for termo, nome in (("inglês", "Inglês"), ("english", "Inglês"),
+                        ("português", "Português"), ("portuguese", "Português"),
+                        ("francês", "Francês"), ("french", "Francês")):
+        label = f"Idioma: {nome}"
+        if termo in text_lower and not any(c["criterio"] == label for c in out):
+            out.append({"criterio": label, "categoria": "idioma", "essencial": False, "peso": 2})
+    return out[:_MAX_CRITERIOS]
+
+
 def _parse_deterministic(text: str) -> Dict[str, Any]:
     """Hybrid deterministic parser: keyword matching + regex rules."""
     text_lower = text.lower()

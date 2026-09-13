@@ -91,6 +91,7 @@ def candidato_create(request):
             resumo=request.POST.get("resumo", "").strip(),
             notas=request.POST.get("notas", "").strip(),
             cv_file_path=cv_r2_url,
+            cv_texto=request.POST.get("cv_texto", ""),
             created_by=request.user,
         )
         messages.success(request, f"Candidato '{candidato.nome}' adicionado com sucesso!")
@@ -629,6 +630,7 @@ def bulk_upload_one_cv(request):
             idiomas=_safe_list(extraido.get("idiomas")),
             resumo=extraido.get("resumo") or "",
             cv_file_path=r2_url,
+            cv_texto=texto,
             created_by=request.user,
         )
     except Exception as e:

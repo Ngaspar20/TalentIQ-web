@@ -41,6 +41,7 @@ class Candidato(models.Model):
     notas = models.TextField(blank=True)
     motivo_rejeicao = models.CharField(max_length=50, choices=MOTIVO_REJEICAO_CHOICES, blank=True)
     cv_file_path = models.CharField(max_length=500, blank=True)
+    cv_texto = models.TextField(blank=True, default="")
     perfil_completo = models.JSONField(default=dict)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,

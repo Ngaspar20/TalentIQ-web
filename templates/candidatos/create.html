@@ -105,6 +105,7 @@
         {% csrf_token %}
         <input type="hidden" name="vaga_id" id="vaga_id_hidden">
         <input type="hidden" name="cv_r2_url" id="cv_r2_url_hidden" value="">
+        <input type="hidden" name="cv_texto" id="cv_texto_hidden" value="">
 
         <div id="cv-form-fields">
             <div id="cv-empty-state" class="py-10 text-center text-slate-400">
@@ -145,6 +146,10 @@
             const r2Input = e.detail.target.querySelector('input[name="cv_r2_url"]');
             if (r2Input) {
                 document.getElementById('cv_r2_url_hidden').value = r2Input.value;
+            }
+            const textoInput = e.detail.target.querySelector('input[name="texto_completo"]');
+            if (textoInput) {
+                document.getElementById('cv_texto_hidden').value = textoInput.value;
             }
         }
     });
