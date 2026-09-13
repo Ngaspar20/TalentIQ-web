@@ -80,6 +80,42 @@
 
 <!-- ════════════════ TAB: Perfil ════════════════ -->
 <div id="tab-perfil" class="tab-panel">
+    {% if candidato.avaliacao_criterios.criterios %}
+    <div class="section-card mb-4" style="border-left:4px solid #7c3aed;">
+        <div class="flex items-center justify-between mb-2">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-0"><i class="fa-solid fa-list-check mr-1"></i> Avaliação contra a Grelha do ToR</p>
+            <span style="font-size:.68rem;color:#94a3b8;">{{ candidato.avaliacao_criterios.metodo }}</span>
+        </div>
+        {% if candidato.avaliacao_criterios.essenciais_falhados %}
+        <div style="margin-bottom:.6rem;padding:.5rem .7rem;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;font-size:.8rem;color:#b91c1c;">
+            <i class="fa-solid fa-triangle-exclamation mr-1"></i> Critério(s) essencial(is) em falta: {{ candidato.avaliacao_criterios.essenciais_falhados|join:"; " }}
+        </div>
+        {% endif %}
+        <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:.8rem;">
+            <tbody>
+                {% for lc in candidato.avaliacao_criterios.criterios %}
+                <tr style="border-bottom:1px solid #f1f5f9;">
+                    <td style="padding:.45rem .5rem;color:#1e293b;width:40%;">
+                        {{ lc.criterio }}
+                        {% if lc.essencial %}<span style="font-size:.62rem;font-weight:700;color:#6d28d9;margin-left:.3rem;">ESSENCIAL</span>{% endif %}
+                    </td>
+                    <td style="padding:.45rem .5rem;text-align:center;width:90px;">
+                        {% if lc.resultado == "cumpre" %}<span style="font-size:.72rem;font-weight:700;color:#15803d;background:#dcfce7;padding:.1rem .5rem;border-radius:999px;">Cumpre</span>
+                        {% elif lc.resultado == "parcial" %}<span style="font-size:.72rem;font-weight:700;color:#92400e;background:#fef3c7;padding:.1rem .5rem;border-radius:999px;">Parcial</span>
+                        {% else %}<span style="font-size:.72rem;font-weight:700;color:#b91c1c;background:#fee2e2;padding:.1rem .5rem;border-radius:999px;">Não cumpre</span>{% endif %}
+                    </td>
+                    <td style="padding:.45rem .5rem;color:#475569;">
+                        {% if lc.evidencia %}<div style="font-style:italic;color:#334155;">“{{ lc.evidencia }}”</div>{% endif %}
+                        {% if lc.comentario %}<div style="font-size:.75rem;color:#64748b;">{{ lc.comentario }}</div>{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+    {% endif %}
     <div class="grid grid-cols-2 gap-4">
         <div>
             {% if candidato.resumo %}

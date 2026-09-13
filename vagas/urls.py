@@ -40,4 +40,5 @@ urlpatterns = [
     path("rapida/<uuid:pk>/upload-tor/", views.upload_tor_rapida, name="upload_tor_rapida"),
     path("rapida/<uuid:pk>/reiniciar/", views.reiniciar_avaliacao_rapida, name="reiniciar_avaliacao_rapida"),
     path("rapida/<uuid:pk>/criterios/", views.criterios_rapida, name="criterios_rapida"),
+    path("rapida/<uuid:pk>/reavaliar/", views.reavaliar_rapida, name="reavaliar_rapida"),
 ]

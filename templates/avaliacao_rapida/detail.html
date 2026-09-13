@@ -173,13 +173,23 @@ function uploadTor(input) {
             <div class="card-title mb-0"><i class="fa-solid fa-list-check" style="color:#7c3aed;"></i> Grelha de Avaliação</div>
             <span style="font-size:.7rem;background:#ede9fe;color:#6d28d9;padding:.15rem .5rem;border-radius:999px;font-weight:600;">{{ vaga.criterios|length }} critérios</span>
         </div>
-        <form method="post" action="/vagas/rapida/{{ vaga.pk }}/criterios/" onsubmit="return confirm('Reextrair a grelha a partir do ToR? As alterações manuais serão perdidas.');">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="reextrair">
-            <button type="submit" class="btn-secondary" style="font-size:.78rem;padding:4px 10px;">
-                <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Reextrair do ToR
-            </button>
-        </form>
+        <div class="flex gap-2">
+            {% if candidatos and vaga.criterios %}
+            <form method="post" action="/vagas/rapida/{{ vaga.pk }}/reavaliar/" onsubmit="return confirm('Reavaliar todos os candidatos contra a grelha actual? Os scores serão recalculados.');">
+                {% csrf_token %}
+                <button type="submit" class="btn-primary" style="font-size:.78rem;padding:4px 10px;">
+                    <i class="fa-solid fa-rotate mr-1"></i> Reavaliar candidatos
+                </button>
+            </form>
+            {% endif %}
+            <form method="post" action="/vagas/rapida/{{ vaga.pk }}/criterios/" onsubmit="return confirm('Reextrair a grelha a partir do ToR? As alterações manuais serão perdidas.');">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="reextrair">
+                <button type="submit" class="btn-secondary" style="font-size:.78rem;padding:4px 10px;">
+                    <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Reextrair do ToR
+                </button>
+            </form>
+        </div>
     </div>
     <p class="text-sm text-slate-500 mb-3">Critérios derivados do ToR. Reveja o texto, ajuste os pesos e marque os essenciais antes de carregar os CVs — cada candidato será pontuado contra esta grelha.</p>
 
@@ -373,8 +383,15 @@ function uploadTor(input) {
     </div>
     {% else %}
     <p style="color:#94a3b8;font-size:.85rem;margin:0;">
-        Nenhum candidato atingiu o score mínimo de {{ score_minimo }}%.
+        Nenhum candidato atingiu o score mínimo de {{ score_minimo }}% sem critérios essenciais em falta.
     </p>
+    {% endif %}
+    {% if excluidos_essencial %}
+    <div style="margin-top:.75rem;padding:.6rem .8rem;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:.8rem;color:#92400e;">
+        <i class="fa-solid fa-triangle-exclamation mr-1"></i>
+        Acima de {{ score_minimo }}% mas <strong>não apurado</strong> por critério essencial em falta:
+        {% for c in excluidos_essencial %}<strong>{{ c.nome }}</strong> ({{ c.score_fit }}%){% if not forloop.last %}, {% endif %}{% endfor %}.
+    </div>
     {% endif %}
 </div>
 {% endif %}
@@ -402,7 +419,15 @@ function uploadTor(input) {
             {% for c in candidatos %}
             <tr style="border-bottom:1px solid #f1f5f9;" id="row-{{ c.pk }}">
                 <td style="padding:.6rem .75rem;color:#94a3b8;font-weight:600;">{{ forloop.counter }}</td>
-                <td style="padding:.6rem .75rem;font-weight:600;color:#1e293b;">{{ c.nome }}</td>
+                <td style="padding:.6rem .75rem;font-weight:600;color:#1e293b;">
+                    {{ c.nome }}
+                    {% if c.avaliacao_criterios.essenciais_falhados %}
+                    <span title="Critério essencial em falta: {{ c.avaliacao_criterios.essenciais_falhados|join:'; ' }}"
+                          style="display:inline-block;margin-left:.4rem;font-size:.68rem;font-weight:700;background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;padding:.1rem .45rem;border-radius:999px;">
+                        <i class="fa-solid fa-triangle-exclamation"></i> essencial em falta
+                    </span>
+                    {% endif %}
+                </td>
                 <td style="padding:.6rem .75rem;" id="score-cell-{{ c.pk }}">
                     {% if c.score_fit is not None %}
                     <span class="score-badge {{ c.score_label }}">{{ c.score_fit }}%</span>
