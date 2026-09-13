@@ -13,8 +13,10 @@ class Command(BaseCommand):
             return
 
         if not Organisation.objects.exists():
-            org = Organisation.objects.create(name="TalentIQ Demo", slug="talentiq-demo")
-            self.stdout.write(f"Created organisation: {org.name}")
+            from django.utils.text import slugify
+            name = os.environ.get("SEED_ORG_NAME", "").strip() or "Organização"
+            org = Organisation.objects.create(name=name, slug=slugify(name) or "organizacao")
+            self.stdout.write(f"Created organisation: {org.name} (rename it later in Sistema)")
         else:
             org = Organisation.objects.first()
 

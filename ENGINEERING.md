@@ -247,7 +247,7 @@ Public function: `calcular_fit(candidato_dict, vaga_dict)` → returns score dic
 
 ### accounts/management/commands/seed_admin.py
 Runs on every Railway deploy (called in `railway.json` startCommand).
-- Creates organisation "TalentIQ Demo" if none exists
+- Creates the organisation if none exists (name from `SEED_ORG_NAME`, default "Organização"); superusers can rename it on the Sistema page
 - Creates/updates `ngaspar10@gmail.com` as superuser with password from `ADMIN_PASSWORD` env var (default: `TalentIQ2024!`)
 - Idempotent — safe to run multiple times
 
