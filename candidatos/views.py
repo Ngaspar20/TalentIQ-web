@@ -28,6 +28,53 @@ def org_candidatos(request):
     return Candidato.objects.filter(organisation=request.user.organisation)
 
 
+def pontuar_candidato(candidato):
+    """Score a candidate against their vaga and persist the result. Returns the score.
+
+    Uses the ToR-derived grelha against the full CV text when both exist;
+    otherwise falls back to the legacy summary-based fit score.
+    """
+    from django.conf import settings
+    vaga = candidato.vaga
+    os.environ["GROK_API_KEY"] = settings.GROK_API_KEY
+    os.environ["LLM_ENGINE"] = settings.LLM_ENGINE
+
+    if vaga.criterios and candidato.cv_texto:
+        from core.scorer import avaliar_por_criterios
+        resultado = avaliar_por_criterios(
+            candidato.cv_texto, vaga.tor_texto, vaga.criterios,
+            {"experiencia_anos": candidato.experiencia_anos or 0},
+        )
+        if resultado:
+            candidato.score_fit = resultado["score_total"]
+            candidato.avaliacao_criterios = resultado
+            candidato.save(update_fields=["score_fit", "avaliacao_criterios"])
+            return candidato.score_fit
+
+    from core.scorer import calcular_fit
+    vaga_dict = {
+        "titulo": vaga.titulo,
+        "competencias_requeridas": vaga.competencias_requeridas or [],
+        "anos_experiencia_min": vaga.anos_experiencia_min,
+        "nivel_formacao": vaga.nivel_formacao,
+        "responsabilidades": vaga.responsabilidades or [],
+    }
+    cand_dict = {
+        "nome": candidato.nome,
+        "competencias": candidato.competencias or [],
+        "experiencia_anos": candidato.experiencia_anos or 0,
+        "formacao": candidato.formacao or [],
+        "idiomas": candidato.idiomas or [],
+        "resumo": candidato.resumo or "",
+    }
+    resultado = calcular_fit(cand_dict, vaga_dict)
+    candidato.score_fit = resultado.get("score_total", 0)
+    candidato.perfil_completo = resultado
+    candidato.avaliacao_criterios = {}
+    candidato.save(update_fields=["score_fit", "perfil_completo", "avaliacao_criterios"])
+    return candidato.score_fit
+
+
 def candidato_list(request):
     from vagas.models import Vaga
     vagas = Vaga.objects.filter(organisation=request.user.organisation).order_by("-created_at")
@@ -638,27 +685,7 @@ def bulk_upload_one_cv(request):
 
     score_fit = None
     try:
-        from core.scorer import calcular_fit
-        vaga_dict = {
-            "titulo": vaga.titulo,
-            "competencias_requeridas": vaga.competencias_requeridas or [],
-            "anos_experiencia_min": vaga.anos_experiencia_min,
-            "nivel_formacao": vaga.nivel_formacao,
-            "responsabilidades": vaga.responsabilidades or [],
-        }
-        cand_dict = {
-            "nome": candidato.nome,
-            "competencias": candidato.competencias or [],
-            "experiencia_anos": candidato.experiencia_anos or 0,
-            "formacao": candidato.formacao or [],
-            "idiomas": candidato.idiomas or [],
-            "resumo": candidato.resumo or "",
-        }
-        resultado = calcular_fit(cand_dict, vaga_dict)
-        score_fit = resultado.get("score_total", 0)
-        candidato.score_fit = score_fit
-        candidato.perfil_completo = resultado
-        candidato.save(update_fields=["score_fit", "perfil_completo"])
+        score_fit = pontuar_candidato(candidato)
     except Exception:
         pass
 
@@ -683,28 +710,7 @@ def score_candidato_json(request):
     os.environ["LLM_ENGINE"] = settings.LLM_ENGINE
 
     try:
-        from core.scorer import calcular_fit
-        vaga = candidato.vaga
-        vaga_dict = {
-            "titulo": vaga.titulo,
-            "competencias_requeridas": vaga.competencias_requeridas or [],
-            "anos_experiencia_min": vaga.anos_experiencia_min,
-            "nivel_formacao": vaga.nivel_formacao,
-            "responsabilidades": vaga.responsabilidades or [],
-        }
-        cand_dict = {
-            "nome": candidato.nome,
-            "competencias": candidato.competencias or [],
-            "experiencia_anos": candidato.experiencia_anos or 0,
-            "formacao": candidato.formacao or [],
-            "idiomas": candidato.idiomas or [],
-            "resumo": candidato.resumo or "",
-        }
-        resultado = calcular_fit(cand_dict, vaga_dict)
-        score = resultado.get("score_total", 0)
-        candidato.score_fit = score
-        candidato.perfil_completo = resultado
-        candidato.save(update_fields=["score_fit", "perfil_completo"])
+        score = pontuar_candidato(candidato)
         return JsonResponse({"ok": True, "score_fit": score})
     except Exception as e:
         return JsonResponse({"ok": False, "error": str(e)})

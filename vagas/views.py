@@ -1444,6 +1444,20 @@ def download_perguntas(request, pk):
 SCORE_APURADO_MIN = 80
 
 
+def _apurados(candidatos):
+    """Shortlist: at/above the threshold AND no essential criterion failed."""
+    return [c for c in candidatos
+            if (c.score_fit or 0) >= SCORE_APURADO_MIN
+            and not (c.avaliacao_criterios or {}).get("essenciais_falhados")]
+
+
+def _excluidos_por_essencial(candidatos):
+    """Above the threshold on score, but blocked by a failed essential criterion."""
+    return [c for c in candidatos
+            if (c.score_fit or 0) >= SCORE_APURADO_MIN
+            and (c.avaliacao_criterios or {}).get("essenciais_falhados")]
+
+
 def avaliacao_rapida_list(request):
     from django.utils import timezone
     vagas = org_vagas(request).filter(modo_rapido=True).order_by("-created_at")
@@ -1483,7 +1497,8 @@ def avaliacao_rapida_detail(request, pk):
     return render(request, "avaliacao_rapida/detail.html", {
         "vaga": vaga,
         "candidatos": candidatos,
-        "apurados": [c for c in candidatos if (c.score_fit or 0) >= SCORE_APURADO_MIN],
+        "apurados": _apurados(candidatos),
+        "excluidos_essencial": _excluidos_por_essencial(candidatos),
         "score_minimo": SCORE_APURADO_MIN,
         "categorias_criterio": CATEGORIAS_CRITERIO,
         "n_scored": n_scored,
@@ -1540,7 +1555,41 @@ def criterios_rapida(request, pk):
         })
     vaga.criterios = criterios[:20]
     vaga.save(update_fields=["criterios"])
-    messages.success(request, f"Grelha de avaliação guardada ({len(vaga.criterios)} critérios).")
+    messages.success(
+        request,
+        f"Grelha de avaliação guardada ({len(vaga.criterios)} critérios). "
+        "Use \"Reavaliar candidatos\" para aplicar a nova grelha aos CVs já carregados.",
+    )
+    return redirect("avaliacao_rapida_detail", pk=pk)
+
+
+@require_POST
+def reavaliar_rapida(request, pk):
+    """Re-score every candidate of this vaga against the current grelha."""
+    from candidatos.models import Candidato
+    from candidatos.views import pontuar_candidato
+    vaga = get_object_or_404(org_vagas(request).filter(modo_rapido=True), pk=pk)
+    if not vaga.criterios:
+        messages.error(request, "Não há grelha de avaliação. Defina os critérios primeiro.")
+        return redirect("avaliacao_rapida_detail", pk=pk)
+    ok, sem_texto, erros = 0, [], 0
+    for c in Candidato.objects.filter(vaga=vaga):
+        if not c.cv_texto:
+            sem_texto.append(c.nome)
+            continue
+        try:
+            pontuar_candidato(c)
+            ok += 1
+        except Exception:
+            erros += 1
+    msg = f"{ok} candidato(s) reavaliado(s) contra a grelha."
+    if sem_texto:
+        msg += (f" {len(sem_texto)} sem texto de CV guardado (carregados antes desta versão) — "
+                f"volte a carregar o CV: {', '.join(sem_texto[:5])}"
+                + ("…" if len(sem_texto) > 5 else "") + ".")
+    if erros:
+        msg += f" {erros} com erro."
+    (messages.warning if (sem_texto or erros) else messages.success)(request, msg)
     return redirect("avaliacao_rapida_detail", pk=pk)
 
 
@@ -1637,12 +1686,12 @@ def avaliacao_rapida_relatorio(request, pk):
     from django.utils import timezone
     from django.conf import settings
     candidatos = list(Candidato.objects.filter(vaga=vaga).order_by("-score_fit", "nome"))
-    apurados = [c for c in candidatos if (c.score_fit or 0) >= SCORE_APURADO_MIN]
     narrativa = _gerar_narrativa_rapida(vaga, candidatos)
     return render(request, "avaliacao_rapida/relatorio.html", {
         "vaga": vaga,
         "candidatos": candidatos,
-        "apurados": apurados,
+        "apurados": _apurados(candidatos),
+        "excluidos_essencial": _excluidos_por_essencial(candidatos),
         "score_minimo": SCORE_APURADO_MIN,
         "today": timezone.now().date(),
         "narrativa": narrativa,
@@ -1672,6 +1721,17 @@ def _gerar_narrativa_rapida(vaga, candidatos):
         )
         if c.resumo:
             cands_text += f"   Resumo: {c.resumo[:500]}\n"
+        av = c.avaliacao_criterios or {}
+        if av.get("criterios"):
+            cands_text += "   Avaliação por critério (fonte de verdade):\n"
+            for lc in av["criterios"]:
+                tag = "ESSENCIAL" if lc.get("essencial") else "desejável"
+                cands_text += f"     - {lc['criterio']} [{tag}]: {lc['resultado']}"
+                if lc.get("evidencia"):
+                    cands_text += f' — evidência: "{lc["evidencia"][:160]}"'
+                cands_text += "\n"
+            if av.get("essenciais_falhados"):
+                cands_text += f"   CRITÉRIOS ESSENCIAIS EM FALTA: {'; '.join(av['essenciais_falhados'])}\n"
     prompt = f"""És um especialista em recursos humanos. Analisa os candidatos abaixo face aos Termos de Referência e redige um relatório narrativo em português europeu/moçambicano.
 
 POSIÇÃO: {vaga.titulo}{f' — {vaga.organizacao}' if vaga.organizacao else ''}
@@ -1686,7 +1746,8 @@ EXPERIÊNCIA MÍNIMA: {vaga.anos_experiencia_min or 0} anos
 CANDIDATOS AVALIADOS:
 {cands_text}
 
-CRITÉRIO DE APURAMENTO: são apurados para a fase seguinte os candidatos com score igual ou superior a {SCORE_APURADO_MIN}%.
+CRITÉRIO DE APURAMENTO: são apurados para a fase seguinte os candidatos com score igual ou superior a {SCORE_APURADO_MIN}% E sem nenhum critério essencial em falta. Um candidato com critério essencial em falta não é apurado, independentemente do score.
+Quando existe "Avaliação por critério", ela é a fonte de verdade: a narrativa tem de ser consistente com esses resultados e citar a evidência quando relevante.
 
 Redige um relatório narrativo com as seguintes secções (usa headings em Markdown):
 ## Resumo do Processo
@@ -1707,7 +1768,7 @@ IMPORTANTE: baseia-te apenas nos dados acima. Se um campo estiver marcado como "
     except Exception:
         pass
     # Deterministic fallback
-    apurados = [c for c in candidatos if (c.score_fit or 0) >= SCORE_APURADO_MIN]
+    apurados = _apurados(candidatos)
     linhas = [
         f"## Resumo do Processo\n\nForam avaliados {len(candidatos)} candidato(s) para a posição de **{vaga.titulo}**.",
         f"\n## Análise dos Candidatos\n",
@@ -1715,10 +1776,17 @@ IMPORTANTE: baseia-te apenas nos dados acima. Se um campo estiver marcado como "
     for c in candidatos:
         score_str = f"{c.score_fit}%" if c.score_fit is not None else "score não calculado"
         form = "; ".join(str(x) for x in (c.formacao or [])) or "não consta do CV"
-        linhas.append(
+        texto = (
             f"**{c.nome}** obteve um score de {score_str}, com {c.experiencia_anos or 0} anos "
             f"de experiência. Formação: {form}."
         )
+        av = c.avaliacao_criterios or {}
+        if av.get("criterios"):
+            n_ok = sum(1 for lc in av["criterios"] if lc["resultado"] == "cumpre")
+            texto += f" Cumpre {n_ok} de {len(av['criterios'])} critérios da grelha."
+            if av.get("essenciais_falhados"):
+                texto += f" Critérios essenciais em falta: {'; '.join(av['essenciais_falhados'])}."
+        linhas.append(texto)
     if apurados:
         nomes = ", ".join(f"**{c.nome}** ({c.score_fit}%)" for c in apurados)
         linhas.append(

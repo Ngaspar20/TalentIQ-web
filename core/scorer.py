@@ -314,6 +314,239 @@ def _score_deterministic(candidato: Dict, vaga: Dict) -> Dict[str, Any]:
     }
 
 
+# ---------------------------------------------------------------------------
+# Rubric-based evaluation: full CV vs full ToR against a grelha de avaliação
+# ---------------------------------------------------------------------------
+
+_RESULTADO_FACTOR = {"cumpre": 1.0, "parcial": 0.5, "nao_cumpre": 0.0}
+
+_NIVEL_KEYWORDS = {
+    "curso técnico": ["tecnico", "certificate", "certificacao", "diploma"],
+    "licenciatura": ["licenciatura", "licenciado", "bacharel", "bachelor", "degree", "engenheiro"],
+    "mestrado": ["mestrado", "master", "mba", "msc"],
+    "doutoramento": ["doutoramento", "phd", "doutor", "doctorate"],
+}
+
+_STOPWORDS = {
+    "de", "da", "do", "das", "dos", "em", "no", "na", "nos", "nas", "com", "para", "por", "e", "ou",
+    "a", "o", "as", "os", "um", "uma", "que", "ser", "ter", "the", "and", "of", "in", "with", "for",
+    "to", "on", "at", "or", "an", "is", "minimo", "minima", "anos", "ano", "years", "year",
+    "experiencia", "experience", "conhecimento", "conhecimentos", "capacidade", "competencia",
+    "competencias", "skills", "skill", "nivel", "level", "forte", "fortes", "bom", "boa",
+    "relevante", "relevantes", "profissional", "area", "areas", "idioma", "lingua", "fluente",
+    "fluencia", "dominio", "solido", "solida", "comprovada", "comprovado", "demonstrada",
+}
+
+
+def avaliar_por_criterios(cv_texto: str, tor_texto: str, criterios: List[Dict[str, Any]],
+                          candidato: Dict[str, Any] = None) -> Dict[str, Any]:
+    """Evaluate a CV against a grelha de avaliação. Returns {} if the rubric is empty.
+
+    Result: {score_total, metodo, criterios: [{criterio, categoria, essencial, peso,
+    resultado, evidencia, comentario, pontos}], essenciais_falhados: [labels]}
+    """
+    criterios = [c for c in (criterios or []) if str(c.get("criterio") or "").strip()]
+    if not criterios:
+        return {}
+    avaliacoes = None
+    metodo = f"LLM ({config.LLM_ENGINE})"
+    if config.LLM_ENGINE != "deterministic":
+        avaliacoes = _avaliar_criterios_llm(cv_texto or "", tor_texto or "", criterios)
+    if not avaliacoes:
+        avaliacoes = _avaliar_criterios_deterministic(cv_texto or "", criterios, candidato or {})
+        metodo = "Determinístico"
+    return _consolidar_avaliacao(criterios, avaliacoes, metodo)
+
+
+def _consolidar_avaliacao(criterios, avaliacoes, metodo) -> Dict[str, Any]:
+    linhas, total, maximo, falhados = [], 0.0, 0, []
+    for crit, av in zip(criterios, avaliacoes):
+        av = av or {}
+        resultado = av.get("resultado") if av.get("resultado") in _RESULTADO_FACTOR else "nao_cumpre"
+        try:
+            peso = max(1, min(5, int(crit.get("peso") or 3)))
+        except (TypeError, ValueError):
+            peso = 3
+        essencial = bool(crit.get("essencial"))
+        pontos = peso * _RESULTADO_FACTOR[resultado]
+        total += pontos
+        maximo += peso
+        # Essential criteria are eliminatory: partial credit counts toward the
+        # score, but anything short of "cumpre" still blocks the shortlist.
+        if essencial and resultado != "cumpre":
+            falhados.append(crit["criterio"])
+        linhas.append({
+            "criterio": crit["criterio"],
+            "categoria": crit.get("categoria") or "outro",
+            "essencial": essencial,
+            "peso": peso,
+            "resultado": resultado,
+            "evidencia": str(av.get("evidencia") or "")[:400],
+            "comentario": str(av.get("comentario") or "")[:400],
+            "pontos": pontos,
+        })
+    score = round(100 * total / maximo) if maximo else 0
+    return {"score_total": score, "metodo": metodo, "criterios": linhas,
+            "essenciais_falhados": falhados}
+
+
+def _normalizar_resultado(valor) -> str:
+    v = _normalize(str(valor or ""))
+    if "parcial" in v or "partial" in v:
+        return "parcial"
+    if v.startswith(("nao", "not")) or v in ("no", "false", "0"):
+        return "nao_cumpre"
+    if "cumpre" in v or "met" in v or v in ("sim", "yes", "true", "1"):
+        return "cumpre"
+    return "nao_cumpre"
+
+
+def _avaliar_criterios_llm(cv_texto: str, tor_texto: str, criterios: list):
+    system = (
+        "Você é um especialista em recrutamento e seleção. Avalia CVs contra uma grelha de "
+        "critérios de forma rigorosa e baseada em evidência. Responda APENAS com JSON válido."
+    )
+    grelha = "\n".join(
+        f'{i}. {c["criterio"]} [{"ESSENCIAL" if c.get("essencial") else "desejável"}, peso {c.get("peso", 3)}]'
+        for i, c in enumerate(criterios, 1)
+    )
+    prompt = f"""Avalia o CV abaixo contra cada critério da grelha, usando os Termos de Referência como contexto.
+
+TERMOS DE REFERÊNCIA:
+{tor_texto[:12000]}
+
+GRELHA DE AVALIAÇÃO:
+{grelha}
+
+CV DO CANDIDATO:
+{cv_texto[:20000]}
+
+Para CADA critério (todos os {len(criterios)}), devolve um objecto numa lista JSON:
+{{
+  "n": número do critério,
+  "resultado": "cumpre" | "parcial" | "nao_cumpre",
+  "evidencia": "citação curta e literal do CV que sustenta o resultado (vazio se não houver)",
+  "comentario": "uma frase em português a justificar"
+}}
+
+Regras:
+- Baseia-te exclusivamente no que está escrito no CV. Não infiras nem assumas.
+- Se o CV não menciona o critério, o resultado é "nao_cumpre" e a evidência fica vazia.
+- "parcial" quando o CV mostra o requisito de forma incompleta (menos anos, nível inferior, experiência adjacente).
+- Devolve apenas a lista JSON."""
+    try:
+        response = get_llm_response(prompt, system)
+        if not response:
+            return None
+        clean = _re.sub(r"^```(?:json)?\s*|\s*```$", "", response.strip())
+        data = json.loads(clean)
+        if isinstance(data, dict):
+            data = data.get("avaliacoes") or data.get("criterios") or data.get("resultados") or []
+        if not isinstance(data, list):
+            return None
+        por_n = {}
+        for item in data:
+            if not isinstance(item, dict):
+                continue
+            try:
+                n = int(item.get("n"))
+            except (TypeError, ValueError):
+                continue
+            item["resultado"] = _normalizar_resultado(item.get("resultado"))
+            por_n[n] = item
+        if not por_n:
+            return None
+        return [por_n.get(i, {"resultado": "nao_cumpre", "comentario": "Não avaliado pelo modelo."})
+                for i in range(1, len(criterios) + 1)]
+    except Exception as e:
+        logger.warning(f"LLM avaliação por critérios falhou, usando fallback: {e}")
+        return None
+
+
+def _avaliar_criterios_deterministic(cv_texto: str, criterios: list, candidato: Dict) -> list:
+    cv_norm = _normalize(cv_texto)
+    linhas_orig = [l.strip() for l in cv_texto.split("\n") if l.strip()]
+    linhas_norm = [_normalize(l) for l in linhas_orig]
+
+    def linha_com(termos):
+        melhor, melhor_n = "", 0
+        for orig, norm in zip(linhas_orig, linhas_norm):
+            n = sum(1 for t in termos if t and t in norm)
+            if n > melhor_n:
+                melhor, melhor_n = orig, n
+        return melhor[:200]
+
+    out = []
+    for c in criterios:
+        cat = c.get("categoria") or "outro"
+        norm = _normalize(c["criterio"])
+
+        if cat == "experiencia":
+            m = _re.search(r"(\d+)\s*(?:anos?|years?)", norm)
+            req = int(m.group(1)) if m else 0
+            anos = candidato.get("experiencia_anos") or 0
+            if not anos:
+                m2 = _re.search(r"(\d+)\s*(?:anos?|years?)\s+(?:de\s+)?(?:experiencia|experience)", cv_norm)
+                anos = int(m2.group(1)) if m2 else 0
+            if req == 0:
+                resultado = "parcial" if anos else "nao_cumpre"
+            elif anos >= req:
+                resultado = "cumpre"
+            elif anos >= req * 0.6:
+                resultado = "parcial"
+            else:
+                resultado = "nao_cumpre"
+            out.append({
+                "resultado": resultado,
+                "evidencia": f"{anos} anos de experiência identificados no CV" if anos else "",
+                "comentario": f"Requisito: {req} anos." if req else "Anos requeridos não especificados no critério.",
+            })
+            continue
+
+        if cat == "formacao":
+            req_rank = min((r for k, r in _EDU_LEVELS.items() if _normalize(k) in norm), default=2)
+            cand_rank, termo_hit = 0, ""
+            for nivel, kws in _NIVEL_KEYWORDS.items():
+                for kw in kws:
+                    if kw in cv_norm and _EDU_LEVELS.get(nivel, 0) > cand_rank:
+                        cand_rank, termo_hit = _EDU_LEVELS[nivel], kw
+            if cand_rank and cand_rank >= req_rank:
+                resultado = "cumpre"
+            elif cand_rank:
+                resultado = "parcial"
+            else:
+                resultado = "nao_cumpre"
+            out.append({
+                "resultado": resultado,
+                "evidencia": linha_com([termo_hit]) if termo_hit else "",
+                "comentario": "Nível de formação verificado por palavras-chave.",
+            })
+            continue
+
+        tokens = [t for t in _re.findall(r"[a-z0-9&+#]{3,}", norm) if t not in _STOPWORDS]
+        if not tokens:
+            out.append({"resultado": "nao_cumpre", "evidencia": "",
+                        "comentario": "Critério sem termos verificáveis automaticamente."})
+            continue
+        hits = []
+        for t in tokens:
+            alts = {t}
+            for g in _SYNONYM_GROUPS:
+                gn = {_normalize(x) for x in g}
+                if t in gn:
+                    alts |= gn
+            if any(a in cv_norm for a in alts):
+                hits.append(t)
+        cov = len(hits) / len(tokens)
+        resultado = "cumpre" if cov >= 0.6 else "parcial" if cov >= 0.3 else "nao_cumpre"
+        out.append({
+            "resultado": resultado,
+            "evidencia": linha_com(hits) if hits else "",
+            "comentario": f"{len(hits)}/{len(tokens)} termos do critério encontrados no CV.",
+        })
+    return out
+
+
 def _score_with_llm(candidato: Dict, vaga: Dict) -> Dict[str, Any]:
     system = (
         "Você é um especialista em recrutamento e seleção. "

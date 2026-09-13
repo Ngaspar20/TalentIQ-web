@@ -42,6 +42,8 @@ class Candidato(models.Model):
     motivo_rejeicao = models.CharField(max_length=50, choices=MOTIVO_REJEICAO_CHOICES, blank=True)
     cv_file_path = models.CharField(max_length=500, blank=True)
     cv_texto = models.TextField(blank=True, default="")
+    # Rubric evaluation: {score_total, metodo, criterios: [...], essenciais_falhados: [...]}
+    avaliacao_criterios = models.JSONField(default=dict, blank=True)
     perfil_completo = models.JSONField(default=dict)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
