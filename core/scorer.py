@@ -320,12 +320,39 @@ def _score_deterministic(candidato: Dict, vaga: Dict) -> Dict[str, Any]:
 
 _RESULTADO_FACTOR = {"cumpre": 1.0, "parcial": 0.5, "nao_cumpre": 0.0}
 
-_NIVEL_KEYWORDS = {
-    "curso técnico": ["tecnico", "certificate", "certificacao", "diploma"],
-    "licenciatura": ["licenciatura", "licenciado", "bacharel", "bachelor", "degree", "engenheiro"],
-    "mestrado": ["mestrado", "master", "mba", "msc"],
-    "doutoramento": ["doutoramento", "phd", "doutor", "doctorate"],
+# Matched against accent-stripped lowercase text with word boundaries, so
+# short abbreviations (bsc, msc, mba) don't fire inside unrelated words.
+_NIVEL_PATTERNS = {
+    "curso técnico": [r"\btecnico\b", r"\bcertificate\b", r"\bcertificacao\b", r"\bdiploma\b"],
+    "licenciatura": [r"\blicenciatura\b", r"\blicenciad[oa]\b", r"\bbacharel(ato)?\b", r"\bbachelor",
+                     r"\bb\.?\s?sc\b", r"\bb\.?\s?eng\b", r"\bb\.?\s?tech\b", r"\bdegree\b",
+                     r"\bengenheir[oa]s?\b", r"\blic\.\s"],
+    "mestrado": [r"\bmestrado\b", r"\bmaster'?s?\b", r"\bmba\b", r"\bm\.?\s?sc\b", r"\bm\.?\s?eng\b",
+                 r"\bmestre\b"],
+    "doutoramento": [r"\bdoutoramento\b", r"\bphd\b", r"\bph\.\s?d\b", r"\bdoutor(a)?\b", r"\bdoctorate\b",
+                     r"\bdoctoral\b"],
 }
+
+
+def _nivel_rank(texto_norm: str):
+    """(highest education rank found, the pattern that matched) or (0, '')."""
+    melhor, hit = 0, ""
+    for nivel, pats in _NIVEL_PATTERNS.items():
+        rank = _EDU_LEVELS.get(nivel, 0)
+        if rank <= melhor:
+            continue
+        for p in pats:
+            if _re.search(p, texto_norm):
+                melhor, hit = rank, p
+                break
+    return melhor, hit
+
+
+def _nivel_requerido(criterio_norm: str) -> int:
+    """Lowest education rank named in a criterion ('Licenciatura ou Mestrado' -> 2); default 2."""
+    ranks = [_EDU_LEVELS.get(nivel, 0) for nivel, pats in _NIVEL_PATTERNS.items()
+             if any(_re.search(p, criterio_norm) for p in pats)]
+    return min(ranks) if ranks else 2
 
 _STOPWORDS = {
     "de", "da", "do", "das", "dos", "em", "no", "na", "nos", "nas", "com", "para", "por", "e", "ou",
@@ -504,21 +531,23 @@ def _avaliar_criterios_deterministic(cv_texto: str, criterios: list, candidato: 
             continue
 
         if cat == "formacao":
-            req_rank = min((r for k, r in _EDU_LEVELS.items() if _normalize(k) in norm), default=2)
-            cand_rank, termo_hit = 0, ""
-            for nivel, kws in _NIVEL_KEYWORDS.items():
-                for kw in kws:
-                    if kw in cv_norm and _EDU_LEVELS.get(nivel, 0) > cand_rank:
-                        cand_rank, termo_hit = _EDU_LEVELS[nivel], kw
+            req_rank = _nivel_requerido(norm)
+            cand_rank, padrao = _nivel_rank(cv_norm)
             if cand_rank and cand_rank >= req_rank:
                 resultado = "cumpre"
             elif cand_rank:
                 resultado = "parcial"
             else:
                 resultado = "nao_cumpre"
+            evidencia = ""
+            if padrao:
+                for orig, ln in zip(linhas_orig, linhas_norm):
+                    if _re.search(padrao, ln):
+                        evidencia = orig[:200]
+                        break
             out.append({
                 "resultado": resultado,
-                "evidencia": linha_com([termo_hit]) if termo_hit else "",
+                "evidencia": evidencia,
                 "comentario": "Nível de formação verificado por palavras-chave.",
             })
             continue
