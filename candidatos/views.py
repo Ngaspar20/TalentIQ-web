@@ -664,6 +664,25 @@ def bulk_upload_one_cv(request):
                 out.append(s)
         return out
 
+    email = (extraido.get("email") or "").strip()
+    telefone = (extraido.get("telefone") or "").strip()
+    duplicado = None
+    if email:
+        duplicado = Candidato.objects.filter(vaga=vaga, email__iexact=email).first()
+    if duplicado is None and telefone:
+        digitos = "".join(ch for ch in telefone if ch.isdigit())
+        if len(digitos) >= 7:
+            for existente in Candidato.objects.filter(vaga=vaga).exclude(telefone="").only("nome", "telefone"):
+                if "".join(ch for ch in existente.telefone if ch.isdigit()).endswith(digitos[-9:]):
+                    duplicado = existente
+                    break
+    if duplicado is not None:
+        return JsonResponse({
+            "ok": False,
+            "error": f"CV duplicado — já existe \"{duplicado.nome}\" com o mesmo "
+                     f"{'email' if email and duplicado.email.lower() == email.lower() else 'telefone'} nesta avaliação.",
+        })
+
     try:
         candidato = Candidato.objects.create(
             organisation=request.user.organisation,
