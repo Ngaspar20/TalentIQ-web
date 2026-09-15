@@ -427,10 +427,33 @@ function uploadTor(input) {
     </p>
     {% endif %}
     {% if excluidos_essencial %}
-    <div style="margin-top:.75rem;padding:.6rem .8rem;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:.8rem;color:#92400e;">
-        <i class="fa-solid fa-triangle-exclamation mr-1"></i>
-        Acima de {{ score_minimo }}% mas <strong>não apurado</strong> por critério essencial em falta:
-        {% for c in excluidos_essencial %}<strong>{{ c.nome }}</strong> ({{ c.score_fit }}%){% if not forloop.last %}, {% endif %}{% endfor %}.
+    <div style="margin-top:.75rem;padding:.75rem .9rem;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:.8rem;color:#92400e;">
+        <div style="font-weight:700;margin-bottom:.4rem;">
+            <i class="fa-solid fa-triangle-exclamation mr-1"></i>
+            {{ excluidos_essencial|length }} candidato(s) acima de {{ score_minimo }}% <strong>não apurados</strong> — bloqueados por critério essencial:
+        </div>
+        {% for crit, cands in bloqueios %}
+        <div style="margin:.35rem 0 .35rem .4rem;padding-left:.6rem;border-left:3px solid #f59e0b;">
+            <div style="font-weight:700;color:#78350f;">
+                “{{ crit }}” <span style="font-weight:600;color:#b45309;">— bloqueia {{ cands|length }}</span>
+            </div>
+            <div style="color:#92400e;margin-top:.15rem;">
+                {% for c in cands %}{{ c.nome }} ({{ c.score_fit }}%){% if not forloop.last %}, {% endif %}{% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+        <div style="margin-top:.5rem;font-size:.76rem;color:#78350f;border-top:1px solid #fde68a;padding-top:.45rem;">
+            <i class="fa-solid fa-lightbulb mr-1"></i>
+            Se um destes critérios não devia ser eliminatório, mude-o para <strong>Essencial: Não</strong> na
+            <a href="#grelha-card" style="color:#78350f;text-decoration:underline;">Grelha de Avaliação</a>, guarde e clique em <strong>Reavaliar candidatos</strong>.
+        </div>
+    </div>
+    {% endif %}
+    {% if nao_avaliados %}
+    <div style="margin-top:.6rem;padding:.6rem .8rem;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:8px;font-size:.78rem;color:#475569;">
+        <i class="fa-solid fa-circle-question mr-1"></i>
+        O modelo não avaliou todos os critérios de {{ nao_avaliados|length }} candidato(s); esses critérios contam como desconhecidos e não bloqueiam.
+        <strong>Reavaliar candidatos</strong> tenta de novo.
     </div>
     {% endif %}
 </div>

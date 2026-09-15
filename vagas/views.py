@@ -1458,6 +1458,20 @@ def _excluidos_por_essencial(candidatos):
             and (c.avaliacao_criterios or {}).get("essenciais_falhados")]
 
 
+def _bloqueios_por_criterio(candidatos):
+    """[(criterio, [candidatos])] — which essential is keeping otherwise-qualifying
+    candidates out, largest group first. Makes an over-strict criterion obvious."""
+    grupos = {}
+    for c in _excluidos_por_essencial(candidatos):
+        for crit in c.avaliacao_criterios.get("essenciais_falhados", []):
+            grupos.setdefault(crit, []).append(c)
+    return sorted(grupos.items(), key=lambda kv: (-len(kv[1]), kv[0]))
+
+
+def _com_criterios_nao_avaliados(candidatos):
+    return [c for c in candidatos if (c.avaliacao_criterios or {}).get("nao_avaliados")]
+
+
 def avaliacao_rapida_list(request):
     from django.utils import timezone
     vagas = org_vagas(request).filter(modo_rapido=True).order_by("-created_at")
@@ -1499,6 +1513,8 @@ def avaliacao_rapida_detail(request, pk):
         "candidatos": candidatos,
         "apurados": _apurados(candidatos),
         "excluidos_essencial": _excluidos_por_essencial(candidatos),
+        "bloqueios": _bloqueios_por_criterio(candidatos),
+        "nao_avaliados": _com_criterios_nao_avaliados(candidatos),
         "score_minimo": SCORE_APURADO_MIN,
         "categorias_criterio": CATEGORIAS_CRITERIO,
         "n_scored": n_scored,
@@ -1803,6 +1819,7 @@ def avaliacao_rapida_relatorio(request, pk):
         "candidatos": candidatos,
         "apurados": _apurados(candidatos),
         "excluidos_essencial": _excluidos_por_essencial(candidatos),
+        "bloqueios": _bloqueios_por_criterio(candidatos),
         "score_minimo": SCORE_APURADO_MIN,
         "today": timezone.now().date(),
         "narrativa": narrativa,

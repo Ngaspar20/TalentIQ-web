@@ -318,7 +318,11 @@ def _score_deterministic(candidato: Dict, vaga: Dict) -> Dict[str, Any]:
 # Rubric-based evaluation: full CV vs full ToR against a grelha de avaliação
 # ---------------------------------------------------------------------------
 
-_RESULTADO_FACTOR = {"cumpre": 1.0, "parcial": 0.5, "nao_cumpre": 0.0}
+# nao_avaliado: the model returned no verdict for this criterion. Scored as
+# unknown (half credit) and never treated as a failed essential.
+_RESULTADO_FACTOR = {"cumpre": 1.0, "parcial": 0.5, "nao_avaliado": 0.5, "nao_cumpre": 0.0}
+_NAO_AVALIADO = {"resultado": "nao_avaliado", "evidencia": "",
+                 "comentario": "Não avaliado pelo modelo — reavalie este candidato."}
 
 # Matched against accent-stripped lowercase text with word boundaries, so
 # short abbreviations (bsc, msc, mba) don't fire inside unrelated words.
@@ -386,10 +390,12 @@ def avaliar_por_criterios(cv_texto: str, tor_texto: str, criterios: List[Dict[st
 
 
 def _consolidar_avaliacao(criterios, avaliacoes, metodo) -> Dict[str, Any]:
-    linhas, total, maximo, falhados = [], 0.0, 0, []
+    linhas, total, maximo, falhados, nao_avaliados = [], 0.0, 0, [], []
     for crit, av in zip(criterios, avaliacoes):
         av = av or {}
         resultado = av.get("resultado") if av.get("resultado") in _RESULTADO_FACTOR else "nao_cumpre"
+        if resultado == "nao_avaliado":
+            nao_avaliados.append(crit["criterio"])
         try:
             peso = max(1, min(5, int(crit.get("peso") or 3)))
         except (TypeError, ValueError):
@@ -400,7 +406,8 @@ def _consolidar_avaliacao(criterios, avaliacoes, metodo) -> Dict[str, Any]:
         maximo += peso
         # Essential criteria are eliminatory: partial credit counts toward the
         # score, but anything short of "cumpre" still blocks the shortlist.
-        if essencial and resultado != "cumpre":
+        # An unevaluated criterion is unknown, not failed, so it never blocks.
+        if essencial and resultado in ("parcial", "nao_cumpre"):
             falhados.append(crit["criterio"])
         linhas.append({
             "criterio": crit["criterio"],
@@ -414,11 +421,13 @@ def _consolidar_avaliacao(criterios, avaliacoes, metodo) -> Dict[str, Any]:
         })
     score = round(100 * total / maximo) if maximo else 0
     return {"score_total": score, "metodo": metodo, "criterios": linhas,
-            "essenciais_falhados": falhados}
+            "essenciais_falhados": falhados, "nao_avaliados": nao_avaliados}
 
 
 def _normalizar_resultado(valor) -> str:
     v = _normalize(str(valor or ""))
+    if "nao avaliado" in v or "not evaluated" in v or "n/a" == v:
+        return "nao_avaliado"
     if "parcial" in v or "partial" in v:
         return "parcial"
     if v.startswith(("nao", "not")) or v in ("no", "false", "0"):
@@ -429,6 +438,38 @@ def _normalizar_resultado(valor) -> str:
 
 
 def _avaliar_criterios_llm(cv_texto: str, tor_texto: str, criterios: list):
+    """Ask the model once; if its answer skipped criteria, ask once more and keep the fuller one."""
+    melhor, melhor_cobertura = None, -1
+    for _ in range(2):
+        avals = _avaliar_criterios_llm_uma_vez(cv_texto, tor_texto, criterios)
+        if avals is None:
+            continue
+        cobertura = sum(1 for a in avals if a.get("resultado") != "nao_avaliado")
+        if cobertura > melhor_cobertura:
+            melhor, melhor_cobertura = avals, cobertura
+        if cobertura == len(criterios):
+            break
+        logger.warning(f"Modelo avaliou {cobertura}/{len(criterios)} critérios; a repetir pedido")
+    return melhor
+
+
+def _mapear_por_numero(data: list, n_criterios: int):
+    """Map model items to criteria 1..N. Tolerates 0-based numbering and missing n (positional)."""
+    itens = [it for it in data if isinstance(it, dict)]
+    numerados = {}
+    for it in itens:
+        try:
+            numerados[int(it.get("n"))] = it
+        except (TypeError, ValueError):
+            pass
+    if not numerados:
+        return {i + 1: it for i, it in enumerate(itens[:n_criterios])}
+    if 0 in numerados and n_criterios not in numerados:
+        numerados = {k + 1: v for k, v in numerados.items()}
+    return numerados
+
+
+def _avaliar_criterios_llm_uma_vez(cv_texto: str, tor_texto: str, criterios: list):
     system = (
         "Você é um especialista em recrutamento e seleção. Avalia CVs contra uma grelha de "
         "critérios de forma rigorosa e baseada em evidência. Responda APENAS com JSON válido."
@@ -471,20 +512,12 @@ Regras:
             data = data.get("avaliacoes") or data.get("criterios") or data.get("resultados") or []
         if not isinstance(data, list):
             return None
-        por_n = {}
-        for item in data:
-            if not isinstance(item, dict):
-                continue
-            try:
-                n = int(item.get("n"))
-            except (TypeError, ValueError):
-                continue
-            item["resultado"] = _normalizar_resultado(item.get("resultado"))
-            por_n[n] = item
+        por_n = _mapear_por_numero(data, len(criterios))
         if not por_n:
             return None
-        return [por_n.get(i, {"resultado": "nao_cumpre", "comentario": "Não avaliado pelo modelo."})
-                for i in range(1, len(criterios) + 1)]
+        for item in por_n.values():
+            item["resultado"] = _normalizar_resultado(item.get("resultado"))
+        return [por_n.get(i, dict(_NAO_AVALIADO)) for i in range(1, len(criterios) + 1)]
     except Exception as e:
         logger.warning(f"LLM avaliação por critérios falhou, usando fallback: {e}")
         return None

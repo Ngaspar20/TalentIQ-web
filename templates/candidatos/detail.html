@@ -86,6 +86,11 @@
             <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-0"><i class="fa-solid fa-list-check mr-1"></i> Avaliação contra a Grelha do ToR</p>
             <span style="font-size:.68rem;color:#94a3b8;">{{ candidato.avaliacao_criterios.metodo }}</span>
         </div>
+        {% if candidato.avaliacao_criterios.nao_avaliados %}
+        <div style="margin-bottom:.6rem;padding:.5rem .7rem;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:8px;font-size:.8rem;color:#475569;">
+            <i class="fa-solid fa-circle-question mr-1"></i> O modelo não avaliou {{ candidato.avaliacao_criterios.nao_avaliados|length }} critério(s) — contam como desconhecidos e não bloqueiam. Use "Calcular" para tentar de novo.
+        </div>
+        {% endif %}
         {% if candidato.avaliacao_criterios.essenciais_falhados %}
         <div style="margin-bottom:.6rem;padding:.5rem .7rem;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;font-size:.8rem;color:#b91c1c;">
             <i class="fa-solid fa-triangle-exclamation mr-1"></i> Critério(s) essencial(is) em falta: {{ candidato.avaliacao_criterios.essenciais_falhados|join:"; " }}
@@ -102,7 +107,9 @@
                     </td>
                     <td style="padding:.45rem .5rem;text-align:center;width:90px;">
                         {% if lc.resultado == "cumpre" %}<span style="font-size:.72rem;font-weight:700;color:#15803d;background:#dcfce7;padding:.1rem .5rem;border-radius:999px;">Cumpre</span>
-                        {% elif lc.resultado == "parcial" %}<span style="font-size:.72rem;font-weight:700;color:#92400e;background:#fef3c7;padding:.1rem .5rem;border-radius:999px;">Parcial</span>
+                        {% elif lc.resultado == "nao_avaliado" %}
+                            <span style="font-size:.72rem;font-weight:700;color:#475569;background:#e2e8f0;padding:.1rem .5rem;border-radius:999px;">Não avaliado</span>
+                            {% elif lc.resultado == "parcial" %}<span style="font-size:.72rem;font-weight:700;color:#92400e;background:#fef3c7;padding:.1rem .5rem;border-radius:999px;">Parcial</span>
                         {% else %}<span style="font-size:.72rem;font-weight:700;color:#b91c1c;background:#fee2e2;padding:.1rem .5rem;border-radius:999px;">Não cumpre</span>{% endif %}
                     </td>
                     <td style="padding:.45rem .5rem;color:#475569;">
